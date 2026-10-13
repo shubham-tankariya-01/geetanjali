@@ -8,8 +8,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 // Measurement Entity: Represents a measurement session for a customer and a specific garment.
 // For example, "Ramesh's measurements for a Shirt taken on Oct 12".
@@ -42,6 +45,12 @@ public class Measurement {
     // @Column = Timestamp when the measurement was taken (stored as TIMESTAMPTZ in PostgreSQL, mapped to java.time.Instant).
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
+
+    // @OneToMany = One measurement session contains multiple measurement field values.
+    // mappedBy = "measurement" = Specifies the field name on MeasurementValue that owns this relationship.
+    // fetch = FetchType.LAZY = Values are loaded lazily on demand.
+    @OneToMany(mappedBy = "measurement", fetch = FetchType.LAZY)
+    private List<MeasurementValue> values = new ArrayList<>();
 
     // Default zero-argument constructor: JPA/Hibernate requires this.
     public Measurement() {
@@ -110,5 +119,19 @@ public class Measurement {
     // Output: None (void).
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    // Getter for values.
+    // Input: None.
+    // Output: List<MeasurementValue>.
+    public List<MeasurementValue> getValues() {
+        return values;
+    }
+
+    // Setter for values.
+    // Input: List<MeasurementValue> values.
+    // Output: None (void).
+    public void setValues(List<MeasurementValue> values) {
+        this.values = values;
     }
 }

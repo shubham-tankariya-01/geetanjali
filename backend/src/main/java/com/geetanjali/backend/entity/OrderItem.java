@@ -8,10 +8,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 // OrderItem Entity: Represents an individual clothing item within a customer order.
 // For example: 1 Shirt with custom notes, delivery date Oct 20, and price 450.00.
@@ -71,6 +74,12 @@ public class OrderItem {
     // @Column = Timestamp when item was delivered to customer.
     @Column(name = "delivered_at")
     private Instant deliveredAt;
+
+    // @OneToMany = One order item can have multiple design/cloth photos.
+    // mappedBy = "orderItem" = Specifies the field in ItemPhoto that owns the relationship.
+    // fetch = FetchType.LAZY = Photos are lazily loaded on demand.
+    @OneToMany(mappedBy = "orderItem", fetch = FetchType.LAZY)
+    private List<ItemPhoto> photos = new ArrayList<>();
 
     // Default zero-argument constructor: JPA/Hibernate requires this.
     public OrderItem() {
@@ -227,5 +236,19 @@ public class OrderItem {
     // Output: None (void).
     public void setDeliveredAt(Instant deliveredAt) {
         this.deliveredAt = deliveredAt;
+    }
+
+    // Getter for photos.
+    // Input: None.
+    // Output: List<ItemPhoto>.
+    public List<ItemPhoto> getPhotos() {
+        return photos;
+    }
+
+    // Setter for photos.
+    // Input: List<ItemPhoto> photos.
+    // Output: None (void).
+    public void setPhotos(List<ItemPhoto> photos) {
+        this.photos = photos;
     }
 }

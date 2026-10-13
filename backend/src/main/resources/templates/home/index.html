@@ -1,34 +1,173 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  home/index.html: Temporary Home landing page.
-  Confirms project skeleton is wired and displays the logged-in tailor/owner name.
+  home/index.html: Tailor Shop Main Home Dashboard.
+  In EJS, this corresponds to `views/home/index.ejs`.
+  Features:
+  1. Fast customer lookup search box submitting to /customers?q=...
+  2. Live list of up to 20 recent orders showing customer, items, total, and nearest delivery date.
+  3. Floating "+ New Order" button in bottom right.
 -->
-<head th:replace="~{fragments/layout :: page-head('Home')}"></head>
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('Dashboard')}"></th:block>
+    <style>
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .order-row:hover {
+            background: #f8fafc;
+        }
+        .order-row:last-child {
+            border-bottom: none;
+        }
+        .floating-fab {
+            position: fixed;
+            bottom: 80px;
+            right: 24px;
+            background: var(--primary-color, #7b2cbf);
+            color: #ffffff !important;
+            padding: 0.85rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(123, 44, 191, 0.4);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1000;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .floating-fab:hover {
+            background: var(--primary-hover, #5a189a);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(123, 44, 191, 0.5);
+        }
+    </style>
+</head>
 <body>
 
-    <!-- Top bar with shop name and logout -->
+    <!-- Header bar with shop branding and logged-in tailor info -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container">
-        <!-- Flash message area for alerts -->
+    <div class="container" style="max-width: 950px; margin: 0 auto; padding-bottom: 6rem;">
+        <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card">
-            <h2>Geetanjali is running</h2>
-            <p style="margin-bottom: 1rem; font-size: 1.1rem;">
-                Welcome, <strong th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Tailor</strong>!
-            </p>
-            <p>
-                The project skeleton, database schema, and security layers are fully wired.
-                Role: <span class="role-tag" th:text="${currentUser != null ? currentUser.role : 'GUEST'}">OWNER</span>
-            </p>
+        <!-- Welcome Banner -->
+        <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #ffffff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="margin: 0; color: #e0a96d; font-size: 1.5rem;">
+                        Namaste, <span th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Tailor</span>! 🙏
+                    </h2>
+                    <p style="margin: 0.35rem 0 0 0; color: #cbd5e1; font-size: 0.95rem;">
+                        Welcome to <strong th:text="${shopName}">Geetanjali Tailors</strong> management dashboard.
+                    </p>
+                </div>
+                <div>
+                    <a th:href="@{/orders/new}" class="btn btn-primary" style="background: #e0a96d; color: #1a1a2e; border: none; font-weight: 700;">
+                        ➕ New Order
+                    </a>
+                </div>
+            </div>
+        </div>
 
-            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                <a th:if="${isOwner}" th:href="@{/signup}" class="btn btn-primary">➕ Register Staff Member</a>
+        <!-- Customer Search Bar -->
+        <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+            <form th:action="@{/customers}" method="get" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <input type="text"
+                       name="q"
+                       class="form-control"
+                       style="flex: 1; min-width: 240px; padding: 0.65rem 1rem; font-size: 0.95rem;"
+                       placeholder="🔍 Search customers by name or 10-digit mobile number..." />
+                <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 600;">
+                    Search Customers
+                </button>
+            </form>
+        </div>
+
+        <!-- Recent Orders Card -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #fafafa;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+                    📋 Recent Orders (Last 20)
+                </h3>
+                <span class="text-muted" style="font-size: 0.85rem;" th:if="${recentOrders != null}">
+                    Showing <strong th:text="${recentOrders.size()}">0</strong> order(s)
+                </span>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${recentOrders == null or recentOrders.isEmpty()}" style="padding: 3rem 1.5rem; text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📦</div>
+                <h4 style="margin: 0 0 0.5rem 0; color: #475569;">No orders placed yet</h4>
+                <p class="text-muted" style="margin: 0 0 1.25rem 0; font-size: 0.9rem;">
+                    Start by booking your first customer order using the new order wizard.
+                </p>
+                <a th:href="@{/orders/new}" class="btn btn-primary">
+                    ➕ Book First Order
+                </a>
+            </div>
+
+            <!-- Recent Orders List -->
+            <div th:if="${recentOrders != null and !recentOrders.isEmpty()}">
+                <a th:each="ord : ${recentOrders}"
+                   th:href="@{'/orders/' + ${ord.id}}"
+                   class="order-row">
+                    <!-- Left: Order No & Customer -->
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <span style="font-weight: 800; font-size: 1.05rem; color: var(--primary-color, #7b2cbf);">
+                                Order #<span th:text="${ord.orderNo}">1001</span>
+                            </span>
+                            <span style="font-size: 0.75rem; background: #e0e7ff; color: #4338ca; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                <span th:text="${ord.itemCount}">1</span> items
+                            </span>
+                        </div>
+                        <div style="margin-top: 0.25rem; font-size: 0.95rem; font-weight: 600; color: #1e293b;">
+                            👤 <span th:text="${ord.customer.name}">Suresh Raina</span>
+                            <span class="text-muted" style="font-weight: normal; font-size: 0.85rem; margin-left: 0.35rem;">
+                                (📱 <span th:text="${ord.customer.mobile}">9876512345</span>)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Nearest Delivery & Financials -->
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; font-size: 1.05rem; color: #1e293b;">
+                            ₹<span th:text="${ord.totalAmount}">500.00</span>
+                        </div>
+                        <div style="margin-top: 0.25rem; font-size: 0.85rem;" class="text-muted">
+                            📅 Delivery:
+                            <strong th:if="${ord.nearestDeliveryDate != null}" style="color: #0284c7;" th:text="${ord.nearestDeliveryDate}">2026-10-31</strong>
+                            <span th:if="${ord.nearestDeliveryDate == null}">N/A</span>
+                        </div>
+                        <div style="font-size: 0.8rem; margin-top: 0.15rem;">
+                            <span th:if="${ord.balanceDue != null and ord.balanceDue.compareTo(T(java.math.BigDecimal).ZERO) > 0}" style="color: #dc2626; font-weight: 700;">
+                                Due: ₹<span th:text="${ord.balanceDue}">300.00</span>
+                            </span>
+                            <span th:if="${ord.balanceDue != null and ord.balanceDue.compareTo(T(java.math.BigDecimal).ZERO) == 0}" style="color: #059669; font-weight: 700;">
+                                Paid in full
+                            </span>
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
     </div>
+
+    <!-- Floating Action Button (+ New Order) -->
+    <a th:href="@{/orders/new}" class="floating-fab" title="Create New Order">
+        ➕ New Order
+    </a>
 
     <!-- Bottom navigation bar -->
     <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>

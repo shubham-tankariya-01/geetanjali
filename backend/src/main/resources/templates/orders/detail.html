@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  orders/detail.html: Customer Order Detail view.
+  In EJS, this corresponds to `views/orders/detail.ejs`.
+  Displays customer link, financial ledger, and cards for each stitched item with photo lightbox and measurement snapshot.
+-->
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('Order #' + ${order.orderNo})}"></th:block>
+</head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container" style="max-width: 900px; margin: 0 auto; padding-bottom: 5rem;">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Back to Home navigation -->
+        <div style="margin-bottom: 1rem;">
+            <a th:href="@{/}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; font-size: 0.9rem;">
+                ← Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Order Header Card -->
+        <div class="card" style="margin-bottom: 1.5rem; border-left: 5px solid var(--primary-color, #7b2cbf);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <h2 style="margin: 0; font-size: 1.6rem; color: #1e293b;">
+                            Order #<span th:text="${order.orderNo}">1001</span>
+                        </h2>
+                        <span class="role-tag" style="background: #e0e7ff; color: #4338ca; font-weight: 700;">
+                            <span th:text="${order.itemCount}">1</span> Item(s)
+                        </span>
+                    </div>
+
+                    <div style="margin-top: 0.5rem; font-size: 1.1rem;">
+                        👤 Customer:
+                        <a th:href="@{'/customers/' + ${order.customer.id}}"
+                           style="color: var(--primary-color, #7b2cbf); font-weight: 700; text-decoration: underline;"
+                           th:text="${order.customer.name}">
+                            Suresh Raina
+                        </a>
+                        <span class="text-muted" style="margin-left: 0.5rem; font-size: 0.95rem;">
+                            (📱 <span th:text="${order.customer.mobile}">9876512345</span>)
+                        </span>
+                    </div>
+
+                    <div class="text-muted" style="font-size: 0.85rem; margin-top: 0.35rem;">
+                        Booked on: <span th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, hh:mm a')}">13 Oct 2026, 10:30 PM</span>
+                        by <strong th:text="${order.createdBy != null ? order.createdBy.fullName : 'Shop Staff'}">Tailor</strong>
+                    </div>
+                </div>
+
+                <!-- Financial Ledger Box -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; min-width: 240px; text-align: right;">
+                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">
+                        Total Amount: <strong style="color: #1e293b; font-size: 1rem;">₹<span th:text="${order.totalAmount}">500.00</span></strong>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #059669; margin-bottom: 0.35rem;">
+                        Advance Paid: <strong>₹<span th:text="${order.totalPaid}">200.00</span></strong>
+                    </div>
+                    <div style="border-top: 2px dashed #cbd5e1; padding-top: 0.4rem; font-size: 1.15rem; font-weight: 800; color: #dc2626;">
+                        Balance Due: ₹<span th:text="${order.balanceDue}">300.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Garment Items List -->
+        <h3 style="margin-bottom: 1rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+            🧵 Garment Items (<span th:text="${order.itemCount}">1</span>)
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <!-- Iterating over order items (lazy-loaded on demand via Open-in-View) -->
+            <div th:each="item, iterStat : ${order.items}" class="card" style="margin-bottom: 0; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="font-size: 1.25rem; font-weight: 800; color: #1e293b;" th:text="${item.garment.name}">
+                            Shirt
+                        </span>
+                        <span class="badge"
+                              th:text="${item.status}"
+                              th:style="${item.status == 'DELIVERED' ? 'background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;' : (item.status == 'DONE' ? 'background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;' : 'background: #fef3c7; color: #92400e; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;')}">
+                            PENDING
+                        </span>
+                    </div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary-color, #7b2cbf);">
+                        ₹<span th:text="${item.price}">500.00</span>
+                    </div>
+                </div>
+
+                <!-- Delivery date and specifications -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.95rem; margin-bottom: 0.75rem;">
+                    <div>
+                        <span class="text-muted">📅 Promised Delivery:</span>
+                        <strong style="color: #1e293b;" th:text="${item.deliveryDate}">2026-10-31</strong>
+                    </div>
+                    <div th:if="${item.doneAt != null}">
+                        <span class="text-muted">✅ Stitched:</span>
+                        <span th:text="${#temporals.format(item.doneAt, 'dd MMM yyyy')}">28 Oct 2026</span>
+                    </div>
+                    <div th:if="${item.deliveredAt != null}">
+                        <span class="text-muted">📦 Delivered:</span>
+                        <span th:text="${#temporals.format(item.deliveredAt, 'dd MMM yyyy')}">30 Oct 2026</span>
+                    </div>
+                </div>
+
+                <!-- Notes / Styling Instructions -->
+                <div th:if="${item.notes != null and !item.notes.isBlank()}" style="margin-bottom: 0.75rem;">
+                    <div style="background: #f8fafc; border-left: 3px solid var(--primary-color, #7b2cbf); padding: 0.6rem 0.85rem; border-radius: 4px; font-size: 0.9rem;">
+                        <strong>📝 Styling Notes:</strong>
+                        <span th:text="${item.notes}" style="color: #334155;">Mandarin collar, double buttons</span>
+                    </div>
+                </div>
+
+                <!-- Attached Photos with interactive Lightbox Pop-up -->
+                <div th:if="${item.photos != null and !item.photos.isEmpty()}" style="margin-top: 0.75rem; margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem;">
+                        📷 Attached Cloth &amp; Pattern Photos (Tap to enlarge):
+                    </div>
+                    <div class="photo-thumbnails-grid">
+                        <div th:each="photo : ${item.photos}"
+                             class="photo-thumbnail-card"
+                             style="cursor: pointer;"
+                             onclick="openImageModal(this.querySelector('img').src)">
+                            <img th:src="${photo.url}" alt="Cloth swatch photo" class="photo-thumbnail-img" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsed Measurements <details> Block -->
+                <details style="margin-top: 0.85rem; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem 1rem; background: #fafafa;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #334155; font-size: 0.95rem;">
+                        📏 Measurements Snapshot
+                        <span class="text-muted" style="font-weight: normal; font-size: 0.85rem;"
+                              th:text="'(' + (${item.measurement != null and item.measurement.values != null} ? ${item.measurement.values.size()} : 0) + ' recorded)'">
+                            (6 recorded)
+                        </span>
+                    </summary>
+
+                    <div style="margin-top: 0.75rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
+                        <div th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}"
+                             style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
+                            <div th:each="val : ${item.measurement.values}"
+                                 style="background: #ffffff; border: 1px solid #e2e8f0; padding: 0.5rem 0.65rem; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;" th:text="${val.field.label}">Chest</div>
+                                <div style="font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-top: 0.15rem;">
+                                    <span th:text="${val.value}">40.0</span>
+                                    <span style="font-size: 0.75rem; font-weight: normal; color: #94a3b8;" th:text="${val.field.unit}">inch</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}" class="text-muted" style="font-size: 0.85rem;">
+                            No measurements recorded for this garment item.
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full-Size Photo Modal / Lightbox Pop-up -->
+    <div id="imageLightboxModal"
+         style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; padding: 1.5rem;"
+         onclick="closeImageModal()">
+        <div style="position: relative; max-width: 90%; max-height: 90%;">
+            <button type="button"
+                    onclick="closeImageModal()"
+                    style="position: absolute; top: -35px; right: 0; background: transparent; border: none; color: #ffffff; font-size: 2.2rem; cursor: pointer; line-height: 1;"
+                    title="Close">
+                &times;
+            </button>
+            <img id="lightboxImg"
+                 src=""
+                 alt="Full size view"
+                 style="max-width: 100%; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); object-fit: contain;"
+                 onclick="event.stopPropagation();" />
+        </div>
+    </div>
+
+    <!-- Interactive script for image pop-up -->
+    <script>
+        function openImageModal(imgSrc) {
+            var modal = document.getElementById('imageLightboxModal');
+            var img = document.getElementById('lightboxImg');
+            if (modal && img) {
+                img.src = imgSrc;
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeImageModal() {
+            var modal = document.getElementById('imageLightboxModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close lightbox on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+    </script>
+
+    <!-- Bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

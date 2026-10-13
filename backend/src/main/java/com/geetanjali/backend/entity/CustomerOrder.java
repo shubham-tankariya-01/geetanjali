@@ -8,8 +8,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 // CustomerOrder Entity: Represents an overarching tailor order created for a customer.
 // In Express, this is the main Order model that ties items and payments together.
@@ -46,6 +51,18 @@ public class CustomerOrder {
     // @Column = Timestamp when order was placed.
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
+
+    // @OneToMany = One customer order contains multiple order garment items.
+    // mappedBy = "order" = Specifies the field in OrderItem that owns the relationship.
+    // fetch = FetchType.LAZY = Loaded on demand when items are accessed.
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<OrderItem> items = new ArrayList<>();
+
+    // @OneToMany = One customer order can receive multiple payments (advance + delivery balance).
+    // mappedBy = "order" = Specifies the field in Payment that owns the relationship.
+    // fetch = FetchType.LAZY = Loaded on demand when payments are accessed.
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<Payment> payments = new ArrayList<>();
 
     // Default zero-argument constructor: JPA/Hibernate requires this.
     public CustomerOrder() {
@@ -129,5 +146,104 @@ public class CustomerOrder {
     // Output: None (void).
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    // Getter for items.
+    // Input: None.
+    // Output: List<OrderItem>.
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    // Setter for items.
+    // Input: List<OrderItem> items.
+    // Output: None (void).
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
+    }
+
+    // Getter for payments.
+    // Input: None.
+    // Output: List<Payment>.
+    public List<Payment> getPayments() {
+        return payments;
+    }
+
+    // Setter for payments.
+    // Input: List<Payment> payments.
+    // Output: None (void).
+    public void setPayments(List<Payment> payments) {
+        this.payments = payments;
+    }
+
+    // =========================================================================
+    // CALCULATED GETTERS (Used across templates and dashboards)
+    // =========================================================================
+
+    // Calculates the total price across all garment items in this order.
+    // Because spring.jpa.open-in-view is active, accessing items triggers lazy loading seamlessly.
+    // Input: None.
+    // Output: BigDecimal - cumulative order total.
+    public BigDecimal getTotalAmount() {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (OrderItem item : items) {
+            if (item.getPrice() != null) {
+                sum = sum.add(item.getPrice());
+            }
+        }
+        return sum;
+    }
+
+    // Returns total count of garment items in this order.
+    // Input: None.
+    // Output: int - number of items.
+    public int getItemCount() {
+        return items != null ? items.size() : 0;
+    }
+
+    // Determines the nearest (earliest) promised delivery date among all items in this order.
+    // Used by Home dashboard to highlight upcoming deadlines for the tailor.
+    // Input: None.
+    // Output: LocalDate - earliest delivery date, or null if order has no items.
+    public LocalDate getNearestDeliveryDate() {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        LocalDate nearest = null;
+        for (OrderItem item : items) {
+            LocalDate date = item.getDeliveryDate();
+            if (date != null) {
+                if (nearest == null || date.isBefore(nearest)) {
+                    nearest = date;
+                }
+            }
+        }
+        return nearest;
+    }
+
+    // Calculates total money collected so far across all payments for this order.
+    // Input: None.
+    // Output: BigDecimal - total paid amount.
+    public BigDecimal getTotalPaid() {
+        if (payments == null || payments.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Payment payment : payments) {
+            if (payment.getAmount() != null) {
+                sum = sum.add(payment.getAmount());
+            }
+        }
+        return sum;
+    }
+
+    // Calculates remaining balance due to be collected from customer upon delivery.
+    // Input: None.
+    // Output: BigDecimal - balance amount (TotalAmount - TotalPaid), clamped to zero.
+    public BigDecimal getBalanceDue() {
+        return getTotalAmount().subtract(getTotalPaid()).max(BigDecimal.ZERO);
     }
 }

@@ -195,4 +195,20 @@ public class OrderService {
     public List<OrderItem> getOrderItems(Long orderId) {
         return orderItemRepository.findByOrderId(orderId);
     }
+
+    // Retrieves up to 20 most recent orders across the shop for the home dashboard.
+    // Input: None.
+    // Output: List<CustomerOrder> - newest orders list.
+    public List<CustomerOrder> getRecentOrders() {
+        return customerOrderRepository.findTop20ByOrderByCreatedAtDesc();
+    }
+
+    // Retrieves an order by its primary key ID, or throws ResourceNotFoundException if missing.
+    // Automatically mapped to HTTP 404 by GlobalExceptionHandler.
+    // Input: id (Long).
+    // Output: CustomerOrder entity.
+    public CustomerOrder getOrderOrThrow(Long id) {
+        return customerOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+    }
 }

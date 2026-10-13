@@ -40,4 +40,11 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     // Input: customerId (Long).
     // Output: Optional<CustomerOrder> - the latest order, or empty if customer has never ordered.
     Optional<CustomerOrder> findFirstByCustomerIdOrderByCreatedAtDesc(Long customerId);
+
+    // Retrieves up to 20 most recent orders across the entire tailor shop, sorted newest first.
+    // Derived query: Spring Data generates `SELECT * FROM customer_order ORDER BY created_at DESC LIMIT 20`.
+    // In Express, this is like `CustomerOrder.find().sort({ createdAt: -1 }).limit(20)`.
+    // Input: None.
+    // Output: List<CustomerOrder> - top 20 recent orders.
+    List<CustomerOrder> findTop20ByOrderByCreatedAtDesc();
 }
