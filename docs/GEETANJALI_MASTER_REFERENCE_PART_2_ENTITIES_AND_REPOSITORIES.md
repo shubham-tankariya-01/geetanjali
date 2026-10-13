@@ -504,7 +504,7 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
      * *Parameters*: `customerId` (`Long`).
      * *Generated SQL*: `SELECT * FROM customer_order WHERE customer_id = ? ORDER BY created_at DESC`
      * *Returns*: `List<CustomerOrder>` — Order history for a specific customer.
-     * *Called by*: Customer profile page.
+     * *Called by*: `CustomerService.getCustomerOrders(customerId)` for customer profile order history table.
   3. `long countByCustomerId(Long customerId)`
      * *Parameters*: `customerId` (`Long`).
      * *Derived Query*: Spring Data JPA generates `SELECT count(*) FROM customer_order WHERE customer_id = ?`.

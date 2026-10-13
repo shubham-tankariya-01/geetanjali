@@ -102,4 +102,12 @@ public class CustomerService {
 
         return Optional.of(localOrderDate);
     }
+
+    // Retrieves all past orders placed by a specific customer, ordered newest first.
+    // In Express, this is like `CustomerOrder.find({ customerId }).sort({ createdAt: -1 })`.
+    // Input: customerId (Long) - database ID of the customer.
+    // Output: List<CustomerOrder> - customer's historical orders list.
+    public List<CustomerOrder> getCustomerOrders(Long customerId) {
+        return customerOrderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+    }
 }

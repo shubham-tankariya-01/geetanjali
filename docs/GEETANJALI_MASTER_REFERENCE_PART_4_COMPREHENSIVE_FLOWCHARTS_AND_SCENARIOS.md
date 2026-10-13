@@ -771,3 +771,79 @@ sequenceDiagram
     OWCtrl->>OWSvc: startFresh()
     OWCtrl-->>Tailor: 302 Redirect to /orders/{orderId} with flash "Items added to Order #G-202610-0042 successfully!"
 ```
+
+---
+
+## 6. Customer Detail & More Hub Workflows (Scenarios 17 - 18)
+
+---
+
+### Scenario 17: Customer Detail, Order History Inspection, and Direct Order Booking Preselection (`GET /customers/{id}`, `GET /orders/new?customerId=...`)
+
+This scenario depicts inspecting a customer profile, viewing their chronological order history and garment measurements, and initiating a new order with preselected customer details that jumps straight to wizard Step 2 (Garment selection).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff Tailor
+    participant CustCtrl as CustomerController
+    participant CustSvc as CustomerService
+    participant MeasSvc as MeasurementService
+    participant OWCtrl as OrderWizardController
+    participant OWSvc as OrderWizardService
+    participant Draft as HttpSession (OrderDraft)
+    participant DB as PostgreSQL 17
+
+    %% 1. Loading Customer Profile
+    Tailor->>CustCtrl: GET /customers/{customerId}
+    CustCtrl->>CustSvc: getById(customerId)
+    CustSvc->>DB: SELECT * FROM customer WHERE id = customerId
+    DB-->>CustSvc: Customer Entity (Ramesh Patel)
+
+    CustCtrl->>CustSvc: getCustomerOrders(customerId)
+    CustSvc->>DB: SELECT * FROM customer_order WHERE customer_id = customerId ORDER BY created_at DESC
+    DB-->>CustSvc: List<CustomerOrder> (historical orders, newest first)
+
+    CustCtrl->>MeasSvc: getLatestPerGarment(customer)
+    MeasSvc->>DB: Query newest measurement snapshots for Shirt, Pant, Kurta, Blouse
+    DB-->>MeasSvc: List<GarmentLatestMeasurement>
+
+    CustCtrl-->>Tailor: 200 OK (customers/detail.html with profile, order history, measurements)
+
+    %% 2. Clicking "New Order for this Customer"
+    Tailor->>OWCtrl: GET /orders/new?customerId={customerId}
+    Note over OWCtrl: customerId parameter detected!
+    OWCtrl->>OWSvc: startForCustomer(customerId)
+    OWSvc->>Draft: draft.reset()<br/>draft.setCustomer(customerId, name, mobile)
+    OWCtrl-->>Tailor: 302 Redirect to /orders/new/garment
+    Note over Tailor,Draft: Step 1 (Customer identification) is bypassed completely!<br/>Wizard lands directly on Step 2 with customer locked in banner.
+```
+
+---
+
+### Scenario 18: More & Settings Administration Page Flow (`GET /more`, Owner vs Staff Views)
+
+This scenario illustrates navigating to the More hub (`/more`), where `GlobalModelAdvice` evaluates `${isOwner}` to dynamically grant administrative capabilities (Garment catalog and Staff onboarding) to the Shop Owner while showing upcoming roadmap extensions to all authenticated tailors.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Authenticated Tailor / Owner
+    participant MoreCtrl as MoreController
+    participant Advice as GlobalModelAdvice
+    participant GarmSvc as GarmentService
+    participant View as Thymeleaf (more.html)
+
+    User->>MoreCtrl: GET /more (or GET /settings -> 302 Redirect to /more)
+    MoreCtrl->>GarmSvc: listActiveGarments()
+    GarmSvc-->>MoreCtrl: List<Garment> (Shirt, Pant, Kurta, Blouse)
+    
+    Advice->>View: Injects ${shopName}, ${currentUser}, ${isOwner}, ${currentUri}
+    MoreCtrl-->>View: Returns "more" with garments list
+
+    alt User Role == OWNER (isOwner = true)
+        View-->>User: Renders 200 OK with "Shop Administration (Owner Only)"<br/>- Garments & Templates card (with link to /garments)<br/>- Staff Onboarding card (with link to /signup)<br/>- Roadmap & Extensions Grid
+    else User Role == TAILOR (isOwner = false)
+        View-->>User: Renders 200 OK with Informational Staff Banner<br/>- Explains administrative actions require Owner credentials<br/>- Roadmap & Extensions Grid (Stage 2 & Stage 3+ features)<br/>- Quick Navigation Shortcuts
+    end
+```

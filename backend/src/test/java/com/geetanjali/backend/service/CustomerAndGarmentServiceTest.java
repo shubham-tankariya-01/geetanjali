@@ -137,4 +137,19 @@ class CustomerAndGarmentServiceTest {
         // 2026-10-12T15:30:00Z + 5:30 IST = 2026-10-12T21:00:00 IST -> 2026-10-12
         assertEquals(LocalDate.of(2026, 10, 12), date.get());
     }
+
+    @Test
+    void testCustomerService_getCustomerOrders() {
+        CustomerOrder o1 = new CustomerOrder();
+        o1.setId(101L);
+        CustomerOrder o2 = new CustomerOrder();
+        o2.setId(102L);
+
+        when(customerOrderRepository.findByCustomerIdOrderByCreatedAtDesc(5L)).thenReturn(List.of(o1, o2));
+
+        List<CustomerOrder> orders = customerService.getCustomerOrders(5L);
+        assertEquals(2, orders.size());
+        assertEquals(101L, orders.get(0).getId());
+        assertEquals(102L, orders.get(1).getId());
+    }
 }

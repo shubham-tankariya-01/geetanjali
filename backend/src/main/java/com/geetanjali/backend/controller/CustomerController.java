@@ -2,6 +2,7 @@ package com.geetanjali.backend.controller;
 
 import com.geetanjali.backend.dto.response.GarmentLatestMeasurement;
 import com.geetanjali.backend.entity.Customer;
+import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.service.CustomerService;
 import com.geetanjali.backend.service.MeasurementService;
 import org.springframework.stereotype.Controller;
@@ -81,10 +82,14 @@ public class CustomerController {
         long orderCount = customerService.countEarlierOrders(id);
         LocalDate lastOrderDate = customerService.findLastOrderDate(id).orElse(null);
 
+        // Fetch customer's full order history (newest first)
+        List<CustomerOrder> orders = customerService.getCustomerOrders(id);
+
         // Job 3: Fetch newest measurement snapshot per active garment for this customer
         List<GarmentLatestMeasurement> garmentMeasurements = measurementService.getLatestPerGarment(customer);
 
         model.addAttribute("customer", customer);
+        model.addAttribute("orders", orders);
         model.addAttribute("orderCount", orderCount);
         model.addAttribute("lastOrderDate", lastOrderDate);
         model.addAttribute("garmentMeasurements", garmentMeasurements);

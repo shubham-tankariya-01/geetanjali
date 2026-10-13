@@ -235,6 +235,13 @@ Services contain all business rules, calculations, and transactional boundaries 
      * **Returns**: `Optional<LocalDate>` — Date of most recent order, or empty if customer has never ordered.
      * **Caller / Destination**: Customer profile view and `CustomerApiController.lookupCustomer()`.
 
+  7. `public List<CustomerOrder> getCustomerOrders(Long customerId)`
+     * **Signature**: Takes `customerId` (`Long`).
+     * **In-Built Functions Used**:
+       * `customerOrderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId)`: Queries all past orders placed by this customer, sorted chronologically descending.
+     * **Returns**: `List<CustomerOrder>` — Order history.
+     * **Caller / Destination**: `CustomerController.showCustomerDetail()` for populating the customer profile order history table.
+
 ---
 
 ---
@@ -521,6 +528,9 @@ Services contain all business rules, calculations, and transactional boundaries 
        * `customerService.getById(id)`: Fetches customer entity. If missing, throws `ResourceNotFoundException`, which `GlobalExceptionHandler` converts to a 404 page.
        * `customerService.countEarlierOrders(id)`: Queries total past order count.
        * `customerService.findLastOrderDate(id)`: Obtains last order date.
+       * `customerService.getCustomerOrders(id)`: Fetches customer's full order history (newest first).
+       * `measurementService.getLatestPerGarment(customer)`: Retrieves newest measurement snapshot per active garment.
+     * **Model Injections**: `customer`, `orders`, `orderCount`, `lastOrderDate`, `garmentMeasurements`.
      * **Returns**: `String` view name `"customers/detail"`.
      * **Caller / Destination**: Browser loads `customers/detail.html`.
 
@@ -535,7 +545,7 @@ Services contain all business rules, calculations, and transactional boundaries 
   * Marked with `@Controller` and `@RequestMapping("/orders/new")`.
   * Manages the 4-step wizard workflow with session-scoped draft cart.
 * **Functions & Methods**:
-  1. `GET /orders/new` (`showCustomerStep`) — Displays Step 1: Customer identification / creation.
+  1. `GET /orders/new` (`showCustomerStep`) — Entry point for order booking. If `customerId` query parameter is present, preselects customer in session draft and jumps immediately to Step 2 (`/orders/new/garment`). Otherwise resets draft to clean slate and displays Step 1 (`orders/wizard-customer`).
   2. `POST /orders/new/customer` (`handleCustomerStep`) — Validates/creates customer, updates draft, redirects to `/orders/new/garment`.
   3. `GET /orders/new/garment` (`showGarmentStep`) — Displays Step 2: Garment category cards.
   4. `POST /orders/new/garment` (`handleGarmentStep`) — Stores selected garment in draft, redirects to `/orders/new/item`.
@@ -558,6 +568,26 @@ Services contain all business rules, calculations, and transactional boundaries 
   2. `GET /orders/{orderId}/add-items` (`startAddItemsToOrder`) — Calls `orderWizardService.startAppendToOrder(order)` and redirects directly to `/orders/new/garment` (skipping customer selection).
   3. `GET /orders/{orderId}/items/{itemId}/edit` (`showEditOrderItem`) — Loads existing measurements, price, notes, and photos into `ItemForm`. Renders `orders/item-edit.html`.
   4. `POST /orders/{orderId}/items/{itemId}` (`handleUpdateOrderItem`) — Validates form, calls `orderService.updateOrderItem()` (which preserves snapshot immutability), and redirects back to `/orders/{orderId}` with flash message.
+
+---
+
+### Controller 9: [`MoreController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/MoreController.java)
+* **Location**: `src/main/java/com/geetanjali/backend/controller/MoreController.java`
+* **Real-Life Analogy**: The shop administration and settings office displaying owner configurations and shop roadmap extensions.
+* **Class Explanation**:
+  * Marked with `@Controller`. Handles `/more`, `/settings`, and `/garments`.
+  * Integrates with `GlobalModelAdvice` to inspect `${isOwner}` and provide role-specific options.
+* **Functions & Methods**:
+  1. `public String showMorePage(Model model)`
+     * **Annotation**: `@GetMapping("/more")`
+     * **Logic**: Injects `garments` via `garmentService.listActiveGarments()`. Renders `"more"`.
+  2. `public String showGarments(Model model)`
+     * **Annotation**: `@GetMapping("/garments")`
+     * **Logic**: Direct route loading active garments on the More hub.
+  3. `public String redirectToMore()`
+     * **Annotation**: `@GetMapping("/settings")`
+     * **Logic**: Redirects legacy `/settings` requests to canonical `/more`.
+
 
 ---
 
@@ -651,15 +681,13 @@ Database migrations run sequentially on startup before Hibernate initializes. On
   * Desktop-first data table displaying row numbers, customer names (clickable to profile), phone numbers with monospace formatting, and a `"View Profile →"` action button.
 
 ### Template 7: [`customers/detail.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/customers/detail.html)
-* **Role**: Customer profile detail view.
+* **Role**: Comprehensive customer profile view.
 * **Features**:
   * Navigation breadcrumb link back to the customer directory (`← Back to Customer Directory`).
-  * Profile header avatar and customer ID badge (`#1`).
-  * Details grid showing:
-    * Mobile number with clickable `tel:` link for direct phone dialing.
-    * Total orders placed count (`<strong th:text="${orderCount}">`).
-    * Last order date (or `"No orders yet"` if empty).
-  * Quick action buttons: `"← Back to Customers"` and `"➕ Create New Order"`.
+  * Profile header with customer avatar, name, ID badge (`#1`), and direct `tel:` mobile dialing link.
+  * Quick action buttons: `"← Back to Customers"` and `"➕ New Order for this Customer"` (links to `/orders/new?customerId=...` which preselects customer and jumps straight to Step 2).
+  * **Order History Table**: Chronological list of all orders placed by this customer (newest first). Each row displays clickable Order Number (e.g. `Order #1001`), item count, promised delivery date, total price, balance due status badge (`✓ Paid in Full` or `₹... Due`), and `"View Details →"` action button. Includes dedicated empty state when no orders exist yet.
+  * **Saved Measurements Section**: Visual cards displaying the latest measurement snapshot recorded for each active garment type (Shirt, Pant, Kurta, Blouse) with snapshot ID badge, field names, numeric values, and units.
 
 ---
 
@@ -709,6 +737,20 @@ Database migrations run sequentially on startup before Hibernate initializes. On
   * Context banner indicating order number and garment type being modified.
   * Embeds `fragments/item-form.html` loaded with current item values.
   * Cancel button linking directly back to `/orders/{orderId}`.
+
+---
+
+### Template 16: [`more.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/more.html)
+* **Role**: Administration hub, settings, and upcoming extensions page.
+* **Features**:
+  * Header banner displaying current shop name, logged-in staff member full name, and role badge (`OWNER` / `TAILOR`).
+  * **Owner-Only Administration Section** (`th:if="${isOwner}"`):
+    * Garment catalog card showing active categories (Shirt, Pant, Kurta, Blouse) and link to `/garments`.
+    * Staff management card linking to `/signup` to register new tailor staff members.
+  * **Non-Owner Informational Notice** (`th:unless="${isOwner}"`): Explains owner-restricted configuration privileges to staff tailors.
+  * **Roadmap & Extensions Grid**: Outlines upcoming features for Stage 2 (Stitching Workbench, Delivery Overrides) and Stage 3+ (Financial Analytics, WhatsApp & SMS alerts, Data Backup & CSV Export).
+  * **Quick Navigation Shortcuts**: Direct buttons for Home Dashboard, Customers Directory, and New Order booking.
+
 
 ---
 

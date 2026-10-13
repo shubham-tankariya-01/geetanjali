@@ -1227,3 +1227,41 @@ Editing an item loads saved values. Modifying a measurement triggers `Measuremen
 
 ### Scenario 16: Appending Items to Existing Order Flow
 Clicking `+ Add Items to Order` initializes session draft with customer pre-set and `existingOrderId`. Directly opens Step 2 (Garment). Completing summary appends new items and payment to the existing order, preserving original `order_no`.
+
+---
+
+## 5. Customer Profile Expansion & Administration Hub (Stage 1 - Step 10)
+
+### Group M: Step 10 Components
+
+#### 75. [`CustomerService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/CustomerService.java) (Expanded)
+* **New Method**: `getCustomerOrders(Long customerId)` — Queries all past orders for a customer sorted newest first via `CustomerOrderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId)`.
+
+#### 76. [`MoreController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/MoreController.java)
+* **Endpoints**:
+  * `GET /more`: Renders the More administration & settings hub with active garments list.
+  * `GET /settings`: Redirects to `/more`.
+  * `GET /garments`: Renders garment catalog on More hub.
+
+#### 77. [`customers/detail.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/customers/detail.html) (Expanded)
+* **New Features**:
+  * Action button: `➕ New Order for this Customer` linking to `/orders/new?customerId=...`.
+  * Chronological **Order History Table** displaying Order # (linking to `/orders/{id}`), items count, nearest promised delivery date, total price, balance due status badge (`✓ Paid in Full` or `₹... Due`), and `"View Details →"` button.
+  * Contextual empty state when a customer has no prior orders.
+
+#### 78. [`more.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/more.html)
+* **Features**:
+  * Shop & current staff profile header.
+  * Owner-only administration cards (`th:if="${isOwner}"`) linking to Garment catalog (`/garments`) and Staff onboarding (`/signup`).
+  * Non-owner informational banner (`th:unless="${isOwner}"`).
+  * Upcoming modules roadmap (Stage 2 Stitching Workbench & Delivery Overrides; Stage 3+ Financial Analytics, WhatsApp/SMS alerts, Data Export).
+  * Quick navigation buttons for Home, Customers, and New Order.
+
+---
+
+### Scenario 17: Customer Detail, Order History Inspection, and Direct Order Booking Preselection
+*(Refer to Part 4 for detailed sequence diagram)*
+Tailor navigates to `/customers/{id}` -> Customer profile loads name, phone, order history table (newest first, linking to `/orders/{orderId}`), and latest measurements per garment. Clicking `"New Order for this Customer"` navigates to `/orders/new?customerId={id}`, which preselects the customer in the session draft and jumps immediately to wizard Step 2 (Garment selection).
+
+### Scenario 18: More & Settings Administration Page Flow
+Tailor navigates to `/more` (or clicks "More" tab in bottom navigation bar). If logged in as `OWNER`, the page displays shop administration cards for Garment catalog management and staff addition (`/signup`). If logged in as regular `TAILOR`, administrative tools are hidden behind a friendly informational notice. Both roles view the Stage 2 & 3+ extensions roadmap.

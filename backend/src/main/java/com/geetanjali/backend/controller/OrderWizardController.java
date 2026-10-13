@@ -96,12 +96,13 @@ public class OrderWizardController {
             Model model) {
 
         if (customerId != null) {
-            // Start wizard pre-populated for known customer
+            // Start wizard pre-populated for known customer and jump straight to Step 2 (Garment selection)
             orderWizardService.startForCustomer(customerId);
-        } else {
-            // Start completely fresh
-            orderWizardService.startFresh();
+            return "redirect:/orders/new/garment";
         }
+
+        // Start completely fresh
+        orderWizardService.startFresh();
 
         // Initialize form with customer details from draft
         OrderDraft draft = orderWizardService.getDraft();

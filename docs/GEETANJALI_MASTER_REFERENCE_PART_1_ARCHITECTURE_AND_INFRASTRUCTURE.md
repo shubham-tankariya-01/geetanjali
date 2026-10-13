@@ -550,4 +550,8 @@ graph TD
 | `GET` | `/orders/{id}/add-items` | `OrderController` | Authenticated | Initializes wizard draft for existing order & jumps to Step 2 |
 | `GET` | `/orders/{id}/items/{itemId}/edit` | `OrderController` | Authenticated | Loads existing measurements & item details for editing |
 | `POST` | `/orders/{id}/items/{itemId}` | `OrderController` | Authenticated | Saves edited measurements (snapshot immutability) & details |
+| `GET` | `/orders/new?customerId={id}` | `OrderWizardController` | Authenticated | Preselects customer and jumps directly to Step 2 (Garment) |
+| `GET` | `/more` | `MoreController` | Authenticated | More & Settings hub (owner tools, stage 2 & 3 roadmap) |
+| `GET` | `/settings` | `MoreController` | Authenticated | Legacy redirect to `/more` |
+| `GET` | `/garments` | `MoreController` | Authenticated | View active garment catalog on More hub |
 
