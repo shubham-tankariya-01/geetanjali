@@ -134,4 +134,47 @@ public class OrderWizardService {
 
         return item;
     }
+
+    // Updates an existing draft item at the specified 0-based position index.
+    // Inputs: index (int), form (ItemForm).
+    // Output: OrderDraftItem - the updated draft item.
+    public OrderDraftItem updateItem(int index, ItemForm form) {
+        if (index < 0 || index >= orderDraft.getItemCount()) {
+            throw new IndexOutOfBoundsException("Invalid item index: " + index);
+        }
+
+        OrderDraftItem item = orderDraft.getItems().get(index);
+        item.setMeasurementValues(form.getMeasurements());
+        item.setNotes(form.getNotes());
+        item.setDeliveryDate(form.getDeliveryDate());
+        item.setPrice(form.getPrice());
+        item.setPhotoUrls(form.getPhotoUrls());
+        item.setPhotoPublicIds(form.getPhotoPublicIds());
+
+        // Clear working garment
+        orderDraft.setCurrentGarment(null);
+        orderDraft.setCurrentItem(null);
+
+        return item;
+    }
+
+    // Removes an item from the draft and deletes its uploaded photo files from storage.
+    // Inputs: index (int), photoStorageService (PhotoStorageService).
+    // Output: None (void).
+    public void removeItemAndPhotos(int index, com.geetanjali.backend.service.storage.PhotoStorageService photoStorageService) {
+        if (index < 0 || index >= orderDraft.getItemCount()) {
+            return;
+        }
+
+        OrderDraftItem item = orderDraft.getItems().get(index);
+
+        // Delete photo files from disk if storage service provided
+        if (photoStorageService != null && item.getPhotoPublicIds() != null) {
+            for (String publicId : item.getPhotoPublicIds()) {
+                photoStorageService.delete(publicId);
+            }
+        }
+
+        orderDraft.removeItem(index);
+    }
 }

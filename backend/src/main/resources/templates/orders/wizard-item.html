@@ -46,7 +46,7 @@
             </div>
 
             <!-- Embed shared item form fragment -->
-            <div th:replace="~{fragments/item-form :: item-form(@{/orders/new/item}, false)}"></div>
+            <div th:replace="~{fragments/item-form :: item-form(${isEdit != null and isEdit ? '/orders/new/item/' + editIndex : '/orders/new/item'}, ${isEdit != null and isEdit})}"></div>
         </div>
     </div>
 

@@ -2,20 +2,32 @@ package com.geetanjali.backend.controller;
 
 import com.geetanjali.backend.dto.draft.OrderDraft;
 import com.geetanjali.backend.dto.draft.OrderDraftItem;
+import com.geetanjali.backend.dto.form.AdvanceForm;
 import com.geetanjali.backend.dto.form.CustomerStepForm;
 import com.geetanjali.backend.dto.form.ItemForm;
 import com.geetanjali.backend.dto.response.MeasurementPrefill;
+import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.entity.Garment;
 import com.geetanjali.backend.entity.GarmentField;
+import com.geetanjali.backend.entity.OrderItem;
+import com.geetanjali.backend.entity.Payment;
+import com.geetanjali.backend.enums.PaymentMode;
+import com.geetanjali.backend.exception.ResourceNotFoundException;
+import com.geetanjali.backend.security.AppUserDetails;
 import com.geetanjali.backend.service.GarmentService;
 import com.geetanjali.backend.service.MeasurementService;
+import com.geetanjali.backend.service.OrderService;
 import com.geetanjali.backend.service.OrderWizardService;
+import com.geetanjali.backend.service.PaymentService;
+import com.geetanjali.backend.service.storage.PhotoStorageService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,21 +52,25 @@ public class OrderWizardController {
     private final OrderWizardService orderWizardService;
     private final GarmentService garmentService;
     private final MeasurementService measurementService;
+    private final OrderService orderService;
+    private final PaymentService paymentService;
+    private final PhotoStorageService photoStorageService;
     private final Clock clock;
 
     // Constructor injection: Spring provides the service beans and IST Clock automatically.
-    // Inputs:
-    //   orderWizardService (OrderWizardService)
-    //   garmentService (GarmentService)
-    //   measurementService (MeasurementService)
-    //   clock (Clock) - always Asia/Kolkata timezone
     public OrderWizardController(OrderWizardService orderWizardService,
                                  GarmentService garmentService,
                                  MeasurementService measurementService,
+                                 OrderService orderService,
+                                 PaymentService paymentService,
+                                 PhotoStorageService photoStorageService,
                                  Clock clock) {
         this.orderWizardService = orderWizardService;
         this.garmentService = garmentService;
         this.measurementService = measurementService;
+        this.orderService = orderService;
+        this.paymentService = paymentService;
+        this.photoStorageService = photoStorageService;
         this.clock = clock;
     }
 
@@ -312,7 +328,9 @@ public class OrderWizardController {
     // STEP 4: ORDER DRAFT REVIEW & SUMMARY
     // =========================================================================
 
-    // Handles GET /orders/new/summary: Displays summary of all items in the draft cart.
+    // Handles GET /orders/new/summary: Displays summary of all items in the draft cart,
+    // plus the advance payment box with Cash/UPI mode and live remaining balance.
+    //
     // Inputs: model (Model), redirectAttributes (RedirectAttributes).
     // Output: String - view name "orders/wizard-summary".
     //
@@ -331,8 +349,207 @@ public class OrderWizardController {
             return "redirect:/orders/new/garment";
         }
 
+        if (!model.containsAttribute("advanceForm")) {
+            model.addAttribute("advanceForm", new AdvanceForm(BigDecimal.ZERO, PaymentMode.CASH));
+        }
         model.addAttribute("draft", draft);
 
         return "orders/wizard-summary";
+    }
+
+    // Handles POST /orders/new/summary: Validates advance deposit and saves the whole order in one @Transactional call.
+    // Clears the session draft and redirects to the order success screen.
+    //
+    // Express comparison: `app.post('/orders/new/summary', async (req, res) => { const order = await orderService.placeOrder(req.session.draft, req.body); req.session.draft = null; res.redirect('/orders/new/success/' + order.id); })`.
+    //
+    // Inputs:
+    //   advanceForm (@Valid @ModelAttribute("advanceForm") AdvanceForm) - submitted advance money and payment mode.
+    //   bindingResult (BindingResult) - contains any validation errors.
+    //   model (Model) - view model.
+    //   redirectAttributes (RedirectAttributes) - flash messages across redirect.
+    //   userDetails (@AuthenticationPrincipal AppUserDetails) - logged-in staff member.
+    // Output: String - redirect to success screen or re-render summary view on errors.
+    //
+    // @PostMapping("/summary") = Maps HTTP POST requests for "/orders/new/summary" to this method.
+    @PostMapping("/summary")
+    public String handleSaveOrder(
+            @Valid @ModelAttribute("advanceForm") AdvanceForm advanceForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal AppUserDetails userDetails) {
+
+        OrderDraft draft = orderWizardService.getDraft();
+
+        // Guard: Order must have at least one item
+        if (draft.getItemCount() == 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Your cart is empty. Please add at least one garment item.");
+            return "redirect:/orders/new/garment";
+        }
+
+        // Validate that advance amount does not exceed the total price
+        if (advanceForm.getAdvanceAmount() != null && advanceForm.getAdvanceAmount().compareTo(draft.getTotalPrice()) > 0) {
+            bindingResult.rejectValue("advanceAmount", "excessAdvance",
+                    "Advance amount cannot exceed the order total of ₹" + draft.getTotalPrice());
+        }
+
+        // If validation errors exist, re-render summary page
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("draft", draft);
+            return "orders/wizard-summary";
+        }
+
+        // Commit order atomically into PostgreSQL
+        CustomerOrder savedOrder = orderService.placeOrder(
+                draft,
+                advanceForm,
+                userDetails.getAppUser()
+        );
+
+        // Clear session draft so back button or fresh order starts clean
+        orderWizardService.startFresh();
+
+        // Always redirect after POST (Post-Redirect-Get pattern)
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Order #" + savedOrder.getOrderNo() + " booked successfully!");
+        return "redirect:/orders/new/success/" + savedOrder.getId();
+    }
+
+    // Handles GET /orders/new/success/{orderId}: Displays confirmation screen for a newly placed order.
+    // Refreshing this page is safe and cannot double-book or duplicate database rows.
+    //
+    // Inputs:
+    //   orderId (@PathVariable("orderId") Long) - database ID of the placed order.
+    //   model (Model) - passes order details and financial totals to Thymeleaf.
+    // Output: String - view template path "orders/wizard-done".
+    //
+    // @GetMapping("/success/{orderId}") = Maps HTTP GET requests for "/orders/new/success/{orderId}".
+    @GetMapping("/success/{orderId}")
+    public String showSuccessStep(
+            @PathVariable("orderId") Long orderId,
+            Model model) {
+
+        CustomerOrder order = orderService.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        List<OrderItem> items = orderService.getOrderItems(orderId);
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        for (OrderItem item : items) {
+            if (item.getPrice() != null) {
+                totalAmount = totalAmount.add(item.getPrice());
+            }
+        }
+
+        BigDecimal advancePaid = paymentService.getTotalPaid(orderId);
+        BigDecimal balanceDue = totalAmount.subtract(advancePaid).max(BigDecimal.ZERO);
+        List<Payment> payments = paymentService.findByOrderId(orderId);
+
+        model.addAttribute("order", order);
+        model.addAttribute("items", items);
+        model.addAttribute("totalAmount", totalAmount);
+        model.addAttribute("advancePaid", advancePaid);
+        model.addAttribute("balanceDue", balanceDue);
+        model.addAttribute("payments", payments);
+
+        return "orders/wizard-done";
+    }
+
+    // =========================================================================
+    // DRAFT ITEM EDIT & REMOVE ACTIONS
+    // =========================================================================
+
+    // Handles GET /orders/new/item/{index}/edit: Re-opens Step 3 for an item in the cart by its 0-based index.
+    // Inputs: index (int), model (Model), redirectAttributes (RedirectAttributes).
+    // Output: String - view template "orders/wizard-item".
+    @GetMapping("/item/{index}/edit")
+    public String showEditItem(
+            @PathVariable("index") int index,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        OrderDraft draft = orderWizardService.getDraft();
+        if (index < 0 || index >= draft.getItemCount()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid garment item index.");
+            return "redirect:/orders/new/summary";
+        }
+
+        OrderDraftItem item = draft.getItems().get(index);
+        Garment garment = item.getGarment();
+        draft.setCurrentGarment(garment);
+
+        List<GarmentField> fields = garmentService.getActiveFields(garment.getId());
+
+        ItemForm form = new ItemForm();
+        form.setMeasurements(item.getMeasurementValues());
+        form.setNotes(item.getNotes());
+        form.setDeliveryDate(item.getDeliveryDate());
+        form.setPrice(item.getPrice());
+        form.setPhotoUrls(item.getPhotoUrls());
+        form.setPhotoPublicIds(item.getPhotoPublicIds());
+
+        LocalDate today = clock.instant().atZone(clock.getZone()).toLocalDate();
+
+        model.addAttribute("itemForm", form);
+        model.addAttribute("garment", garment);
+        model.addAttribute("garmentFields", fields);
+        model.addAttribute("draft", draft);
+        model.addAttribute("minDate", today.toString());
+        model.addAttribute("isEdit", true);
+        model.addAttribute("editIndex", index);
+
+        return "orders/wizard-item";
+    }
+
+    // Handles POST /orders/new/item/{index}: Updates an existing item in the draft cart.
+    // Inputs: index (int), itemForm (ItemForm), bindingResult (BindingResult), model (Model), redirectAttributes (RedirectAttributes).
+    // Output: String - redirect to /orders/new/summary.
+    @PostMapping("/item/{index}")
+    public String handleUpdateItem(
+            @PathVariable("index") int index,
+            @Valid @ModelAttribute("itemForm") ItemForm itemForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        OrderDraft draft = orderWizardService.getDraft();
+        if (index < 0 || index >= draft.getItemCount()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid garment item index.");
+            return "redirect:/orders/new/summary";
+        }
+
+        LocalDate today = clock.instant().atZone(clock.getZone()).toLocalDate();
+        if (itemForm.getDeliveryDate() != null && itemForm.getDeliveryDate().isBefore(today)) {
+            bindingResult.rejectValue("deliveryDate", "pastDate", "Promised delivery date cannot be in the past");
+        }
+
+        if (bindingResult.hasErrors()) {
+            OrderDraftItem item = draft.getItems().get(index);
+            Garment garment = item.getGarment();
+            List<GarmentField> fields = garmentService.getActiveFields(garment.getId());
+            model.addAttribute("garment", garment);
+            model.addAttribute("garmentFields", fields);
+            model.addAttribute("draft", draft);
+            model.addAttribute("minDate", today.toString());
+            model.addAttribute("isEdit", true);
+            model.addAttribute("editIndex", index);
+            return "orders/wizard-item";
+        }
+
+        orderWizardService.updateItem(index, itemForm);
+        redirectAttributes.addFlashAttribute("successMessage", "Updated garment item in order draft.");
+        return "redirect:/orders/new/summary";
+    }
+
+    // Handles POST /orders/new/item/{index}/remove: Deletes an item and cleans up its photo files from disk.
+    // Inputs: index (int), redirectAttributes (RedirectAttributes).
+    // Output: String - redirect to /orders/new/summary.
+    @PostMapping("/item/{index}/remove")
+    public String handleRemoveItem(
+            @PathVariable("index") int index,
+            RedirectAttributes redirectAttributes) {
+
+        orderWizardService.removeItemAndPhotos(index, photoStorageService);
+        redirectAttributes.addFlashAttribute("successMessage", "Removed garment item from order draft.");
+        return "redirect:/orders/new/summary";
     }
 }

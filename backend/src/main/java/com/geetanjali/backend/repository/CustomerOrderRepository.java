@@ -2,6 +2,7 @@ package com.geetanjali.backend.repository;
 
 import com.geetanjali.backend.entity.CustomerOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,12 @@ import java.util.Optional;
 // @Repository = Tells Spring to manage this interface as a data access bean.
 @Repository
 public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Long> {
+
+    // Retrieves the next human-readable order number from PostgreSQL sequence `order_no_seq` (e.g. 1001, 1002).
+    // Input: None.
+    // Output: Long - next order sequence value.
+    @Query(value = "SELECT nextval('order_no_seq')", nativeQuery = true)
+    Long getNextOrderNo();
 
     // Finds an order by its human-friendly unique order number (e.g. 1001).
     // Input: orderNo (Long).
