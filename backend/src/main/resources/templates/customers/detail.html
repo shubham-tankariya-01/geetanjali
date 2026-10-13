@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  customers/detail.html: Customer detail profile page.
+  In EJS, this is like `views/customers/detail.ejs`.
+-->
+<head th:replace="~{fragments/layout :: page-head(${customer.name} + ' - Customer Profile')}"></head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Navigation breadcrumb -->
+        <div style="margin-bottom: 1rem;">
+            <a th:href="@{/customers}" class="back-link">← Back to Customer Directory</a>
+        </div>
+
+        <!-- Customer Profile Card -->
+        <div class="card customer-profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <div>
+                    <h2 th:text="${customer.name}">Ramesh Patel</h2>
+                    <p class="text-muted">Customer ID: #<span th:text="${customer.id}">1</span></p>
+                </div>
+            </div>
+
+            <hr class="divider" />
+
+            <div class="profile-details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Mobile Number</span>
+                    <span class="detail-value">
+                        📱 <a th:href="'tel:' + ${customer.mobile}" th:text="${customer.mobile}" class="phone-link">9876543210</a>
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Total Orders Placed</span>
+                    <span class="detail-value">
+                        <strong th:text="${orderCount}">0</strong> order(s)
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Last Order Date</span>
+                    <span class="detail-value">
+                        <span th:if="${lastOrderDate != null}" th:text="${lastOrderDate}">2026-10-12</span>
+                        <span th:if="${lastOrderDate == null}" class="text-muted">No orders yet</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="profile-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <a th:href="@{/customers}" class="btn btn-outline">← Back to Customers</a>
+                <a th:href="@{/orders/new}" class="btn btn-primary">➕ Create New Order</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

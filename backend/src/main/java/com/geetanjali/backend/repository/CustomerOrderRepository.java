@@ -20,4 +20,17 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     // Input: customerId (Long).
     // Output: List<CustomerOrder>.
     List<CustomerOrder> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
+
+    // Counts the total number of orders placed by a customer.
+    // Derived query: Spring Data generates `SELECT count(*) FROM customer_order WHERE customer_id = ?`.
+    // In Express, this is like `CustomerOrder.countDocuments({ customerId })`.
+    // Input: customerId (Long).
+    // Output: long - total count of earlier orders.
+    long countByCustomerId(Long customerId);
+
+    // Finds the single most recent order placed by a customer.
+    // Derived query: Spring Data generates `SELECT * FROM customer_order WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1`.
+    // Input: customerId (Long).
+    // Output: Optional<CustomerOrder> - the latest order, or empty if customer has never ordered.
+    Optional<CustomerOrder> findFirstByCustomerIdOrderByCreatedAtDesc(Long customerId);
 }

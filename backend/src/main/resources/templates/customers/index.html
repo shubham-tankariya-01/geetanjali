@@ -1,16 +1,105 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!-- customers/index.html: Customer directory view (feature coming in next task) -->
-<head th:replace="~{fragments/layout :: page-head('Customers')}"></head>
+<!--
+  customers/index.html: Customer directory list and search page.
+  In EJS, this is like `views/customers/index.ejs`.
+-->
+<head th:replace="~{fragments/layout :: page-head('Customer Directory')}"></head>
 <body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
+
     <div class="container">
+        <!-- Flash messages for success or errors -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h2>Customer Directory</h2>
+                <p>Search and look up customer profiles, phone numbers, and past order records.</p>
+            </div>
+        </div>
+
+        <!-- Search Form -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <form th:action="@{/customers}" method="get" class="search-box">
+                <div class="search-input-group">
+                    <input type="text"
+                           name="q"
+                           th:value="${q}"
+                           placeholder="Search customer by name or 10-digit mobile number..."
+                           class="form-control"
+                           autocomplete="off"
+                           autofocus />
+                    <button type="submit" class="btn btn-primary">🔍 Search</button>
+                    <a th:if="${q != null and not #strings.isEmpty(q)}"
+                       th:href="@{/customers}"
+                       class="btn btn-outline">Clear</a>
+                </div>
+                <div th:if="${q != null and not #strings.isEmpty(q)}" class="search-indicator">
+                    Showing search results for: <strong th:text="${q}"></strong>
+                </div>
+            </form>
+        </div>
+
+        <!-- Customers Table Card -->
         <div class="card">
-            <h2>Customer Directory</h2>
-            <p>Customers list and profiles will be activated in the next development stage.</p>
+            <div class="table-header">
+                <h3>Customer Records</h3>
+                <span class="badge" th:text="${#lists.size(customers) + ' customer(s)'}">0 customer(s)</span>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(customers)}" class="empty-state">
+                <p th:if="${q != null and not #strings.isEmpty(q)}">
+                    No customers match your search "<strong><span th:text="${q}"></span></strong>".
+                </p>
+                <p th:if="${q == null or #strings.isEmpty(q)}">
+                    No customers registered in the system yet.
+                </p>
+                <a th:if="${q != null and not #strings.isEmpty(q)}" th:href="@{/customers}" class="btn btn-outline" style="margin-top: 0.5rem;">
+                    Show All Customers
+                </a>
+            </div>
+
+            <!-- Table with Results -->
+            <div th:if="${not #lists.isEmpty(customers)}" class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th>Customer Name</th>
+                            <th>Mobile Number</th>
+                            <th style="width: 140px; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="customer, stat : ${customers}">
+                            <td th:text="${stat.count}">1</td>
+                            <td>
+                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="customer-name-link">
+                                    <strong th:text="${customer.name}">Ramesh Patel</strong>
+                                </a>
+                            </td>
+                            <td>
+                                <span class="phone-display">📱 <span th:text="${customer.mobile}">9876543210</span></span>
+                            </td>
+                            <td style="text-align: right;">
+                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="btn btn-sm btn-outline">
+                                    View Profile →
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <!-- Sticky bottom navigation bar -->
     <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
 </body>
 </html>
