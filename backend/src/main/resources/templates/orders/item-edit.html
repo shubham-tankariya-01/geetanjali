@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  orders/item-edit.html: Edit Garment Item for an Existing Order.
+  In EJS, this corresponds to `views/orders/item-edit.ejs`.
+  Reuses the shared `fragments/item-form.html` form fragment.
+-->
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('Edit Item - Order #' + ${order.orderNo})}"></th:block>
+    <!-- Interactive client script for chip clicks and photo management -->
+    <script th:src="@{/js/new-order.js}" defer></script>
+</head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container" style="max-width: 820px; margin: 0 auto; padding-bottom: 5rem;">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Back to Order link -->
+        <div style="margin-bottom: 1rem;">
+            <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; font-size: 0.9rem;">
+                ← Back to Order #<span th:text="${order.orderNo}">1001</span>
+            </a>
+        </div>
+
+        <!-- Context Banner -->
+        <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">
+                    Editing Item in Order #<span th:text="${order.orderNo}">1001</span>
+                </span>
+                <div style="font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-top: 0.2rem;">
+                    👤 <span th:text="${order.customer.name}">Suresh Raina</span>
+                    <span style="font-weight: normal; color: #64748b; font-size: 0.95rem; margin-left: 0.5rem;">
+                        (📱 <span th:text="${order.customer.mobile}">9876512345</span>)
+                    </span>
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <div style="font-size: 0.85rem; color: #64748b;">
+                    Garment: <strong style="color: var(--primary-color, #7b2cbf); font-size: 1.05rem;" th:text="${garment.name}">Shirt</strong>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.15rem;">
+                    Status: <span class="badge" th:text="${item.status}">PENDING</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Embed Shared Item Form Fragment -->
+        <div th:replace="~{fragments/item-form :: item-form(${formAction}, true)}"></div>
+    </div>
+
+    <!-- Bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

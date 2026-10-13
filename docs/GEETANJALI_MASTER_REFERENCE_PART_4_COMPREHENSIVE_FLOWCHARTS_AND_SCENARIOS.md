@@ -594,3 +594,180 @@ sequenceDiagram
    - Calling `GarmentService.getActiveFields(garmentId)` first verifies the garment exists, then delegates to `GarmentFieldRepository.findByGarmentIdAndActiveTrueOrderByDisplayOrderAsc(garmentId)`.
    - This retrieves all active `GarmentField` definitions configured in migration `V2__seed_defaults.sql`.
    - The returned list provides the labels, unit names, and order needed to dynamically construct measurement forms in the upcoming Step 3 (Measurement recording).
+
+---
+
+## 5. Order Management, Wizard & Snapshot Workflows (Scenarios 13 - 16)
+
+---
+
+### Scenario 13: Order Creation Wizard Multi-Step Draft Flow (`GET & POST /orders/new/**`)
+
+This scenario depicts the 4-step wizard for taking a new custom order, holding intermediate garments in the session draft, and atomically persisting the order into PostgreSQL.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff Tailor
+    participant OWCtrl as OrderWizardController
+    participant OWSvc as OrderWizardService
+    participant Draft as HttpSession (OrderDraft)
+    participant CustSvc as CustomerService
+    participant GarmSvc as GarmentService
+    participant MeasSvc as MeasurementService
+    participant OrdSvc as OrderService
+    participant PaySvc as PaymentService
+    participant DB as PostgreSQL 17
+
+    %% Step 1: Customer
+    Tailor->>OWCtrl: GET /orders/new
+    OWCtrl->>OWSvc: startFresh()
+    OWSvc->>Draft: Reset session draft
+    OWCtrl-->>Tailor: 200 OK (orders/wizard-customer.html)
+
+    Tailor->>OWCtrl: POST /orders/new/customer (name="Suresh", mobile="9876512345")
+    OWCtrl->>CustSvc: findOrCreateCustomer("Suresh", "9876512345")
+    CustSvc->>DB: INSERT / SELECT customer
+    DB-->>CustSvc: Customer Entity
+    OWCtrl->>OWSvc: setCustomer(customer)
+    OWCtrl-->>Tailor: 302 Redirect to /orders/new/garment
+
+    %% Step 2: Garment
+    Tailor->>OWCtrl: GET /orders/new/garment
+    OWCtrl->>GarmSvc: listActiveGarments()
+    OWCtrl-->>Tailor: 200 OK (orders/wizard-garment.html)
+
+    Tailor->>OWCtrl: POST /orders/new/garment (garmentId=1 [Shirt])
+    OWCtrl->>GarmSvc: getGarmentById(1)
+    OWCtrl->>OWSvc: selectGarment(Shirt)
+    OWCtrl-->>Tailor: 302 Redirect to /orders/new/item
+
+    %% Step 3: Item details & measurements
+    Tailor->>OWCtrl: GET /orders/new/item
+    OWCtrl->>MeasSvc: getLatestValues(customerId, garmentId=1)
+    MeasSvc->>DB: Query latest measurement_value
+    OWCtrl-->>Tailor: 200 OK (orders/wizard-item.html pre-populated)
+
+    Tailor->>OWCtrl: POST /orders/new/item (chest=38, length=40, price=750, action="finish")
+    OWCtrl->>OWSvc: addItem(ItemForm)
+    OWSvc->>Draft: Append OrderDraftItem
+    OWCtrl-->>Tailor: 302 Redirect to /orders/new/summary
+
+    %% Step 4: Summary & Order Commitment
+    Tailor->>OWCtrl: GET /orders/new/summary
+    OWCtrl-->>Tailor: 200 OK (orders/wizard-summary.html)
+
+    Tailor->>OWCtrl: POST /orders/new/summary (advanceAmount=300.00, mode=CASH)
+    OWCtrl->>OrdSvc: @Transactional placeOrder(draft, advanceForm, currentUser)
+    OrdSvc->>DB: SELECT nextval('order_no_seq') -> e.g. 1001
+    OrdSvc->>DB: INSERT INTO customer_order (order_no=1001, customer_id, created_by)
+    loop For each item in draft
+        OrdSvc->>MeasSvc: saveSnapshot(customer, garment, measurements)
+        MeasSvc->>DB: INSERT INTO measurement & measurement_value
+        OrdSvc->>DB: INSERT INTO order_item (order_id, garment_id, measurement_id, price=750)
+    end
+    OrdSvc->>PaySvc: recordPayment(order, 300.00, CASH)
+    PaySvc->>DB: INSERT INTO payment (order_id, amount=300.00, mode='CASH')
+    OrdSvc-->>OWCtrl: Saved CustomerOrder Entity
+    OWCtrl->>OWSvc: startFresh()
+    OWCtrl-->>Tailor: 302 Redirect to /orders/new/success/1001
+```
+
+---
+
+### Scenario 14: Order Detail View & Recent Orders on Dashboard (`GET /orders/{id}`, `GET /`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff Tailor
+    participant HomeCtrl as HomeController
+    participant OrdCtrl as OrderController
+    participant OrdSvc as OrderService
+    participant DB as PostgreSQL 17
+
+    %% Home Dashboard Flow
+    Tailor->>HomeCtrl: GET /
+    HomeCtrl->>OrdSvc: listRecentOrders()
+    OrdSvc->>DB: SELECT * FROM customer_order ORDER BY created_at DESC LIMIT 20
+    DB-->>OrdSvc: 20 recent orders
+    HomeCtrl-->>Tailor: 200 OK (home/index.html with Recent Orders table & + New Order FAB)
+
+    %% Order Detail Flow
+    Tailor->>OrdCtrl: GET /orders/{orderId}
+    OrdCtrl->>OrdSvc: getOrderOrThrow(orderId)
+    OrdSvc->>DB: SELECT * FROM customer_order WHERE id = ?
+    DB-->>OrdSvc: CustomerOrder (Lazy associations: items, payments, photos)
+    OrdCtrl-->>Tailor: 200 OK (orders/detail.html)
+    Note over Tailor,DB: Open-In-View allows Thymeleaf to resolve order.totalAmount, order.balanceDue, and measurements without LazyInitializationException
+```
+
+---
+
+### Scenario 15: Order Item Edit Flow & Snapshot Immutability Engine (`GET & POST /orders/{id}/items/{itemId}`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff Tailor
+    participant OrdCtrl as OrderController
+    participant OrdSvc as OrderService
+    participant MeasSvc as MeasurementService
+    participant DB as PostgreSQL 17
+
+    Tailor->>OrdCtrl: GET /orders/{orderId}/items/{itemId}/edit
+    OrdCtrl->>OrdSvc: getOrderItemOrThrow(orderId, itemId)
+    OrdSvc->>DB: SELECT * FROM order_item WHERE id = itemId AND order_id = orderId
+    OrdCtrl->>OrdSvc: prepareItemEditForm(item)
+    OrdCtrl-->>Tailor: 200 OK (orders/item-edit.html with current measurements)
+
+    Tailor->>OrdCtrl: POST /orders/{orderId}/items/{itemId} (chest modified from 38.5 to 42.0, price=900)
+    OrdCtrl->>OrdSvc: @Transactional updateOrderItem(orderId, itemId, form)
+    OrdSvc->>MeasSvc: saveSnapshot(customer, garment, newMeasurements)
+    MeasSvc->>MeasSvc: compare(newMeasurements, latestSnapshotValues)
+    Note over MeasSvc,DB: Values differ! Immutability rule: Do NOT modify existing measurement row!
+    MeasSvc->>DB: INSERT INTO measurement (customer_id, garment_id, created_at) RETURNING new_id
+    MeasSvc->>DB: INSERT INTO measurement_value (measurement_id=new_id, field_id, value)
+    MeasSvc-->>OrdSvc: New Measurement Entity (ID: 47)
+    OrdSvc->>DB: UPDATE order_item SET measurement_id = 47, price = 900.00, notes = ... WHERE id = itemId
+    OrdSvc-->>OrdCtrl: Updated OrderItem
+    OrdCtrl-->>Tailor: 302 Redirect to /orders/{orderId} with flash success banner
+```
+
+---
+
+### Scenario 16: Appending Items to Existing Order Flow (`GET /orders/{id}/add-items` -> Wizard -> `POST summary`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff Tailor
+    participant OrdCtrl as OrderController
+    participant OWCtrl as OrderWizardController
+    participant OWSvc as OrderWizardService
+    participant Draft as HttpSession (OrderDraft)
+    participant OrdSvc as OrderService
+    participant PaySvc as PaymentService
+    participant DB as PostgreSQL 17
+
+    Tailor->>OrdCtrl: GET /orders/{orderId}/add-items
+    OrdCtrl->>OrdSvc: getOrderOrThrow(orderId)
+    OrdCtrl->>OWSvc: startAppendToOrder(order)
+    OWSvc->>Draft: draft.setCustomer(order.customer)<br/>draft.setExistingOrderId(order.id)
+    OrdCtrl-->>Tailor: 302 Redirect to /orders/new/garment (skips customer step!)
+
+    Tailor->>OWCtrl: Complete Step 2 (Garment selection) & Step 3 (Pant measurements)
+    OWCtrl->>OWSvc: addItem(pantItem)
+    OWCtrl-->>Tailor: 302 Redirect to /orders/new/summary
+
+    Tailor->>OWCtrl: POST /orders/new/summary (advanceAmount=200.00, mode=UPI)
+    OWCtrl->>OrdSvc: @Transactional placeOrder(draft, advanceForm, currentUser)
+    Note over OrdSvc: draft.getExistingOrderId() != null detected! Reuses existing order!
+    OrdSvc->>DB: SELECT * FROM customer_order WHERE id = orderId
+    OrdSvc->>DB: INSERT INTO order_item (order_id=orderId, garment_id=2, price=800)
+    OrdSvc->>PaySvc: recordPayment(existingOrder, 200.00, UPI)
+    PaySvc->>DB: INSERT INTO payment (order_id=orderId, amount=200.00, mode='UPI')
+    OrdSvc-->>OWCtrl: Existing CustomerOrder Entity (Preserves original order_no!)
+    OWCtrl->>OWSvc: startFresh()
+    OWCtrl-->>Tailor: 302 Redirect to /orders/{orderId} with flash "Items added to Order #G-202610-0042 successfully!"
+```

@@ -237,6 +237,97 @@ Services contain all business rules, calculations, and transactional boundaries 
 
 ---
 
+---
+
+### Service 7: [`MeasurementService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/MeasurementService.java)
+* **Location**: `src/main/java/com/geetanjali/backend/service/MeasurementService.java`
+* **Real-Life Analogy**: The master tailor's measurement comparison ledger and snapshot engine.
+* **Class Explanation**:
+  * Marked with `@Service` and `@Transactional(readOnly = true)`.
+  * Implements **Snapshot Immutability**: Tailoring measurements change over time, but historical orders must never change. When saving measurements, it checks if values match the latest recorded snapshot. If identical, it reuses the existing snapshot ID. If any value differs, it inserts a new `Measurement` record and associated `MeasurementValue` rows, preserving previous order history intact.
+* **Functions & Methods**:
+  1. `public Measurement saveSnapshot(Customer customer, Garment garment, Map<Long, BigDecimal> submittedValues)`
+     * **Annotation**: `@Transactional` (write transaction).
+     * **Signature**: Takes `customer` (`Customer`), `garment` (`Garment`), `submittedValues` (`Map<Long, BigDecimal>` of fieldId -> numeric value).
+     * **Logic**: Compares submitted map against latest snapshot. If identical, reuses existing snapshot. If differing or absent, saves new `Measurement` and `MeasurementValue` rows.
+     * **Returns**: `Measurement` snapshot entity.
+     * **Caller / Destination**: `OrderService.placeOrder()` and `OrderService.updateOrderItem()`.
+  2. `public boolean compare(Map<Long, BigDecimal> submitted, List<MeasurementValue> current)`
+     * **Signature**: Takes `submitted` map and `current` measurement value list.
+     * **Returns**: `true` if all numeric values match (`compareTo == 0`), `false` otherwise.
+  3. `public Optional<Measurement> getLatestSnapshot(Long customerId, Long garmentId)`
+     * **Signature**: Takes `customerId` and `garmentId`.
+     * **Returns**: `Optional<Measurement>` most recent snapshot.
+  4. `public Map<Long, BigDecimal> getLatestValues(Long customerId, Long garmentId)`
+     * **Signature**: Takes `customerId` and `garmentId`.
+     * **Returns**: `Map<Long, BigDecimal>` fieldId -> numeric value for auto-populating measurement forms.
+
+---
+
+### Service 8: [`OrderService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/OrderService.java)
+* **Location**: `src/main/java/com/geetanjali/backend/service/OrderService.java`
+* **Real-Life Analogy**: The tailor shop order book coordinator managing order booking, item customization, advance deposits, and item edits.
+* **Class Explanation**:
+  * Marked with `@Service` and `@Transactional(readOnly = true)`.
+  * Orchestrates `CustomerOrderRepository`, `OrderItemRepository`, `ItemPhotoRepository`, `MeasurementService`, and `PaymentService`.
+* **Functions & Methods**:
+  1. `public CustomerOrder placeOrder(OrderDraft draft, AdvanceForm advanceForm, AppUser createdBy)`
+     * **Annotation**: `@Transactional` (write transaction).
+     * **Signature**: Takes session `draft` (`OrderDraft`), `advanceForm` (`AdvanceForm`), and `createdBy` (`AppUser`).
+     * **Logic**: If `draft.getExistingOrderId()` is present, retrieves existing order, attaches new `OrderItem`s and `ItemPhoto`s, records additional advance deposit, and skips sequence generation. Otherwise, resolves customer, generates sequential `order_no` via `customerOrderRepository.getNextOrderNo()`, creates `CustomerOrder`, attaches garments/photos, and logs initial deposit.
+     * **Returns**: `CustomerOrder` saved entity.
+     * **Caller / Destination**: `OrderWizardController.handleSaveOrder()`.
+  2. `public CustomerOrder getOrderOrThrow(Long id)`
+     * **Signature**: Takes `id` (`Long`).
+     * **Returns**: `CustomerOrder` or throws `ResourceNotFoundException`.
+  3. `public OrderItem getOrderItemOrThrow(Long orderId, Long itemId)`
+     * **Signature**: Takes `orderId` (`Long`) and `itemId` (`Long`).
+     * **Returns**: `OrderItem` or throws `ResourceNotFoundException`.
+  4. `public ItemForm prepareItemEditForm(OrderItem item)`
+     * **Signature**: Takes `item` (`OrderItem`).
+     * **Returns**: Prepopulated `ItemForm` with existing notes, price, delivery date, measurement values, and photos.
+  5. `public OrderItem updateOrderItem(Long orderId, Long itemId, ItemForm form)`
+     * **Annotation**: `@Transactional` (write transaction).
+     * **Signature**: Takes `orderId`, `itemId`, and submitted `form` (`ItemForm`).
+     * **Logic**: Verifies item belongs to order, saves/updates measurement snapshot via `measurementService.saveSnapshot()` (snapshot immutability), updates price, notes, deliveryDate, synchronizes `ItemPhoto` records, and saves item.
+     * **Returns**: Updated `OrderItem`.
+  6. `public List<CustomerOrder> listRecentOrders()`
+     * **Signature**: None.
+     * **Returns**: Top 20 recent orders via `customerOrderRepository.findTop20ByOrderByCreatedAtDesc()`.
+
+---
+
+### Service 9: [`OrderWizardService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/OrderWizardService.java)
+* **Location**: `src/main/java/com/geetanjali/backend/service/OrderWizardService.java`
+* **Real-Life Analogy**: The tailor's multi-step order booking clipboard held during customer fitting and consultation.
+* **Class Explanation**:
+  * Marked with `@Service`.
+  * Encapsulates HTTP session state management for `OrderDraft` cart.
+* **Functions & Methods**:
+  1. `public OrderDraft getDraft()` — Retrieves existing session draft or initializes a fresh one.
+  2. `public void startFresh()` — Resets session draft for a brand new order.
+  3. `public void startAppendToOrder(CustomerOrder order)` — Clears draft, pre-populates customer info, and sets `existingOrderId` so wizard skips Step 1 and appends to this existing order.
+  4. `public void setCustomer(Customer customer)` — Sets customer details on draft.
+  5. `public void selectGarment(Garment garment)` — Sets current garment being measured.
+  6. `public void addItem(ItemForm form)` — Converts `ItemForm` to `OrderDraftItem` and adds to cart.
+  7. `public void updateItem(int index, ItemForm form)` — Updates draft item at index.
+  8. `public void removeItemAndPhotos(int index, PhotoStorageService storage)` — Removes item from cart and deletes uploaded photos from disk.
+
+---
+
+### Service 10: [`PaymentService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/PaymentService.java)
+* **Location**: `src/main/java/com/geetanjali/backend/service/PaymentService.java`
+* **Real-Life Analogy**: The cashier cash register recording payment receipts against orders.
+* **Class Explanation**:
+  * Marked with `@Service` and `@Transactional`.
+* **Functions & Methods**:
+  1. `public Payment recordPayment(CustomerOrder order, BigDecimal amount, PaymentMode mode)`
+     * **Signature**: Takes `order` (`CustomerOrder`), `amount` (`BigDecimal`), `mode` (`PaymentMode`).
+     * **Logic**: Validates amount > 0, resolves payment date via injected `Clock` (Asia/Kolkata), saves `Payment` entity.
+     * **Returns**: `Payment` entity.
+
+---
+
 ## 2. Controller & Advice Layer Breakdown (`controller/`, `controller/advice/`, `controller/api/`)
 
 ---
@@ -435,6 +526,41 @@ Services contain all business rules, calculations, and transactional boundaries 
 
 ---
 
+---
+
+### Controller 7: [`OrderWizardController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/OrderWizardController.java)
+* **Location**: `src/main/java/com/geetanjali/backend/controller/OrderWizardController.java`
+* **Real-Life Analogy**: The multi-step booking desk attendant guiding tailors through customer selection, garment choice, measurements, and advance collection.
+* **Class Explanation**:
+  * Marked with `@Controller` and `@RequestMapping("/orders/new")`.
+  * Manages the 4-step wizard workflow with session-scoped draft cart.
+* **Functions & Methods**:
+  1. `GET /orders/new` (`showCustomerStep`) — Displays Step 1: Customer identification / creation.
+  2. `POST /orders/new/customer` (`handleCustomerStep`) — Validates/creates customer, updates draft, redirects to `/orders/new/garment`.
+  3. `GET /orders/new/garment` (`showGarmentStep`) — Displays Step 2: Garment category cards.
+  4. `POST /orders/new/garment` (`handleGarmentStep`) — Stores selected garment in draft, redirects to `/orders/new/item`.
+  5. `GET /orders/new/item` (`showItemStep`) — Displays Step 3: Measurement entry form and photo dropzone. Auto-populates previous measurements if customer ordered this garment before.
+  6. `POST /orders/new/item` (`handleSaveItem`) — Validates measurements, price, and delivery date. If action=`"more"`, redirects to `/orders/new/garment`; if action=`"finish"`, redirects to `/orders/new/summary`.
+  7. `GET /orders/new/summary` (`showSummaryStep`) — Displays Step 4: Review cart items, order total, and advance payment form.
+  8. `POST /orders/new/summary` (`handleSaveOrder`) — Atomically books order / appends items into PostgreSQL. Redirects to `/orders/{id}` for appends, or `/orders/new/success/{id}` for new orders.
+  9. `GET /orders/new/success/{id}` (`showSuccessStep`) — Renders confirmation screen `orders/wizard-done.html`.
+  10. `POST /orders/new/cancel` (`handleCancelWizard`) — Clears draft and cleans up photos.
+
+---
+
+### Controller 8: [`OrderController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/OrderController.java)
+* **Location**: `src/main/java/com/geetanjali/backend/controller/OrderController.java`
+* **Real-Life Analogy**: The order records manager handling order details, modifications, and adding items.
+* **Class Explanation**:
+  * Marked with `@Controller` and `@RequestMapping("/orders")`.
+* **Functions & Methods**:
+  1. `GET /orders/{orderId}` (`showOrderDetail`) — Loads order with items, payments, and photos. Computes balance due and delivery dates. Renders `orders/detail.html`.
+  2. `GET /orders/{orderId}/add-items` (`startAddItemsToOrder`) — Calls `orderWizardService.startAppendToOrder(order)` and redirects directly to `/orders/new/garment` (skipping customer selection).
+  3. `GET /orders/{orderId}/items/{itemId}/edit` (`showEditOrderItem`) — Loads existing measurements, price, notes, and photos into `ItemForm`. Renders `orders/item-edit.html`.
+  4. `POST /orders/{orderId}/items/{itemId}` (`handleUpdateOrderItem`) — Validates form, calls `orderService.updateOrderItem()` (which preserves snapshot immutability), and redirects back to `/orders/{orderId}` with flash message.
+
+---
+
 ## 3. Flyway Database Migrations (`resources/db/migration/`)
 
 Database migrations run sequentially on startup before Hibernate initializes. Once applied, migration files are immutable.
@@ -534,6 +660,57 @@ Database migrations run sequentially on startup before Hibernate initializes. On
     * Total orders placed count (`<strong th:text="${orderCount}">`).
     * Last order date (or `"No orders yet"` if empty).
   * Quick action buttons: `"← Back to Customers"` and `"➕ Create New Order"`.
+
+---
+
+### Template 8: [`fragments/item-form.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/fragments/item-form.html)
+* **Role**: Reusable garment customization form fragment shared by Wizard Step 3 (`orders/wizard-item.html`) and Order Item Edit (`orders/item-edit.html`).
+* **Features**:
+  * Dynamic measurement numeric input grid rendered based on active `garmentFields`.
+  * Promised delivery date picker with `minDate` guard preventing past dates.
+  * Stitching price input in rupees (`₹`).
+  * Custom stitching notes textarea.
+  * Multi-photo dropzone supporting camera capture and local preview.
+  * Context-aware action buttons: `"Add Another Garment"` & `"Proceed to Summary"` in wizard mode vs `"Save Changes"` & `"Cancel"` in edit mode.
+
+### Template 9: [`orders/wizard-customer.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-customer.html)
+* **Role**: Wizard Step 1: Customer identification.
+* **Features**: Mobile number input with real-time AJAX lookup, customer name auto-fill, and existing customer selection cards.
+
+### Template 10: [`orders/wizard-garment.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-garment.html)
+* **Role**: Wizard Step 2: Garment category selection.
+* **Features**: Customer context summary bar, garment category cards (Shirt, Pant, Kurta, Blouse) with base pricing and visual icons.
+
+### Template 11: [`orders/wizard-item.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-item.html)
+* **Role**: Wizard Step 3: Measurement entry and cloth photo attachments.
+* **Features**: Embeds `fragments/item-form.html` with active draft summary counter and previous measurements auto-fill.
+
+### Template 12: [`orders/wizard-summary.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-summary.html)
+* **Role**: Wizard Step 4: Multi-item review and advance payment collection.
+* **Features**: Itemized cart cards with edit/delete buttons, financial summary (total amount, advance deposit, remaining balance due), and payment mode toggle (`CASH` / `UPI`).
+
+### Template 13: [`orders/wizard-done.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-done.html)
+* **Role**: Order booking confirmation screen.
+* **Features**: Large success badge, human-readable Order Number (e.g. `#1001`), customer info, balance due reminder, and action buttons (`"View Order"`, `"Book Another Order"`, `"Print Receipt"`).
+
+### Template 14: [`orders/detail.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/detail.html)
+* **Role**: Complete order detail view.
+* **Features**:
+  * Order header with human-readable order number, link to customer profile, and creation timestamp.
+  * Financial summary banner displaying Total Amount, Advance Paid, and Balance Due.
+  * Garment items list with promised delivery date, price, stitching status badge, and `"✏️ Edit"` button.
+  * Expandable `<details>` measurements snapshot drawer displaying all recorded numbers.
+  * Cloth photos gallery with interactive lightbox modal pop-up (`imageLightboxModal`).
+  * `"➕ Add Items to Order"` header button launching the wizard in append mode.
+
+### Template 15: [`orders/item-edit.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/item-edit.html)
+* **Role**: Order item edit screen.
+* **Features**:
+  * Context banner indicating order number and garment type being modified.
+  * Embeds `fragments/item-form.html` loaded with current item values.
+  * Cancel button linking directly back to `/orders/{orderId}`.
+
+---
 
 ### Asset 1: [`static/css/app.css`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/static/css/app.css)
 * **Role**: Desktop-first styling system.

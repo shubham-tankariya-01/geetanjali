@@ -1,9 +1,14 @@
 package com.geetanjali.backend.controller;
 
+import com.geetanjali.backend.dto.form.ItemForm;
 import com.geetanjali.backend.entity.Customer;
 import com.geetanjali.backend.entity.CustomerOrder;
+import com.geetanjali.backend.entity.Garment;
+import com.geetanjali.backend.entity.OrderItem;
 import com.geetanjali.backend.exception.ResourceNotFoundException;
+import com.geetanjali.backend.service.GarmentService;
 import com.geetanjali.backend.service.OrderService;
+import com.geetanjali.backend.service.OrderWizardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,26 +17,44 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
+import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-// OrderControllerTest: Unit tests verifying OrderController request handling and view routing.
+// OrderControllerTest: Unit tests verifying OrderController request handling, edit views, and view routing.
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
 
     @Mock
     private OrderService orderService;
 
+    @Mock
+    private OrderWizardService orderWizardService;
+
+    @Mock
+    private GarmentService garmentService;
+
+    private Clock fixedClock;
     private OrderController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new OrderController(orderService);
+        fixedClock = Clock.fixed(Instant.parse("2026-10-13T10:00:00Z"), ZoneId.of("Asia/Kolkata"));
+        controller = new OrderController(orderService, orderWizardService, garmentService, fixedClock);
     }
 
     @Test
@@ -61,5 +84,63 @@ class OrderControllerTest {
         );
         assertEquals("Order not found with id: 999", ex.getMessage());
         verify(orderService).getOrderOrThrow(999L);
+    }
+
+    @Test
+    @DisplayName("startAddItemsToOrder starts wizard with existing order and redirects to /orders/new/garment")
+    void testStartAddItemsToOrder_startsWizardAndRedirectsToGarmentStep() {
+        CustomerOrder order = new CustomerOrder(1001L, new Customer("Deepak Verma", "9876599999"), null, Instant.now());
+        order.setId(15L);
+        when(orderService.getOrderOrThrow(15L)).thenReturn(order);
+
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        String view = controller.startAddItemsToOrder(15L, redirectAttributes);
+
+        assertEquals("redirect:/orders/new/garment", view);
+        verify(orderWizardService).startAppendToOrder(order);
+    }
+
+    @Test
+    @DisplayName("showEditOrderItem loads saved values and returns orders/item-edit")
+    void testShowEditOrderItem_loadsSavedValuesAndRendersEditForm() {
+        CustomerOrder order = new CustomerOrder(1001L, new Customer("Deepak Verma", "9876599999"), null, Instant.now());
+        order.setId(15L);
+        Garment shirt = new Garment("Shirt", 1, true);
+        shirt.setId(1L);
+        OrderItem item = new OrderItem(order, shirt, null, "Double pocket", new BigDecimal("500.00"), LocalDate.of(2026, 10, 25));
+        item.setId(25L);
+
+        when(orderService.getOrderOrThrow(15L)).thenReturn(order);
+        when(orderService.getOrderItemOrThrow(15L, 25L)).thenReturn(item);
+
+        ItemForm form = new ItemForm(LocalDate.of(2026, 10, 25), new BigDecimal("500.00"));
+        when(orderService.prepareItemEditForm(item)).thenReturn(form);
+        when(garmentService.getActiveFields(1L)).thenReturn(List.of());
+
+        Model model = new ConcurrentModel();
+        String view = controller.showEditOrderItem(15L, 25L, model);
+
+        assertEquals("orders/item-edit", view);
+        assertEquals(order, model.getAttribute("order"));
+        assertEquals(item, model.getAttribute("item"));
+        assertEquals(form, model.getAttribute("itemForm"));
+        assertEquals("/orders/15/items/25", model.getAttribute("formAction"));
+        assertEquals("/orders/15", model.getAttribute("cancelUrl"));
+    }
+
+    @Test
+    @DisplayName("handleUpdateOrderItem saves updates and redirects to /orders/{orderId}")
+    void testHandleUpdateOrderItem_validForm_updatesAndRedirects() {
+        ItemForm form = new ItemForm(LocalDate.of(2026, 10, 25), new BigDecimal("550.00"));
+        form.setNotes("Updated styling note");
+
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "itemForm");
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        Model model = new ConcurrentModel();
+
+        String view = controller.handleUpdateOrderItem(15L, 25L, form, bindingResult, model, redirectAttributes);
+
+        assertEquals("redirect:/orders/15", view);
+        verify(orderService).updateOrderItem(eq(15L), eq(25L), any(ItemForm.class));
     }
 }

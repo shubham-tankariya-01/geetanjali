@@ -1144,3 +1144,86 @@ sequenceDiagram
         GSvc-->>Caller: Returns List<GarmentField> measurement templates
     end
 ```
+
+---
+
+## 4. Order Management & Editing Infrastructure (Stage 1 - Steps 7, 8, 9)
+
+### Group J: Order Domain DTOs & Enums
+
+#### 56. [`PaymentMode.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/enums/PaymentMode.java)
+* **Location**: `src/main/java/com/geetanjali/backend/enums/PaymentMode.java`
+* **Values**: `CASH`, `UPI`. Prevents invalid payment types.
+
+#### 57. [`OrderDraft.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/draft/OrderDraft.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/draft/OrderDraft.java`
+* **Role**: Session-scoped cart holding in-flight items, customer info, current garment, and `existingOrderId`.
+
+#### 58. [`OrderDraftItem.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/draft/OrderDraftItem.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/draft/OrderDraftItem.java`
+* **Role**: Holds garment, numeric measurements map, notes, delivery date, price, and photos in draft.
+
+#### 59. [`ItemForm.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/form/ItemForm.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/form/ItemForm.java`
+* **Role**: Validated form DTO shared between Wizard Step 3 and Order Item Edit.
+
+#### 60. [`AdvanceForm.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/form/AdvanceForm.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/form/AdvanceForm.java`
+* **Role**: Captures advance deposit money and payment mode.
+
+### Group K: Order Services & Controllers
+
+#### 61. [`MeasurementService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/MeasurementService.java)
+* **Methods**: `saveSnapshot(customer, garment, values)`, `compare()`, `getLatestSnapshot()`, `getLatestValues()`.
+* **Guarantees**: Snapshot immutability across historical orders.
+
+#### 62. [`OrderService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/OrderService.java)
+* **Methods**:
+  * `placeOrder(draft, advanceForm, createdBy)`: Supports both fresh bookings and appending items to existing orders.
+  * `getOrderOrThrow(id)`: Fetches order with items and payments.
+  * `getOrderItemOrThrow(orderId, itemId)`: Fetches item belonging to order.
+  * `prepareItemEditForm(item)`: Prepopulates form for editing.
+  * `updateOrderItem(orderId, itemId, form)`: Atomically updates measurements (via `saveSnapshot`), price, notes, and photos.
+  * `listRecentOrders()`: Returns top 20 recent orders.
+
+#### 63. [`OrderWizardService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/OrderWizardService.java)
+* **Methods**: `getDraft()`, `startFresh()`, `startAppendToOrder(order)`, `setCustomer(customer)`, `selectGarment(garment)`, `addItem(form)`, `updateItem(index, form)`, `removeItemAndPhotos(index, storage)`.
+
+#### 64. [`PaymentService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/PaymentService.java)
+* **Methods**: `recordPayment(order, amount, mode)`.
+
+#### 65. [`OrderWizardController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/OrderWizardController.java)
+* **Routes**: `/orders/new/**` (Step 1 Customer, Step 2 Garment, Step 3 Item, Step 4 Summary, Success confirmation).
+
+#### 66. [`OrderController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/OrderController.java)
+* **Routes**:
+  * `GET /orders/{id}`: Order detail.
+  * `GET /orders/{id}/add-items`: Starts wizard in append mode.
+  * `GET /orders/{id}/items/{itemId}/edit`: Renders edit screen.
+  * `POST /orders/{id}/items/{itemId}`: Saves edited item.
+
+### Group L: Order Templates
+
+#### 67. [`fragments/item-form.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/fragments/item-form.html)
+#### 68. [`orders/wizard-customer.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-customer.html)
+#### 69. [`orders/wizard-garment.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-garment.html)
+#### 70. [`orders/wizard-item.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-item.html)
+#### 71. [`orders/wizard-summary.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-summary.html)
+#### 72. [`orders/wizard-done.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/wizard-done.html)
+#### 73. [`orders/detail.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/detail.html)
+#### 74. [`orders/item-edit.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/orders/item-edit.html)
+
+---
+
+### Scenario 13: Order Creation Wizard Multi-Step Draft Flow
+*(Refer to Part 4 for detailed sequence diagram)*
+Tailor enters customer info -> Chooses Garment -> Enters Measurements & Photos -> Reviews Summary & Pays Advance -> Committed atomically with generated `order_no`.
+
+### Scenario 14: Order Detail View & Recent Orders on Dashboard
+Home dashboard displays top 20 recent orders. Clicking an order loads `/orders/{id}` with complete financial balance, item cards, and collapsed measurements snapshot drawer.
+
+### Scenario 15: Order Item Edit Flow & Snapshot Immutability Engine
+Editing an item loads saved values. Modifying a measurement triggers `MeasurementService.saveSnapshot()`, which creates a brand new `Measurement` record and points the `OrderItem` to it, leaving the original measurement snapshot intact in PostgreSQL.
+
+### Scenario 16: Appending Items to Existing Order Flow
+Clicking `+ Add Items to Order` initializes session draft with customer pre-set and `existingOrderId`. Directly opens Step 2 (Garment). Completing summary appends new items and payment to the existing order, preserving original `order_no`.

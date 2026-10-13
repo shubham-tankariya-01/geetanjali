@@ -465,3 +465,89 @@ graph TD
     * **Signature**: Takes `message` (`String`) explaining why the rule was violated.
     * **Returns**: New exception instance.
     * **Caller / Destination**: Thrown by services; intercepted by `GlobalExceptionHandler.handleBusinessRule()`, which stores a flash message and redirects back to the previous page.
+
+---
+
+### 5. Order Management & Multi-Step Wizard Infrastructure
+
+#### File 12: [`PaymentMode.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/enums/PaymentMode.java)
+* **Location**: `src/main/java/com/geetanjali/backend/enums/PaymentMode.java`
+* **Real-Life Analogy**: The payment tender options acceptable at the tailor cash drawer (`CASH` or `UPI`).
+* **Class Explanation**:
+  * Type-safe enum restricting payment modes across advance deposits and final order collections.
+* **Values**:
+  * `CASH` — Cash currency physically collected in shop.
+  * `UPI` — Digital payment via Google Pay, PhonePe, Paytm, or BHIM QR code.
+
+---
+
+#### File 13: [`OrderDraft.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/draft/OrderDraft.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/draft/OrderDraft.java`
+* **Real-Life Analogy**: The tailor's clipboard notepad holding customer choices and measurements across multiple garments before committing them to the permanent ledger.
+* **Class Explanation**:
+  * Session-scoped in-memory cart object. Holds:
+    * `customerId`, `customerName`, `customerMobile`
+    * `currentGarment` (the garment selected in Step 2 currently being measured)
+    * `items` (`List<OrderDraftItem>`) — Cumulative list of measured garments in the order
+    * `existingOrderId` — Populated when "+ Add Items to Order" is triggered on an existing order; directs the final save to append rather than create a duplicate `CustomerOrder`.
+  * Helper methods: `getTotalPrice()`, `getItemCount()`, `hasCustomer()`, `hasItems()`.
+
+---
+
+#### File 14: [`OrderDraftItem.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/draft/OrderDraftItem.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/draft/OrderDraftItem.java`
+* **Real-Life Analogy**: A single garment slip attached to the tailor's clipboard.
+* **Class Explanation**:
+  * Holds details of a single customized garment prior to database insertion:
+    * `garment` (`Garment`)
+    * `measurementValues` (`Map<Long, BigDecimal>`) — fieldId -> numeric measurement
+    * `notes` (`String`), `deliveryDate` (`LocalDate`), `price` (`BigDecimal`)
+    * `photoUrls` & `photoPublicIds` (`List<String>`) — uploaded cloth references
+
+---
+
+#### File 15: [`ItemForm.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/form/ItemForm.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/form/ItemForm.java`
+* **Real-Life Analogy**: The measurement and customization form handed to the tailor during fitting.
+* **Class Explanation**:
+  * Form-backing DTO shared between Wizard Step 3 (`wizard-item.html`) and Order Item Edit (`item-edit.html`).
+  * Validates:
+    * `@NotNull price`, `@DecimalMin(0.00)`
+    * `@NotNull deliveryDate` (with controller-level guard preventing past dates)
+    * `measurements` map (`Map<Long, BigDecimal>`)
+    * `notes` (`String`)
+    * `action` (`String`: `"more"` to add another garment, `"finish"` to proceed to summary)
+    * `photoUrls`, `photoPublicIds`
+
+---
+
+#### File 16: [`AdvanceForm.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/form/AdvanceForm.java)
+* **Location**: `src/main/java/com/geetanjali/backend/dto/form/AdvanceForm.java`
+* **Real-Life Analogy**: The advance deposit slip filled at the cash counter upon booking.
+* **Class Explanation**:
+  * Form-backing DTO for Wizard Step 4 (`wizard-summary.html`).
+  * Captures:
+    * `advanceAmount` (`BigDecimal`, `@NotNull`, `@DecimalMin("0.00")`)
+    * `mode` (`PaymentMode`, `@NotNull`, defaults to `CASH`)
+
+---
+
+#### Route Authorization & Order Management Mapping Table
+
+| Method | Path Pattern | Controller | Access Role | Description |
+|:---|:---|:---|:---|:---|
+| `GET` | `/` | `HomeController` | Authenticated | Dashboard with customer search & top 20 recent orders |
+| `GET` | `/orders/new` | `OrderWizardController` | Authenticated | Wizard Step 1: Customer identification / creation |
+| `POST` | `/orders/new/customer` | `OrderWizardController` | Authenticated | Binds customer to session draft, redirects to garment step |
+| `GET` | `/orders/new/garment` | `OrderWizardController` | Authenticated | Wizard Step 2: Garment category selection |
+| `POST` | `/orders/new/garment` | `OrderWizardController` | Authenticated | Selects garment category, redirects to measurement step |
+| `GET` | `/orders/new/item` | `OrderWizardController` | Authenticated | Wizard Step 3: Measurement entry form & photo upload |
+| `POST` | `/orders/new/item` | `OrderWizardController` | Authenticated | Validates item, stores in draft, routes to next item or summary |
+| `GET` | `/orders/new/summary` | `OrderWizardController` | Authenticated | Wizard Step 4: Review items, calculate total & advance deposit |
+| `POST` | `/orders/new/summary` | `OrderWizardController` | Authenticated | Atomically books order / appends items into PostgreSQL |
+| `GET` | `/orders/new/success/{id}`| `OrderWizardController` | Authenticated | Wizard confirmation screen |
+| `GET` | `/orders/{id}` | `OrderController` | Authenticated | Order detail view with item cards & financial totals |
+| `GET` | `/orders/{id}/add-items` | `OrderController` | Authenticated | Initializes wizard draft for existing order & jumps to Step 2 |
+| `GET` | `/orders/{id}/items/{itemId}/edit` | `OrderController` | Authenticated | Loads existing measurements & item details for editing |
+| `POST` | `/orders/{id}/items/{itemId}` | `OrderController` | Authenticated | Saves edited measurements (snapshot immutability) & details |
+

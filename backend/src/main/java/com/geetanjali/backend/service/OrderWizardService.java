@@ -4,6 +4,7 @@ import com.geetanjali.backend.dto.draft.OrderDraft;
 import com.geetanjali.backend.dto.draft.OrderDraftItem;
 import com.geetanjali.backend.dto.form.CustomerStepForm;
 import com.geetanjali.backend.entity.Customer;
+import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.entity.Garment;
 import com.geetanjali.backend.exception.ResourceNotFoundException;
 import com.geetanjali.backend.repository.CustomerRepository;
@@ -62,6 +63,16 @@ public class OrderWizardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
 
         orderDraft.setCustomer(customer.getId(), customer.getName(), customer.getMobile());
+    }
+
+    // Starts the wizard to append new garment items to an existing open order.
+    // Pre-populates the customer in the session draft and sets existingOrderId, allowing Step 1 to be skipped!
+    // Input: order (CustomerOrder) - existing order to append items to.
+    public void startAppendToOrder(CustomerOrder order) {
+        orderDraft.reset();
+        Customer customer = order.getCustomer();
+        orderDraft.setCustomer(customer.getId(), customer.getName(), customer.getMobile());
+        orderDraft.setExistingOrderId(order.getId());
     }
 
     // Step 1: Sets the chosen customer on the order draft from the submitted form.

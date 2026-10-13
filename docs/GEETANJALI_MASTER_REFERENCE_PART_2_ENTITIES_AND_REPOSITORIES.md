@@ -292,6 +292,8 @@ erDiagram
   * `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "customer_id", nullable = false) private Customer customer` — Customer reference.
   * `@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "created_by", nullable = false) private AppUser createdBy` — Staff member who created the order.
   * `@Column(name = "created_at", nullable = false) private Instant createdAt = Instant.now()` — Timestamp of order placement.
+  * `@OneToMany(mappedBy = "order") private List<OrderItem> items = new ArrayList<>()` — Bidirectional association to order garments.
+  * `@OneToMany(mappedBy = "order") private List<Payment> payments = new ArrayList<>()` — Bidirectional association to payments collected.
 * **Functions & Methods**:
   1. `public CustomerOrder()` — Zero-argument JPA constructor.
   2. `public CustomerOrder(Long orderNo, Customer customer, AppUser createdBy, Instant createdAt)` — Full constructor.
@@ -300,6 +302,14 @@ erDiagram
   5. `public Customer getCustomer()`, `public void setCustomer(Customer customer)`
   6. `public AppUser getCreatedBy()`, `public void setCreatedBy(AppUser createdBy)`
   7. `public Instant getCreatedAt()`, `public void setCreatedAt(Instant createdAt)`
+  8. `public List<OrderItem> getItems()`, `public void setItems(List<OrderItem> items)`
+  9. `public List<Payment> getPayments()`, `public void setPayments(List<Payment> payments)`
+* **Calculated Business Getters**:
+  10. `public BigDecimal getTotalAmount()` — Sums prices of all order items (`BigDecimal.ZERO` if empty).
+  11. `public int getItemCount()` — Returns count of garment items in the order.
+  12. `public LocalDate getNearestDeliveryDate()` — Earliest promised delivery date among all items.
+  13. `public BigDecimal getTotalPaid()` — Sums all payment vouchers recorded against this order.
+  14. `public BigDecimal getBalanceDue()` — Computes outstanding balance (`totalAmount - totalPaid`), clamped to zero.
 
 ---
 
@@ -505,6 +515,16 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
      * *Derived Query*: Spring Data JPA generates `SELECT * FROM customer_order WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1`.
      * *Returns*: `Optional<CustomerOrder>` — Customer's single most recent order.
      * *Called by*: `CustomerService.findLastOrderDate(customerId)` to compute the date of their last visit.
+  5. `Long getNextOrderNo()`
+     * *Parameters*: None.
+     * *Native Query*: `@Query(value = "SELECT nextval('order_no_seq')", nativeQuery = true)`.
+     * *Returns*: `Long` — Next atomic sequence number for human-readable order slips.
+     * *Called by*: `OrderService.placeOrder()` when booking a new order.
+  6. `List<CustomerOrder> findTop20ByOrderByCreatedAtDesc()`
+     * *Parameters*: None.
+     * *Derived Query*: Spring Data JPA generates `SELECT * FROM customer_order ORDER BY created_at DESC LIMIT 20`.
+     * *Returns*: `List<CustomerOrder>` — Top 20 most recent orders across the shop.
+     * *Called by*: `HomeController.showHome()` for tailor landing dashboard.
 
 #### Repository 9: [`OrderItemRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/OrderItemRepository.java)
 * **Interface Signature**: `public interface OrderItemRepository extends JpaRepository<OrderItem, Long>`

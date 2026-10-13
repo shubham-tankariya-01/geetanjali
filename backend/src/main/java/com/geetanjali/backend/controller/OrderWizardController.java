@@ -399,6 +399,9 @@ public class OrderWizardController {
             return "orders/wizard-summary";
         }
 
+        // Check if we are appending to an existing order
+        boolean isAppend = draft.getExistingOrderId() != null;
+
         // Commit order atomically into PostgreSQL
         CustomerOrder savedOrder = orderService.placeOrder(
                 draft,
@@ -408,6 +411,12 @@ public class OrderWizardController {
 
         // Clear session draft so back button or fresh order starts clean
         orderWizardService.startFresh();
+
+        if (isAppend) {
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Items added to Order #" + savedOrder.getOrderNo() + " successfully!");
+            return "redirect:/orders/" + savedOrder.getId();
+        }
 
         // Always redirect after POST (Post-Redirect-Get pattern)
         redirectAttributes.addFlashAttribute("successMessage",

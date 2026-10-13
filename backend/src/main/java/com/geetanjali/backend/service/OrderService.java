@@ -3,11 +3,13 @@ package com.geetanjali.backend.service;
 import com.geetanjali.backend.dto.draft.OrderDraft;
 import com.geetanjali.backend.dto.draft.OrderDraftItem;
 import com.geetanjali.backend.dto.form.AdvanceForm;
+import com.geetanjali.backend.dto.form.ItemForm;
 import com.geetanjali.backend.entity.AppUser;
 import com.geetanjali.backend.entity.Customer;
 import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.entity.ItemPhoto;
 import com.geetanjali.backend.entity.Measurement;
+import com.geetanjali.backend.entity.MeasurementValue;
 import com.geetanjali.backend.entity.OrderItem;
 import com.geetanjali.backend.exception.ResourceNotFoundException;
 import com.geetanjali.backend.repository.CustomerOrderRepository;
@@ -21,7 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 // OrderService: Core domain service managing customer orders, items, and atomic order placement.
@@ -92,13 +97,19 @@ public class OrderService {
         String normalizedMobile = PhoneNumbers.normalize(draft.getCustomerMobile());
         Customer customer = resolveCustomer(draft, normalizedMobile);
 
-        // Step 2: Retrieve next order number from sequence order_no_seq (e.g. 1001)
-        Long orderNo = customerOrderRepository.getNextOrderNo();
-
-        // Step 3: Create top-level CustomerOrder
-        Instant now = clock.instant();
-        CustomerOrder order = new CustomerOrder(orderNo, customer, createdBy, now);
-        CustomerOrder savedOrder = customerOrderRepository.save(order);
+        // Step 2 & 3: Resolve CustomerOrder (either append to existing order or create new order)
+        CustomerOrder savedOrder;
+        if (draft.getExistingOrderId() != null) {
+            savedOrder = customerOrderRepository.findById(draft.getExistingOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Existing order not found with id: " + draft.getExistingOrderId()));
+            customer = savedOrder.getCustomer();
+        } else {
+            // Retrieve next order number from sequence order_no_seq (e.g. 1001)
+            Long orderNo = customerOrderRepository.getNextOrderNo();
+            Instant now = clock.instant();
+            CustomerOrder order = new CustomerOrder(orderNo, customer, createdBy, now);
+            savedOrder = customerOrderRepository.save(order);
+        }
 
         // Step 4: Persist each garment item, its measurement snapshot, and photos
         for (OrderDraftItem draftItem : draft.getItems()) {
@@ -210,5 +221,101 @@ public class OrderService {
     public CustomerOrder getOrderOrThrow(Long id) {
         return customerOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+    }
+
+    // Retrieves a specific OrderItem belonging to an order, or throws ResourceNotFoundException if missing or mismatched.
+    // Inputs: orderId (Long), itemId (Long).
+    // Output: OrderItem entity.
+    public OrderItem getOrderItemOrThrow(Long orderId, Long itemId) {
+        CustomerOrder order = getOrderOrThrow(orderId);
+        OrderItem item = orderItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order item not found with id: " + itemId));
+        if (!item.getOrder().getId().equals(order.getId())) {
+            throw new ResourceNotFoundException("Order item " + itemId + " does not belong to order " + orderId);
+        }
+        return item;
+    }
+
+    // Prepares an ItemForm DTO pre-filled with the saved values of an OrderItem (notes, price, date, measurements, photos).
+    // Input: item (OrderItem) - existing order item.
+    // Output: ItemForm - populated form DTO.
+    public ItemForm prepareItemEditForm(OrderItem item) {
+        ItemForm form = new ItemForm();
+        form.setNotes(item.getNotes());
+        form.setPrice(item.getPrice());
+        form.setDeliveryDate(item.getDeliveryDate());
+
+        // Pre-fill measurement snapshot values
+        if (item.getMeasurement() != null && item.getMeasurement().getValues() != null) {
+            Map<Long, BigDecimal> valuesMap = new LinkedHashMap<>();
+            for (MeasurementValue val : item.getMeasurement().getValues()) {
+                if (val.getField() != null) {
+                    valuesMap.put(val.getField().getId(), val.getValue());
+                }
+            }
+            form.setMeasurements(valuesMap);
+        }
+
+        // Pre-fill existing photo URLs and public IDs
+        List<ItemPhoto> photos = itemPhotoRepository.findByOrderItemId(item.getId());
+        List<String> photoUrls = new ArrayList<>();
+        List<String> photoPublicIds = new ArrayList<>();
+        for (ItemPhoto photo : photos) {
+            photoUrls.add(photo.getUrl());
+            photoPublicIds.add(photo.getPublicId());
+        }
+        form.setPhotoUrls(photoUrls);
+        form.setPhotoPublicIds(photoPublicIds);
+
+        return form;
+    }
+
+    // Updates an existing order item's styling notes, price, promised delivery date, photos, and measurements.
+    // If measurements changed, creates a fresh measurement snapshot and points the item to it (old snapshot remains untouched).
+    //
+    // WHY @Transactional:
+    // Guarantees that updating measurements, syncing photo records, and saving item details succeed or roll back together.
+    //
+    // Inputs:
+    //   orderId (Long) - parent customer order ID.
+    //   itemId (Long) - order item ID being modified.
+    //   form (ItemForm) - updated form details.
+    // Output: OrderItem - the updated entity.
+    @Transactional
+    public OrderItem updateOrderItem(Long orderId, Long itemId, ItemForm form) {
+        CustomerOrder order = getOrderOrThrow(orderId);
+        OrderItem item = getOrderItemOrThrow(orderId, itemId);
+
+        // Step 1: If measurements were provided, save snapshot through Step 3 engine
+        // If numbers changed, a new snapshot is created; if identical, existing is reused
+        if (form.getMeasurements() != null && !form.getMeasurements().isEmpty()) {
+            Measurement snapshot = measurementService.saveSnapshot(
+                    order.getCustomer(),
+                    item.getGarment(),
+                    form.getMeasurements()
+            );
+            item.setMeasurement(snapshot);
+        }
+
+        // Step 2: Update notes, price, and delivery date
+        item.setNotes(form.getNotes());
+        item.setPrice(form.getPrice());
+        item.setDeliveryDate(form.getDeliveryDate());
+
+        // Step 3: Update photos
+        if (form.getPhotoUrls() != null) {
+            List<ItemPhoto> existingPhotos = itemPhotoRepository.findByOrderItemId(itemId);
+            itemPhotoRepository.deleteAll(existingPhotos);
+
+            List<String> urls = form.getPhotoUrls();
+            List<String> publicIds = form.getPhotoPublicIds();
+            for (int i = 0; i < urls.size(); i++) {
+                String url = urls.get(i);
+                String publicId = (publicIds != null && i < publicIds.size()) ? publicIds.get(i) : null;
+                itemPhotoRepository.save(new ItemPhoto(item, url, publicId));
+            }
+        }
+
+        return orderItemRepository.save(item);
     }
 }

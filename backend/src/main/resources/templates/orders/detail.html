@@ -71,14 +71,21 @@
         </div>
 
         <!-- Section: Garment Items List -->
-        <h3 style="margin-bottom: 1rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-            🧵 Garment Items (<span th:text="${order.itemCount}">1</span>)
-        </h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+                🧵 Garment Items (<span th:text="${order.itemCount}">1</span>)
+            </h3>
+            <a th:href="@{'/orders/' + ${order.id} + '/add-items'}"
+               class="btn btn-outline"
+               style="border-color: var(--primary-color, #7b2cbf); color: var(--primary-color, #7b2cbf); font-weight: 700; font-size: 0.85rem; padding: 0.4rem 0.85rem;">
+                ➕ Add Items to Order
+            </a>
+        </div>
 
         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
             <!-- Iterating over order items (lazy-loaded on demand via Open-in-View) -->
             <div th:each="item, iterStat : ${order.items}" class="card" style="margin-bottom: 0; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                         <span style="font-size: 1.25rem; font-weight: 800; color: #1e293b;" th:text="${item.garment.name}">
                             Shirt
@@ -89,8 +96,15 @@
                             PENDING
                         </span>
                     </div>
-                    <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary-color, #7b2cbf);">
-                        ₹<span th:text="${item.price}">500.00</span>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary-color, #7b2cbf);">
+                            ₹<span th:text="${item.price}">500.00</span>
+                        </div>
+                        <a th:href="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/edit'}"
+                           class="btn btn-outline"
+                           style="padding: 0.25rem 0.65rem; font-size: 0.8rem; font-weight: 600;">
+                            ✏️ Edit
+                        </a>
                     </div>
                 </div>
 

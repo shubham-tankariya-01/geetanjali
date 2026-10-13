@@ -198,7 +198,7 @@
                  SECTION 5: ACTION BUTTONS
                  ========================================================================= -->
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
-                <a th:href="@{/orders/new/garment}" class="btn btn-outline">
+                <a th:href="${cancelUrl != null ? cancelUrl : '/orders/new/garment'}" class="btn btn-outline" th:text="${isEdit ? '← Cancel' : '← Back to Garment'}">
                     ← Back to Garment
                 </a>
 
