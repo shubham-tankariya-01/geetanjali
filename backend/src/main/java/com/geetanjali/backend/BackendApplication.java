@@ -1,30 +1,17 @@
 package com.geetanjali.backend;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
+// @SpringBootApplication = Tells Spring Boot that this is the main entry point and configuration class.
+// In Express terms, this is like your main "app.js" or "server.js" where the web server is booted.
 @SpringBootApplication
-@RestController
-public class BackendApplication implements CommandLineRunner {
+public class BackendApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(BackendApplication.class, args);
-	}
-
-	@GetMapping("/")
-	public String Hello(){
-		return "Hello from a Pro dev shubham";
-	}
-	private RazorpayService srvc = new RazorpayService();
-
-
-	@Override
-	public void run(String... args) throws Exception {
-		String payment = srvc.pay();
-		System.out.println("payment done :" + payment);
-	}
-
+    // Main entry point method for the Java Virtual Machine (JVM).
+    // Input: Command line arguments array.
+    // Output: None (void). Boots up the Spring ApplicationContext.
+    public static void main(String[] args) {
+        SpringApplication.run(BackendApplication.class, args);
+    }
 }

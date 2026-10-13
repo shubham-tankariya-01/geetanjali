@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  layout.html: Master page layout fragment for Geetanjali.
+  In EJS, this is like your main `boilerplate.ejs` or partial headers/footers.
+-->
+<head th:fragment="page-head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
+    <title th:text="${pageTitle != null ? pageTitle + ' - ' + shopName : shopName}">Geetanjali</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+
+    <!-- Top Bar: Shop Name + Logged-in Staff Info + Logout Form -->
+    <header th:fragment="top-bar" class="top-bar">
+        <div class="brand">
+            <h1 th:text="${shopName}">Geetanjali Tailors</h1>
+            <span class="tagline">Tailor Shop System</span>
+        </div>
+        <div class="user-actions" th:if="${currentUser != null}">
+            <div class="user-badge">
+                <span>Tailor: <strong th:text="${currentUser.fullName}">Shubham</strong></span>
+                <span class="role-tag" th:text="${currentUser.role}">OWNER</span>
+            </div>
+            <!-- Logout via POST to adhere to Spring Security CSRF requirements -->
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- Flash Message Area: Displays success or error alert banners -->
+    <div th:fragment="flash-messages" class="flash-area" th:if="${successMessage != null or errorMessage != null or loginError != null or logoutMessage != null}">
+        <div th:if="${successMessage != null}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage != null}" class="alert alert-danger" th:text="${errorMessage}"></div>
+        <div th:if="${loginError != null}" class="alert alert-danger" th:text="${loginError}"></div>
+        <div th:if="${logoutMessage != null}" class="alert alert-success" th:text="${logoutMessage}"></div>
+    </div>
+
+    <!-- Bottom Navigation Bar: Quick action tabs -->
+    <nav th:fragment="bottom-bar" class="bottom-bar">
+        <a th:href="@{/}" class="nav-link" th:classappend="${currentUri == '/' ? 'active' : ''}">
+            <span>🏠 Home</span>
+        </a>
+        <a th:href="@{/orders/new}" class="nav-link nav-link-cta">
+            <span>➕ New Order</span>
+        </a>
+        <a th:href="@{/customers}" class="nav-link" th:classappend="${currentUri != null and currentUri.startsWith('/customers') ? 'active' : ''}">
+            <span>👥 Customers</span>
+        </a>
+        <a th:href="@{/settings}" class="nav-link" th:classappend="${currentUri != null and currentUri.startsWith('/settings') ? 'active' : ''}">
+            <span>⚙️ More</span>
+        </a>
+    </nav>
+
+</body>
+</html>

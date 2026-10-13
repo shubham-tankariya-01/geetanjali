@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  error/403.html: Displayed when a logged-in user lacks permission (HTTP 403 Forbidden).
+  For example, when a Tailor attempts to access Owner-only administration features.
+-->
+<head th:replace="~{fragments/layout :: page-head('Access Denied (403)')}"></head>
+<body>
+
+    <!-- Top bar displaying shop brand and staff info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages area -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <div class="card" style="border-left: 4px solid var(--secondary-color);">
+            <h2>Access Denied (403)</h2>
+            <p th:text="${errorMessage != null ? errorMessage : 'You do not have permission to view or perform this action. Only the shop owner has administrative access.'}">
+                You do not have permission to view or perform this action. Only the shop owner has administrative access.
+            </p>
+            <div style="margin-top: 1.5rem;">
+                <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

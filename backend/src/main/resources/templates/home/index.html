@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  home/index.html: Temporary Home landing page.
+  Confirms project skeleton is wired and displays the logged-in tailor/owner name.
+-->
+<head th:replace="~{fragments/layout :: page-head('Home')}"></head>
+<body>
+
+    <!-- Top bar with shop name and logout -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash message area for alerts -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <div class="card">
+            <h2>Geetanjali is running</h2>
+            <p style="margin-bottom: 1rem; font-size: 1.1rem;">
+                Welcome, <strong th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Tailor</strong>!
+            </p>
+            <p>
+                The project skeleton, database schema, and security layers are fully wired.
+                Role: <span class="role-tag" th:text="${currentUser != null ? currentUser.role : 'GUEST'}">OWNER</span>
+            </p>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <a th:if="${isOwner}" th:href="@{/signup}" class="btn btn-primary">➕ Register Staff Member</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

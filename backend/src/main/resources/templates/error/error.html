@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- error/error.html: Friendly error page shown when an unhandled error happens -->
+<head th:replace="~{fragments/layout :: page-head('Error')}"></head>
+<body>
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+    <div class="container">
+        <div class="card" style="border-left: 4px solid #e63946;">
+            <h2>Something went wrong</h2>
+            <p th:text="${errorMessage != null ? errorMessage : 'An unexpected error occurred. Please navigate back to home.'}">An unexpected error occurred.</p>
+            <div style="margin-top: 1.5rem;">
+                <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+            </div>
+        </div>
+    </div>
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+</body>
+</html>

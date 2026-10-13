@@ -1,0 +1,280 @@
+/* app.css - Geetanjali Tailor Shop Styling (Simple, Desktop-First) */
+
+:root {
+    --primary-color: #7b2cbf;
+    --primary-hover: #5a189a;
+    --secondary-color: #e0a96d;
+    --bg-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --text-primary: #212529;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --success-bg: #d1e7dd;
+    --success-text: #0f5132;
+    --danger-bg: #f8d7da;
+    --danger-text: #842029;
+    --warning-bg: #fff3cd;
+    --warning-text: #664d03;
+    --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-stack);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header & Top Bar */
+.top-bar {
+    background-color: #1a1a2e;
+    color: #ffffff;
+    padding: 0.75rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.top-bar .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.top-bar .brand h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #e0a96d;
+}
+
+.top-bar .brand .tagline {
+    font-size: 0.85rem;
+    color: #a0a0b0;
+}
+
+.top-bar .user-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.user-badge .role-tag {
+    background-color: var(--primary-color);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.logout-form button {
+    background: transparent;
+    border: 1px solid #4a4a68;
+    color: #e0e0e0;
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.logout-form button:hover {
+    background-color: #e63946;
+    border-color: #e63946;
+    color: #ffffff;
+}
+
+/* Layout container */
+.container {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    flex: 1;
+    width: 100%;
+}
+
+/* Flash message area */
+.flash-area {
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    padding: 0.85rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.alert-success {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid #badbcc;
+}
+
+.alert-danger {
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
+    border: 1px solid #f5c2c7;
+}
+
+/* Cards & Content */
+.card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #1a1a2e;
+}
+
+.card p {
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-weight: 500;
+    text-align: center;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.95rem;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #333333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.95rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.2);
+}
+
+.field-error {
+    color: #e63946;
+    font-size: 0.82rem;
+    margin-top: 0.35rem;
+}
+
+/* Auth Pages (Login / Signup) */
+.auth-wrapper {
+    max-width: 440px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-header h2 {
+    font-size: 1.7rem;
+    color: #1a1a2e;
+}
+
+.auth-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.35rem;
+}
+
+/* Bottom Navigation Bar */
+.bottom-bar {
+    background-color: #ffffff;
+    border-top: 1px solid var(--border-color);
+    padding: 0.6rem 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.03);
+    position: sticky;
+    bottom: 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--primary-color);
+    background-color: rgba(123, 44, 191, 0.08);
+}
+
+.nav-link-cta {
+    background-color: var(--primary-color);
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.nav-link-cta:hover {
+    background-color: var(--primary-hover);
+}

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- payments/index.html: Payments and accounts view (feature coming in next task) -->
+<head th:replace="~{fragments/layout :: page-head('Payments')}"></head>
+<body>
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+        <div class="card">
+            <h2>Payments &amp; Ledger</h2>
+            <p>Payments recording and reconciliation will be activated in the next development stage.</p>
+        </div>
+    </div>
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!-- settings/index.html: Shop settings view (feature coming in next task) -->
+<head th:replace="~{fragments/layout :: page-head('Settings')}"></head>
+<body>
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+    <div class="container">
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+        <div class="card">
+            <h2>Shop Settings</h2>
+            <p>Garment types, measurement field configurations, and staff management will be placed here.</p>
+            <div style="margin-top: 1.5rem;" th:if="${isOwner}">
+                <a th:href="@{/signup}" class="btn btn-primary">➕ Add Staff Member</a>
+            </div>
+        </div>
+    </div>
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+</body>
+</html>

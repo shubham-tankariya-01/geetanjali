@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  error/404.html: Displayed when a URL, customer, garment, or order is not found (HTTP 404 Not Found).
+  Spring Boot automatically serves this template whenever a 404 error occurs.
+-->
+<head th:replace="~{fragments/layout :: page-head('Page Not Found (404)')}"></head>
+<body>
+
+    <!-- Top bar displaying shop brand and staff info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages area -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <div class="card" style="border-left: 4px solid #e63946;">
+            <h2>Page Not Found (404)</h2>
+            <p th:text="${errorMessage != null ? errorMessage : 'The page, order, or customer record you requested does not exist.'}">
+                The page, order, or customer record you requested does not exist.
+            </p>
+            <div style="margin-top: 1.5rem;">
+                <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

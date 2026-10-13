@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  error/5xx.html: Displayed when an unhandled server error occurs (HTTP 500 Internal Server Error).
+  Spring Boot automatically serves this template whenever a 5xx series server error occurs.
+-->
+<head th:replace="~{fragments/layout :: page-head('Server Error (500)')}"></head>
+<body>
+
+    <!-- Top bar displaying shop brand and staff info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages area -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <div class="card" style="border-left: 4px solid #d90429;">
+            <h2>Server Error (500)</h2>
+            <p th:text="${errorMessage != null ? errorMessage : 'An unexpected error occurred while processing your request. Please try again or return to the main dashboard.'}">
+                An unexpected error occurred while processing your request. Please try again or return to the main dashboard.
+            </p>
+            <div style="margin-top: 1.5rem;">
+                <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>
