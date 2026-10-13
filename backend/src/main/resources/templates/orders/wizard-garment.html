@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  orders/wizard-garment.html: Order Creation Wizard - Step 2: Garment Category Selection.
+  In EJS, this corresponds to `views/orders/wizard-garment.ejs`.
+-->
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 2: Choose Garment')}"></th:block>
+    <!-- Wizard interactive client script -->
+    <script th:src="@{/js/new-order.js}" defer></script>
+</head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Progress bar for Step 2 -->
+        <div th:replace="~{fragments/layout :: wizard-progress(2)}"></div>
+
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Customer Context Summary Bar -->
+            <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem;">
+                <div>
+                    <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Customer Selected</span>
+                    <div style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin-top: 0.2rem;">
+                        👤 <span th:text="${draft.customerName}">Ramesh Patel</span>
+                        <span style="font-weight: normal; color: #64748b; font-size: 0.95rem; margin-left: 0.5rem;">
+                            (📱 <span th:text="${draft.customerMobile}">9876543210</span>)
+                        </span>
+                    </div>
+                </div>
+                <a th:href="@{/orders/new}" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                    ✎ Change Customer
+                </a>
+            </div>
+
+            <!-- Garment Selection Card -->
+            <div class="card">
+                <div style="margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0; color: #1e293b;">Step 2: Choose Garment Category</h2>
+                    <p class="text-muted" style="margin-top: 0.35rem; font-size: 0.95rem;">
+                        Select the garment to stitch for this item. Measurements and styling options will adapt automatically.
+                    </p>
+                </div>
+
+                <form th:action="@{/orders/new/garment}" method="post">
+                    <!-- Interactive Garment Grid -->
+                    <div class="garment-selection-grid">
+                        <label th:each="g : ${garments}"
+                               class="garment-card"
+                               th:classappend="${draft.currentGarment != null && draft.currentGarment.id == g.id ? 'selected' : ''}">
+                            <input type="radio"
+                                   name="garmentId"
+                                   th:value="${g.id}"
+                                   th:checked="${draft.currentGarment != null && draft.currentGarment.id == g.id}"
+                                   required>
+
+                            <!-- Garment Category Icon -->
+                            <div class="garment-icon">
+                                <span th:if="${g.name == 'Shirt'}">👔</span>
+                                <span th:if="${g.name == 'Pant'}">👖</span>
+                                <span th:if="${g.name == 'Kurta'}">👘</span>
+                                <span th:if="${g.name == 'Blouse'}">🥻</span>
+                                <span th:if="${g.name != 'Shirt' && g.name != 'Pant' && g.name != 'Kurta' && g.name != 'Blouse'}">🧵</span>
+                            </div>
+
+                            <div class="garment-title" th:text="${g.name}">Shirt</div>
+                            <span class="text-muted" style="font-size: 0.8rem;">Custom Stitching</span>
+                        </label>
+                    </div>
+
+                    <!-- Navigation Actions -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 1.25rem;">
+                        <a th:href="@{/orders/new}" class="btn btn-outline">
+                            ← Back to Customer
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Continue to Measurements →
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

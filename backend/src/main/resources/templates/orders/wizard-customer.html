@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  orders/wizard-customer.html: Order Creation Wizard - Step 1: Customer Identification.
+  In EJS, this corresponds to `views/orders/wizard-customer.ejs`.
+  Features live AJAX lookup via /static/js/new-order.js.
+-->
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 1: Customer')}"></th:block>
+    <!-- Wizard interactive client script -->
+    <script th:src="@{/js/new-order.js}" defer></script>
+</head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Progress bar for Step 1 -->
+        <div th:replace="~{fragments/layout :: wizard-progress(1)}"></div>
+
+        <!-- Wizard Step 1 Card -->
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; color: #1e293b;">Step 1: Customer Details</h2>
+                <p class="text-muted" style="margin-top: 0.35rem; font-size: 0.95rem;">
+                    Enter the customer's 10-digit mobile number. Existing customer details will be looked up automatically.
+                </p>
+            </div>
+
+            <form th:action="@{/orders/new/customer}" th:object="${customerStepForm}" method="post">
+                <!-- Hidden fields for customer ID and optional existing order -->
+                <input type="hidden" id="customerId" th:field="*{customerId}">
+                <input type="hidden" th:field="*{existingOrderId}">
+
+                <!-- Mobile Number Input -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="customerMobile" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin-bottom: 0.35rem;">
+                        <span>📱 Mobile Number</span>
+                        <span id="lookupBadge" class="badge" style="display: none; font-size: 0.75rem;"></span>
+                    </label>
+                    <input type="tel"
+                           id="customerMobile"
+                           th:field="*{mobile}"
+                           class="form-control"
+                           placeholder="Enter 10-digit mobile (e.g. 9876543210)"
+                           maxlength="10"
+                           required
+                           autofocus>
+                    <div class="field-error" th:if="${#fields.hasErrors('mobile')}" th:errors="*{mobile}"></div>
+
+                    <!-- Live customer history snippet (populated dynamically by new-order.js) -->
+                    <div id="customerHistoryInfo" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 0.75rem 1rem; margin-top: 0.75rem; font-size: 0.85rem; color: #166534;">
+                    </div>
+                </div>
+
+                <!-- Customer Full Name Input -->
+                <div class="form-group" style="margin-bottom: 1.75rem;">
+                    <label for="customerName" style="font-weight: 600; margin-bottom: 0.35rem; display: block;">
+                        👤 Customer Full Name
+                    </label>
+                    <input type="text"
+                           id="customerName"
+                           th:field="*{name}"
+                           class="form-control"
+                           placeholder="Enter customer name (e.g. Ramesh Patel)"
+                           required>
+                    <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 1.25rem;">
+                    <a th:href="@{/}" class="btn btn-outline">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        Continue to Garment Selection →
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sticky bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

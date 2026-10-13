@@ -41,6 +41,29 @@
         <div th:if="${logoutMessage != null}" class="alert alert-success" th:text="${logoutMessage}"></div>
     </div>
 
+    <!-- Order Wizard Progress Bar: Displays current step in the order creation wizard -->
+    <div th:fragment="wizard-progress(currentStep)" class="wizard-progress-bar">
+        <div class="progress-step" th:classappend="${currentStep == 1 ? 'active' : (currentStep > 1 ? 'completed' : '')}">
+            <div class="step-circle">1</div>
+            <span class="step-title">Customer</span>
+        </div>
+        <div class="progress-connector" th:classappend="${currentStep > 1 ? 'completed' : ''}"></div>
+        <div class="progress-step" th:classappend="${currentStep == 2 ? 'active' : (currentStep > 2 ? 'completed' : '')}">
+            <div class="step-circle">2</div>
+            <span class="step-title">Garment</span>
+        </div>
+        <div class="progress-connector" th:classappend="${currentStep > 2 ? 'completed' : ''}"></div>
+        <div class="progress-step" th:classappend="${currentStep == 3 ? 'active' : (currentStep > 3 ? 'completed' : '')}">
+            <div class="step-circle">3</div>
+            <span class="step-title">Measurements</span>
+        </div>
+        <div class="progress-connector" th:classappend="${currentStep > 3 ? 'completed' : ''}"></div>
+        <div class="progress-step" th:classappend="${currentStep == 4 ? 'active' : ''}">
+            <div class="step-circle">4</div>
+            <span class="step-title">Review &amp; Bill</span>
+        </div>
+    </div>
+
     <!-- Bottom Navigation Bar: Quick action tabs -->
     <nav th:fragment="bottom-bar" class="bottom-bar">
         <a th:href="@{/}" class="nav-link" th:classappend="${currentUri == '/' ? 'active' : ''}">

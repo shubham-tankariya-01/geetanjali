@@ -1,0 +1,106 @@
+package com.geetanjali.backend.service;
+
+import com.geetanjali.backend.dto.draft.OrderDraft;
+import com.geetanjali.backend.dto.draft.OrderDraftItem;
+import com.geetanjali.backend.dto.form.CustomerStepForm;
+import com.geetanjali.backend.entity.Customer;
+import com.geetanjali.backend.entity.Garment;
+import com.geetanjali.backend.exception.ResourceNotFoundException;
+import com.geetanjali.backend.repository.CustomerRepository;
+import com.geetanjali.backend.repository.GarmentRepository;
+import com.geetanjali.backend.util.PhoneNumbers;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
+
+// OrderWizardService: Coordinates the multi-step order placement wizard and manages the session draft.
+// In Express, this corresponds to helper business functions manipulating `req.session.orderDraft`.
+//
+// @Service = Tells Spring to instantiate and manage this class as a business service bean.
+@Service
+// @Transactional(readOnly = true) = Default read-only transactions since wizard steps mainly read and mutate in-memory session.
+@Transactional(readOnly = true)
+public class OrderWizardService {
+
+    private final OrderDraft orderDraft;
+    private final CustomerRepository customerRepository;
+    private final GarmentRepository garmentRepository;
+
+    // Constructor injection: Spring provides the session-scoped OrderDraft proxy and repository beans.
+    // Inputs: orderDraft (OrderDraft), customerRepository (CustomerRepository), garmentRepository (GarmentRepository).
+    public OrderWizardService(OrderDraft orderDraft,
+                              CustomerRepository customerRepository,
+                              GarmentRepository garmentRepository) {
+        this.orderDraft = orderDraft;
+        this.customerRepository = customerRepository;
+        this.garmentRepository = garmentRepository;
+    }
+
+    // Returns the active session-scoped order draft bean.
+    // Inputs: None.
+    // Output: OrderDraft - active shopping cart draft.
+    public OrderDraft getDraft() {
+        return orderDraft;
+    }
+
+    // Starts a fresh order wizard session: resets the draft and clears all previous state.
+    // Used by GET /orders/new.
+    // Inputs: None.
+    // Output: None (void).
+    public void startFresh() {
+        orderDraft.reset();
+    }
+
+    // Starts the order wizard pre-populated for a specific existing customer.
+    // For example, when a tailor clicks "Create New Order" from a customer profile page (/customers/42).
+    // Inputs: customerId (Long) - database ID of the chosen customer.
+    // Output: None (void).
+    public void startForCustomer(Long customerId) {
+        orderDraft.reset();
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
+
+        orderDraft.setCustomer(customer.getId(), customer.getName(), customer.getMobile());
+    }
+
+    // Step 1: Sets the chosen customer on the order draft from the submitted form.
+    // Normalizes the mobile number and checks if the customer already exists in PostgreSQL.
+    // If existing, associates their primary key ID. If new, stores the name and mobile for creation upon final order placement.
+    //
+    // Input: form (CustomerStepForm) - validated form data from wizard step 1.
+    // Output: None (void).
+    public void setCustomer(CustomerStepForm form) {
+        String normalizedMobile = PhoneNumbers.normalize(form.getMobile());
+
+        // Check if a customer with this mobile exists in the database
+        Optional<Customer> existingOpt = customerRepository.findByMobile(normalizedMobile);
+
+        if (existingOpt.isPresent()) {
+            Customer existing = existingOpt.get();
+            // Link to the existing customer
+            orderDraft.setCustomer(existing.getId(), existing.getName(), existing.getMobile());
+        } else {
+            // New customer to be created when the order is committed
+            orderDraft.setCustomer(null, form.getName().trim(), normalizedMobile);
+        }
+
+        // Record optional existing order ID if adding to an open order
+        orderDraft.setExistingOrderId(form.getExistingOrderId());
+    }
+
+    // Step 2: Selects a garment category for the item currently being added to the draft.
+    // Verifies that the garment exists in the database, sets it as current on the draft,
+    // and initializes the working OrderDraftItem.
+    //
+    // Input: garmentId (Long) - chosen garment primary key (e.g. 1 for Shirt).
+    // Output: Garment - the loaded garment entity.
+    public Garment selectGarment(Long garmentId) {
+        Garment garment = garmentRepository.findById(garmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Garment not found with id: " + garmentId));
+
+        orderDraft.setCurrentGarment(garment);
+        orderDraft.setCurrentItem(new OrderDraftItem(garment));
+
+        return garment;
+    }
+}
