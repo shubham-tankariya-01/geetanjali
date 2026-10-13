@@ -3,7 +3,7 @@
 > **Document Scope**: Part 1 of 4 — System Foundation, Directory Rationale, Core Infrastructure, Security, Utilities, DTOs, Enums, and Exceptions.  
 > **Project**: Geetanjali Tailor Shop Management Web Application  
 > **Target Audience**: Student pair programmer learning Spring Boot during a 24-hour hackathon.  
-> **Version / Git Commit**: `Stage 1 - Step 1: Shared foundation` (`1d14e6f`)
+> **Version / Git Commit**: `Stage 1 - Step 2: Garments and customers read side` (`b442392`)
 
 ---
 
@@ -38,6 +38,16 @@ Geetanjali automates this workflow desktop-first, prioritizing fast keyboard ent
    * All currency amounts are represented using `java.math.BigDecimal` (never `float` or `double`) to eliminate IEEE 754 floating-point rounding errors.
    * "Today" is always obtained from an injected `java.time.Clock` bean pinned to `Asia/Kolkata` (IST), never `LocalDate.now()`.
 5. **Database Immutability**: Flyway migrations `V1`, `V2`, `V3` are immutable once applied. New schema changes require a new incremented migration file (`V4`, etc.).
+
+### Step 2 Architectural Patterns & Concepts
+1. **Derived Queries vs. Custom JPQL Queries**:
+   * *Derived Query*: Spring Data JPA parses method names directly into SQL. For example, `countByCustomerId(Long customerId)` automatically generates `SELECT count(*) FROM customer_order WHERE customer_id = ?`. Similarly, `findAllByOrderByNameAsc()` translates to `SELECT * FROM customer ORDER BY name ASC`.
+   * *Custom JPQL Query (`@Query`)*: When queries involve multiple `OR` conditions, case-insensitivity, or complex joins, derived method names become unreadably long (e.g. `findByNameContainingIgnoreCaseOrMobileContaining(name, mobile)`). Using `@Query("SELECT c FROM Customer c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.mobile LIKE CONCAT('%', :query, '%') ORDER BY c.name ASC")` keeps Java code clear and uses **bound parameters** (`:query`) to completely eliminate SQL injection vulnerabilities.
+2. **`@Controller` vs. `@RestController` (HTML Views vs. JSON Payloads)**:
+   * `@Controller`: Used for server-rendered web pages. Handler methods return a template view name `String` (e.g. `"customers/index"` or `"customers/detail"`), which Thymeleaf resolves and merges with model attributes to output full HTML. In Express, this is `res.render('customers/index')`.
+   * `@RestController`: Combines `@Controller` and `@ResponseBody`. Instead of rendering an HTML template, Spring's Jackson converter serializes the return value directly into JSON and writes it into the HTTP response body. In Express, this is `res.json({ found: true, name: '...' })`.
+3. **Data Normalization Before Storage or Search**:
+   * All incoming mobile numbers are processed via `PhoneNumbers.normalize(mobile)` before calling database queries or lookups, stripping `+91`, spaces, hyphens, and trunk zeros.
 
 ---
 

@@ -422,12 +422,25 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
 
 #### Repository 3: [`CustomerRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/CustomerRepository.java)
 * **Interface Signature**: `public interface CustomerRepository extends JpaRepository<Customer, Long>`
-* **Custom Query Methods**:
+* **Custom & Derived Query Methods**:
   1. `Optional<Customer> findByMobile(String mobile)`
      * *Parameters*: `mobile` (`String`) — Customer's 10-digit mobile number.
      * *Generated SQL*: `SELECT * FROM customer WHERE mobile = ?`
      * *Returns*: `Optional<Customer>`.
-     * *Called by*: `CustomerService` and AJAX customer search APIs.
+     * *Called by*: `CustomerService.findByMobile()` and `CustomerApiController.lookupCustomer()`.
+  2. `List<Customer> findAllByOrderByNameAsc()`
+     * *Parameters*: None.
+     * *Derived Query*: Spring Data JPA parses the method name and automatically generates `SELECT * FROM customer ORDER BY name ASC`.
+     * *Returns*: `List<Customer>` — All customers sorted alphabetically by full name for the default directory view.
+     * *Called by*: `CustomerService.search()` when the search term is empty or omitted.
+  3. `List<Customer> searchByNameOrMobile(@Param("query") String query)`
+     * *Parameters*: `query` (`String`) — Search keyword (partial name or phone digits).
+     * *Custom JPQL Query*:
+       `@Query("SELECT c FROM Customer c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.mobile LIKE CONCAT('%', :query, '%') ORDER BY c.name ASC")`
+     * *Why Custom Query with Bound Parameter*:
+       Using JPQL `@Query` with named parameter `:query` ensures the search term is bound safely, completely preventing SQL injection. `LOWER()` guarantees case-insensitive matching across names (e.g., "ramesh", "Ramesh", "RAMESH"). A custom query was chosen over a derived query because a derived equivalent (`findByNameContainingIgnoreCaseOrMobileContaining`) would be awkwardly verbose and require passing the same parameter twice.
+     * *Returns*: `List<Customer>` — Matching customers ordered alphabetically by name.
+     * *Called by*: `CustomerService.search()` and `CustomerController.listCustomers()`.
 
 #### Repository 4: [`GarmentRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentRepository.java)
 * **Interface Signature**: `public interface GarmentRepository extends JpaRepository<Garment, Long>`
@@ -440,7 +453,7 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
      * *Parameters*: None.
      * *Generated SQL*: `SELECT * FROM garment WHERE active = true ORDER BY sort_order ASC`
      * *Returns*: `List<Garment>`.
-     * *Called by*: Order creation wizard to display active clothing tiles.
+     * *Called by*: `GarmentService.listActiveGarments()` for order category tiles.
 
 #### Repository 5: [`GarmentFieldRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentFieldRepository.java)
 * **Interface Signature**: `public interface GarmentFieldRepository extends JpaRepository<GarmentField, Long>`
@@ -449,7 +462,7 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
      * *Parameters*: `garmentId` (`Long`) — Parent garment ID.
      * *Generated SQL*: `SELECT * FROM garment_field WHERE garment_id = ? AND active = true ORDER BY sort_order ASC`
      * *Returns*: `List<GarmentField>` — List of active measurement boxes (Chest, Waist, etc.).
-     * *Called by*: Measurement recording screens.
+     * *Called by*: `GarmentService.getActiveFields(garmentId)` for measurement forms.
 
 #### Repository 6: [`MeasurementRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/MeasurementRepository.java)
 * **Interface Signature**: `public interface MeasurementRepository extends JpaRepository<Measurement, Long>`
@@ -471,7 +484,7 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
 
 #### Repository 8: [`CustomerOrderRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/CustomerOrderRepository.java)
 * **Interface Signature**: `public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Long>`
-* **Custom Query Methods**:
+* **Custom & Derived Query Methods**:
   1. `Optional<CustomerOrder> findByOrderNo(Long orderNo)`
      * *Parameters*: `orderNo` (`Long`) — Sequential bill number (e.g., 1001).
      * *Generated SQL*: `SELECT * FROM customer_order WHERE order_no = ?`
@@ -482,6 +495,16 @@ All repositories reside in `com.geetanjali.backend.repository`, extend `JpaRepos
      * *Generated SQL*: `SELECT * FROM customer_order WHERE customer_id = ? ORDER BY created_at DESC`
      * *Returns*: `List<CustomerOrder>` — Order history for a specific customer.
      * *Called by*: Customer profile page.
+  3. `long countByCustomerId(Long customerId)`
+     * *Parameters*: `customerId` (`Long`).
+     * *Derived Query*: Spring Data JPA generates `SELECT count(*) FROM customer_order WHERE customer_id = ?`.
+     * *Returns*: `long` — Total count of earlier orders placed by this customer.
+     * *Called by*: `CustomerService.countEarlierOrders(customerId)` for customer detail cards and lookup API.
+  4. `Optional<CustomerOrder> findFirstByCustomerIdOrderByCreatedAtDesc(Long customerId)`
+     * *Parameters*: `customerId` (`Long`).
+     * *Derived Query*: Spring Data JPA generates `SELECT * FROM customer_order WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1`.
+     * *Returns*: `Optional<CustomerOrder>` — Customer's single most recent order.
+     * *Called by*: `CustomerService.findLastOrderDate(customerId)` to compute the date of their last visit.
 
 #### Repository 9: [`OrderItemRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/OrderItemRepository.java)
 * **Interface Signature**: `public interface OrderItemRepository extends JpaRepository<OrderItem, Long>`

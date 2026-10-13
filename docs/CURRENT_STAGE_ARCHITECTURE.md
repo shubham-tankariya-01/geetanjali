@@ -1,6 +1,6 @@
 # Geetanjali Tailor Shop System — Exhaustive Architectural & Code Reference
 
-> **Project Stage**: Stage 1, Step 1 (Shared Foundation Completed)  
+> **Project Stage**: Stage 1, Step 2 (Garments and customers read side Completed)  
 > **Target App**: Geetanjali — Tailor Shop Management Web Application  
 > **Stack**: Java 21, Spring Boot 4.1.1, Spring MVC + Thymeleaf, Spring Data JPA, PostgreSQL 17, Flyway 10, Spring Security 6, Jakarta Validation, Lombok, DevTools  
 > **Base Package**: `com.geetanjali.backend`
@@ -34,6 +34,8 @@ graph TD
     subgraph ControllerTier ["Web Presentation Tier (controller/)"]
         AuthCtrl["AuthController (/login, /signup)"]
         HomeCtrl["HomeController (/)"]
+        CustCtrl["CustomerController (/customers, /customers/{id})"]
+        CustApiCtrl["CustomerApiController (/api/customers/lookup)"]
         ModelAdvice["GlobalModelAdvice (@ControllerAdvice)"]
         ExHandler["GlobalExceptionHandler (@ControllerAdvice)"]
     end
@@ -41,6 +43,8 @@ graph TD
     subgraph ServiceTier ["Business Logic Tier (service/)"]
         AuthSvc["AuthService (@Transactional)"]
         ShopSvc["ShopService"]
+        GarmentSvc["GarmentService"]
+        CustSvc["CustomerService"]
         PhotoStorage["PhotoStorageService / LocalDiskPhotoStorageService"]
     end
 
@@ -61,6 +65,10 @@ graph TD
     ModelAdvice -.->|Injects shopName, currentUser| ControllerTier
     ExHandler -.->|Catches Exceptions| ControllerTier
     ControllerTier -->|Calls Business Logic| ServiceTier
+    CustCtrl --> CustSvc
+    CustApiCtrl --> CustSvc
+    CustSvc --> Repos
+    GarmentSvc --> Repos
     ServiceTier -->|CRUD & Custom Queries| Repos
     Repos -->|Hibernate SQL| Postgres
     Flyway -->|Initializes Schema on Startup| Postgres
@@ -299,6 +307,49 @@ graph TD
     * **Returns**: `"home/index"` template view name.
     * **Destination / Flow**: Renders `home/index.html` dashboard with global data injected by `GlobalModelAdvice`.
 
+#### 10b. [`CustomerApiController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/api/CustomerApiController.java)
+* **Real-Life Analogy**: The quick lookup intercom at the tailor desk where staff speak a mobile number and instantly hear the customer's name and previous order count.
+* **Class Responsibility**: Annotated with `@RestController` and `@RequestMapping("/api/customers")`. Provides fast AJAX lookup endpoints returning JSON directly via Jackson HTTP message converters without Thymeleaf HTML rendering.
+* **Injected Dependencies**:
+  * `private final CustomerService customerService`
+* **Functions**:
+  * `public CustomerApiController(CustomerService customerService)` — Constructor injection.
+  * `public CustomerLookupResponse lookupCustomer(String mobile)`
+    * **Annotation**: `@GetMapping("/lookup")`
+    * **Parameters**: `mobile` (`@RequestParam(name = "mobile") String`) — Mobile number query parameter.
+    * **In-built Functions Used**:
+      * `PhoneNumbers.normalize(mobile)` — Strips spaces, hyphens, and +91 prefix to standard 10 digits.
+      * `customerService.findByMobile(normalized)` — Queries customer by normalized number.
+      * `customerService.countEarlierOrders(customer.getId())` — Aggregates prior order count.
+      * `customerService.findLastOrderDate(customer.getId())` — Obtains latest order date in Asia/Kolkata timezone.
+      * `CustomerLookupResponse.found(...)` / `CustomerLookupResponse.notFound()` — Factory records.
+    * **Returns**: `CustomerLookupResponse` record DTO (serialized directly to JSON `{found, name, orderCount, lastOrderDate}`).
+    * **Destination / Flow**: Consumed by client-side JavaScript in the order wizard to auto-fill customer details.
+
+#### 10c. [`CustomerController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/CustomerController.java)
+* **Real-Life Analogy**: The head receptionist's physical customer directory book, complete with an index tab and individual customer profile folders.
+* **Class Responsibility**: Standard MVC controller mapped to `/customers`. Handles directory listing with search filtering and individual customer profile detail views.
+* **Injected Dependencies**:
+  * `private final CustomerService customerService`
+* **Functions**:
+  * `public CustomerController(CustomerService customerService)` — Constructor injection.
+  * `public String listCustomers(String query, Model model)`
+    * **Annotation**: `@GetMapping` (maps to `/customers`)
+    * **Parameters**: `query` (`@RequestParam(name = "q", required = false) String`), `model` (`Model`).
+    * **Flow & Logic**:
+      * Trims query whitespace if present.
+      * Calls `customerService.search(trimmedQuery)`.
+      * Populates model with `customers`, `query`, and `totalCount`.
+    * **Returns**: `"customers/index"` template view name.
+  * `public String showCustomerDetail(Long id, Model model)`
+    * **Annotation**: `@GetMapping("/{id}")` (maps to `/customers/{id}`)
+    * **Parameters**: `id` (`@PathVariable("id") Long`), `model` (`Model`).
+    * **Flow & Logic**:
+      * Calls `customerService.getById(id)` (throws `ResourceNotFoundException` if missing -> 404 page).
+      * Calls `customerService.countEarlierOrders(id)` and `customerService.findLastOrderDate(id)`.
+      * Populates model with `customer`, `orderCount`, and `lastOrderDate`.
+    * **Returns**: `"customers/detail"` template view name.
+
 ---
 
 ### Group D: Service Layer (`service/`, `service/storage/`)
@@ -402,6 +453,54 @@ graph TD
     * **Returns**: `void`.
     * **Destination / Flow**: Called when order items or photos are deleted.
 
+#### 14b. [`GarmentService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/GarmentService.java)
+* **Real-Life Analogy**: The tailor shop's catalog keeper who knows all active stitchable garments (Shirt, Pant, Kurta, Blouse) and the exact body measurement measurements required for each.
+* **Class Responsibility**: Service layer handling garment queries and measurement field templates. Annotated with `@Service` and `@Transactional(readOnly = true)`.
+* **Injected Dependencies**:
+  * `private final GarmentRepository garmentRepository`
+  * `private final GarmentFieldRepository garmentFieldRepository`
+* **Functions**:
+  * `public GarmentService(GarmentRepository garmentRepository, GarmentFieldRepository garmentFieldRepository)` — Constructor injection.
+  * `public List<Garment> listActiveGarments()`
+    * **Parameters**: None.
+    * **In-built Functions Used**: `garmentRepository.findByActiveTrueOrderByDisplayOrderAsc()`.
+    * **Returns**: Ordered `List<Garment>` of active garments.
+  * `public Garment getGarmentById(Long id)`
+    * **Parameters**: `id` (`Long`).
+    * **In-built Functions Used**: `garmentRepository.findById(id).orElseThrow(...)`.
+    * **Returns**: `Garment` entity or throws `ResourceNotFoundException`.
+  * `public List<GarmentField> getActiveFields(Long garmentId)`
+    * **Parameters**: `garmentId` (`Long`).
+    * **Flow & Logic**: First verifies garment exists via `garmentRepository.findById(garmentId)`, then calls `garmentFieldRepository.findByGarmentIdAndActiveTrueOrderByDisplayOrderAsc(garmentId)`.
+    * **Returns**: Ordered `List<GarmentField>` templates for the garment.
+
+#### 14c. [`CustomerService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/CustomerService.java)
+* **Real-Life Analogy**: The shop's master customer relationship manager who searches client records, tracks order frequency, and looks up customer history.
+* **Class Responsibility**: Service layer for customer search, phone normalization lookup, and order history statistics. Annotated with `@Service` and `@Transactional(readOnly = true)`.
+* **Injected Dependencies**:
+  * `private final CustomerRepository customerRepository`
+  * `private final CustomerOrderRepository customerOrderRepository`
+  * `private final Clock clock` (Asia/Kolkata timezone)
+* **Functions**:
+  * `public CustomerService(CustomerRepository customerRepository, CustomerOrderRepository customerOrderRepository, Clock clock)` — Constructor injection.
+  * `public List<Customer> search(String query)`
+    * **Parameters**: `query` (`String`).
+    * **Flow & Logic**: If query is null/blank, calls `customerRepository.findAllByOrderByNameAsc()`. Otherwise calls `customerRepository.searchByNameOrMobile(query.trim())`.
+    * **Returns**: `List<Customer>` sorted by name.
+  * `public Optional<Customer> findByMobile(String mobile)`
+    * **Parameters**: `mobile` (`String`).
+    * **Returns**: `Optional<Customer>` matching normalized mobile.
+  * `public Customer getById(Long id)`
+    * **Parameters**: `id` (`Long`).
+    * **Returns**: `Customer` entity or throws `ResourceNotFoundException`.
+  * `public long countEarlierOrders(Long customerId)`
+    * **Parameters**: `customerId` (`Long`).
+    * **Returns**: `long` count of orders placed by customer.
+  * `public LocalDate findLastOrderDate(Long customerId)`
+    * **Parameters**: `customerId` (`Long`).
+    * **Flow & Logic**: Queries `customerOrderRepository.findFirstByCustomerIdOrderByCreatedAtDesc(customerId)`. Converts UTC `Instant` to `LocalDate` using injected `clock.getZone()`.
+    * **Returns**: `LocalDate` or `null` if no prior orders.
+
 ---
 
 ### Group E: Utilities, DTOs & Exceptions (`util/`, `dto/form/`, `exception/`, `enums/`)
@@ -438,6 +537,18 @@ graph TD
 * **Functions**:
   * `public SignupForm()`, `public SignupForm(shopName, fullName, mobile, password, role)` — Constructors.
   * Standard Getters & Setters for all 5 fields (`getShopName()`, `setShopName()`, etc.).
+
+#### 16b. [`CustomerLookupResponse.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/response/CustomerLookupResponse.java)
+* **Real-Life Analogy**: A compact summary slip handed back instantly when asking "Is this mobile number an existing customer?".
+* **Class Responsibility**: Immutable Java record used as DTO for `CustomerApiController` AJAX responses. Serialized to JSON.
+* **Record Components**:
+  * `boolean found` — Whether the customer exists.
+  * `String name` — Customer full name or null.
+  * `long orderCount` — Number of prior orders.
+  * `LocalDate lastOrderDate` — Date of most recent order in Asia/Kolkata timezone.
+* **Factory Methods**:
+  * `public static CustomerLookupResponse notFound()` — Returns record with `false`, `null`, `0`, `null`.
+  * `public static CustomerLookupResponse found(String name, long orderCount, LocalDate lastOrderDate)` — Returns record with `true`, name, count, date.
 
 #### 17. [`ResourceNotFoundException.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/exception/ResourceNotFoundException.java)
 * **Real-Life Analogy**: A red note stating: *"The requested customer record or garment file could not be found."*
@@ -620,12 +731,12 @@ All repositories extend Spring Data JPA's `JpaRepository<Entity, ID>`.
 | :- | :--- | :--- | :--- |
 | **33** | [`ShopRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/ShopRepository.java) | `Shop` | Inherits standard CRUD: `findAll()`, `findById()`, `save()`. |
 | **34** | [`AppUserRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/AppUserRepository.java) | `AppUser` | • `Optional<AppUser> findByMobile(String mobile)`<br>• `boolean existsByMobile(String mobile)` |
-| **35** | [`CustomerRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/CustomerRepository.java) | `Customer` | • `Optional<Customer> findByMobile(String mobile)` |
-| **36** | [`GarmentRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentRepository.java) | `Garment` | • `Optional<Garment> findByName(String name)`<br>• `List<Garment> findByActiveTrueOrderBySortOrderAsc()` |
-| **37** | [`GarmentFieldRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentFieldRepository.java) | `GarmentField` | • `List<GarmentField> findByGarmentIdAndActiveTrueOrderBySortOrderAsc(Long garmentId)` |
+| **35** | [`CustomerRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/CustomerRepository.java) | `Customer` | • `Optional<Customer> findByMobile(String mobile)`<br>• `List<Customer> findAllByOrderByNameAsc()`<br>• `@Query(...) List<Customer> searchByNameOrMobile(@Param("query") String query)` |
+| **36** | [`GarmentRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentRepository.java) | `Garment` | • `Optional<Garment> findByName(String name)`<br>• `List<Garment> findByActiveTrueOrderByDisplayOrderAsc()` |
+| **37** | [`GarmentFieldRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentFieldRepository.java) | `GarmentField` | • `List<GarmentField> findByGarmentIdAndActiveTrueOrderByDisplayOrderAsc(Long garmentId)` |
 | **38** | [`MeasurementRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/MeasurementRepository.java) | `Measurement` | • `List<Measurement> findByCustomerIdOrderByCreatedAtDesc(Long customerId)` |
 | **39** | [`MeasurementValueRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/MeasurementValueRepository.java) | `MeasurementValue` | • `List<MeasurementValue> findByMeasurementId(Long measurementId)` |
-| **40** | [`CustomerOrderRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/CustomerOrderRepository.java) | `CustomerOrder` | • `Optional<CustomerOrder> findByOrderNo(Long orderNo)`<br>• `List<CustomerOrder> findByCustomerIdOrderByCreatedAtDesc(Long customerId)` |
+| **40** | [`CustomerOrderRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/CustomerOrderRepository.java) | `CustomerOrder` | • `Optional<CustomerOrder> findByOrderNo(Long orderNo)`<br>• `List<CustomerOrder> findByCustomerIdOrderByCreatedAtDesc(Long customerId)`<br>• `long countByCustomerId(Long customerId)`<br>• `Optional<CustomerOrder> findFirstByCustomerIdOrderByCreatedAtDesc(Long customerId)` |
 | **41** | [`OrderItemRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/OrderItemRepository.java) | `OrderItem` | • `List<OrderItem> findByOrderId(Long orderId)`<br>• `List<OrderItem> findByStatus(String status)` |
 | **42** | [`ItemPhotoRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/ItemPhotoRepository.java) | `ItemPhoto` | • `List<ItemPhoto> findByOrderItemId(Long orderItemId)` |
 | **43** | [`PaymentRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/PaymentRepository.java) | `Payment` | • `List<Payment> findByOrderId(Long orderId)` |
@@ -681,6 +792,12 @@ All repositories extend Spring Data JPA's `JpaRepository<Entity, ID>`.
 
 #### 53. Error Templates (`error/403.html`, `error/404.html`, `error/5xx.html`, `error/error.html`)
 * Clean, styled error pages matching the shop theme with return home links.
+
+#### 53b. [`customers/index.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/customers/index.html)
+* Customer directory view featuring search form with auto-focus, live match count, responsive customer data table, tel: phone links, and empty state alert.
+
+#### 53c. [`customers/detail.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/customers/detail.html)
+* Customer profile view with breadcrumbs, contact details card, total order metrics counter, last order date badge, notes display, and back navigation.
 
 #### 54. [`static/css/app.css`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/static/css/app.css)
 * Desktop-first stylesheet defining CSS custom properties, buttons, form cards, navigation bars, and alert banners.
@@ -907,4 +1024,123 @@ sequenceDiagram
     Filter-->>Browser: HTTP 302 Redirect to /login?logout
     Browser->>Browser: GET /login?logout
     Browser-->>Tailor: Renders login page with green banner: "You have been logged out successfully."
+```
+
+---
+
+### Scenario 9: Customer Directory Search & List Flow (`GET /customers?q=...`)
+
+```mermaid
+flowchart TD
+    ReqList["GET /customers?q={query}"] --> SecCheck{"SecurityConfig FilterChain: Authenticated?"}
+    SecCheck -->|No| RedirectLogin["HTTP 302 Redirect to /login"]
+    SecCheck -->|Yes| ModelAdvice["GlobalModelAdvice injects: shopName, currentUser, currentUri='/customers'"]
+    ModelAdvice --> CtrlList["CustomerController.listCustomers(query, model)"]
+    CtrlList --> SvcSearch["CustomerService.search(trimmedQuery)"]
+    SvcSearch --> BranchQuery{"query is null or blank?"}
+    BranchQuery -->|Yes| RepoFindAll["CustomerRepository.findAllByOrderByNameAsc()"]
+    BranchQuery -->|No| RepoSearchQuery["CustomerRepository.searchByNameOrMobile(:query) (Bound Parameter)"]
+    RepoFindAll --> CustList["List<Customer>"]
+    RepoSearchQuery --> CustList
+    CustList --> PopulateModel["Model: customers, query, totalCount"]
+    PopulateModel --> ReturnView["Render customers/index.html"]
+    ReturnView --> RenderBrowser["Displays customer table or empty state alert"]
+```
+
+---
+
+### Scenario 10: Customer Profile Detail & Order History Retrieval Flow (`GET /customers/{id}`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff / Tailor
+    participant Sec as SecurityConfig FilterChain
+    participant Ctrl as CustomerController
+    participant Svc as CustomerService
+    participant CustRepo as CustomerRepository
+    participant OrderRepo as CustomerOrderRepository
+    participant Clock as Injected Clock (Asia/Kolkata)
+    participant View as templates/customers/detail.html
+    participant ErrView as templates/error/404.html
+
+    Tailor->>Sec: GET /customers/42
+    Sec->>Ctrl: showCustomerDetail(id=42, model)
+    Ctrl->>Svc: getById(42)
+    Svc->>CustRepo: findById(42)
+    alt Customer Not Found
+        CustRepo-->>Svc: Optional.empty()
+        Svc-->>Ctrl: Throws ResourceNotFoundException
+        Ctrl-->>ErrView: GlobalExceptionHandler renders 404.html (Status 404)
+    else Customer Found
+        CustRepo-->>Svc: Customer entity
+        Svc-->>Ctrl: Customer entity
+        Ctrl->>Svc: countEarlierOrders(42)
+        Svc->>OrderRepo: countByCustomerId(42)
+        OrderRepo-->>Svc: long count (e.g. 3)
+        Svc-->>Ctrl: 3
+        Ctrl->>Svc: findLastOrderDate(42)
+        Svc->>OrderRepo: findFirstByCustomerIdOrderByCreatedAtDesc(42)
+        OrderRepo-->>Svc: Optional<CustomerOrder>
+        Svc->>Clock: order.getCreatedAt().atZone(clock.getZone()).toLocalDate()
+        Clock-->>Svc: LocalDate
+        Svc-->>Ctrl: LocalDate
+        Ctrl->>View: Render customers/detail.html with customer, orderCount, lastOrderDate
+        View-->>Tailor: HTTP 200 OK (Customer Profile)
+    end
+```
+
+---
+
+### Scenario 11: AJAX Customer Mobile Lookup & JSON Serialization Flow (`GET /api/customers/lookup?mobile=...`)
+
+```mermaid
+flowchart TD
+    JSClient["fetch('/api/customers/lookup?mobile=9876543210')"] --> SecCheck{"SecurityConfig FilterChain"}
+    SecCheck --> ApiCtrl["CustomerApiController.lookupCustomer(mobile)"]
+    ApiCtrl --> Normalize["PhoneNumbers.normalize(mobile)"]
+    Normalize --> CheckValid{"Valid Normalized Number?"}
+    CheckValid -->|No| FastFail["CustomerLookupResponse.notFound()"]
+    CheckValid -->|Yes| SvcFind["CustomerService.findByMobile(normalized)"]
+    SvcFind --> DBQuery{"Customer found in DB?"}
+    DBQuery -->|No| RespNotFound["CustomerLookupResponse.notFound()"]
+    DBQuery -->|Yes| FetchStats["Compute orderCount and lastOrderDate (Asia/Kolkata)"]
+    FetchStats --> RespFound["CustomerLookupResponse.found(name, orderCount, lastOrderDate)"]
+    FastFail --> Jackson["Jackson HttpMessageConverter Serializer"]
+    RespNotFound --> Jackson
+    RespFound --> Jackson
+    Jackson --> JsonOut["HTTP 200 OK Content-Type: application/json<br>{found: true, name: '...', orderCount: N, lastOrderDate: 'YYYY-MM-DD'}"]
+```
+
+---
+
+### Scenario 12: Garment Catalog & Measurement Template Retrieval Flow (`GarmentService`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Caller as Order Wizard / Catalog View
+    participant GSvc as GarmentService
+    participant GRepo as GarmentRepository
+    participant GFRepo as GarmentFieldRepository
+    participant DB as PostgreSQL 17
+
+    Caller->>GSvc: listActiveGarments()
+    GSvc->>GRepo: findByActiveTrueOrderByDisplayOrderAsc()
+    GRepo->>DB: SELECT * FROM garment WHERE active = true ORDER BY display_order ASC
+    DB-->>GRepo: Rows (Shirt, Pant, Kurta, Blouse)
+    GRepo-->>GSvc: List<Garment>
+    GSvc-->>Caller: Returns ordered List<Garment>
+
+    Caller->>GSvc: getActiveFields(garmentId=1)
+    GSvc->>GRepo: findById(1)
+    alt Garment Not Found
+        GSvc-->>Caller: Throws ResourceNotFoundException
+    else Garment Found
+        GSvc->>GFRepo: findByGarmentIdAndActiveTrueOrderByDisplayOrderAsc(1)
+        GFRepo->>DB: SELECT * FROM garment_field WHERE garment_id=1 AND active=true ORDER BY display_order ASC
+        DB-->>GFRepo: Rows (Length, Chest, Waist, Collar...)
+        GFRepo-->>GSvc: List<GarmentField>
+        GSvc-->>Caller: Returns List<GarmentField> measurement templates
+    end
 ```

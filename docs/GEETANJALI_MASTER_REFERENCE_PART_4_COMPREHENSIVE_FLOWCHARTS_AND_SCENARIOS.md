@@ -3,7 +3,7 @@
 > **Document Scope**: Part 4 of 4 — Complete visual topologies, sequence diagrams, and decision flowcharts covering every single file, execution path, branch condition, and failure mode.  
 > **Project**: Geetanjali Tailor Shop Management Web Application  
 > **Target Audience**: Student pair programmer learning Spring Boot during a 24-hour hackathon.  
-> **Version / Git Commit**: `Stage 1 - Step 1: Shared foundation` (`1d14e6f`)
+> **Version / Git Commit**: `Stage 1 - Step 2: Garments and customers read side` (`b442392`)
 
 ---
 
@@ -37,6 +37,12 @@ Every file in the codebase is represented across the scenarios below:
 | 3 Flyway Migrations (`V1`, `V2`, `V3`) | Scenario 1 | Initialize database schema, defaults, and delivery extensions |
 | Templates (`layout.html`, `login.html`, etc.) | Scenario 2, 3, 4, 7, 8 | Render server-side dynamic HTML views |
 | Static Assets (`app.css`, `app.js`) | Scenario 2, 3, 4, 8 | Provide UI tokens, styling, CSRF headers, and alert timers |
+| [`GarmentService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/GarmentService.java) | Scenario 12 | Queries active garments and measurement field templates in display order |
+| [`CustomerService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/CustomerService.java) | Scenario 9, 10, 11 | Handles customer search, normalized lookup, order count & last order date calculation |
+| [`CustomerLookupResponse.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/response/CustomerLookupResponse.java) | Scenario 11 | Immutable record DTO payload for AJAX customer mobile lookup |
+| [`CustomerApiController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/api/CustomerApiController.java) | Scenario 11 | `@RestController` providing `GET /api/customers/lookup?mobile=` returning JSON |
+| [`CustomerController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/CustomerController.java) | Scenario 9, 10 | `@Controller` providing `GET /customers?q=` and `GET /customers/{id}` views |
+| Customer Templates (`index.html`, `detail.html`) | Scenario 9, 10 | Customer directory table and customer profile views |
 
 ---
 
@@ -343,3 +349,248 @@ sequenceDiagram
         Sec-->>Browser: HTTP 403 Forbidden (CSRF attack prevented)
     end
 ```
+
+
+---
+
+## Scenario 9: Customer Directory Search & List Flow (`GET /customers?q=...`)
+
+```mermaid
+flowchart TD
+    ReqList["Visitor or Staff requests GET /customers?q={query}"] --> SecCheck{"SecurityConfig FilterChain<br>Requires Authenticated Session"}
+    SecCheck -->|Unauthenticated| RedirectLogin["HTTP 302 Redirect to /login"]
+    SecCheck -->|Authenticated| ModelAdvice["GlobalModelAdvice injects:<br>${shopName}, ${currentUser}, ${currentUserName}, ${isOwner}, ${currentUri}='/customers'"]
+    
+    ModelAdvice --> CtrlList["CustomerController.listCustomers(query, model)"]
+    CtrlList --> TrimQuery["String trimmedQuery = (query != null) ? query.trim() : null"]
+    TrimQuery --> SvcSearch["CustomerService.search(trimmedQuery)"]
+    
+    SvcSearch --> BranchQuery{"trimmedQuery == null || trimmedQuery.isBlank()?"}
+    BranchQuery -->|True: Empty Search| RepoFindAll["customerRepository.findAllByOrderByNameAsc()<br>SQL: SELECT * FROM customer ORDER BY name ASC"]
+    BranchQuery -->|False: Active Search| RepoSearchQuery["customerRepository.searchByNameOrMobile(trimmedQuery)<br>SQL: SELECT * FROM customer WHERE LOWER(name) LIKE LOWER('%' || :query || '%')<br>OR mobile LIKE ('%' || :query || '%') ORDER BY name ASC<br>(Bound Parameter :query prevents SQL injection)"]
+    
+    RepoFindAll --> CustList["List<Customer> customers"]
+    RepoSearchQuery --> CustList
+    
+    CustList --> PopulateModel["model.addAttribute('customers', customers)<br>model.addAttribute('query', trimmedQuery != null ? trimmedQuery : '')<br>model.addAttribute('totalCount', customers.size())"]
+    PopulateModel --> ReturnView["Returns view name 'customers/index'"]
+    
+    ReturnView --> Thymeleaf["Thymeleaf Template Engine resolves templates/customers/index.html"]
+    Thymeleaf --> CheckEmpty{"customers.isEmpty()?"}
+    CheckEmpty -->|Yes| EmptyAlert["Renders empty state alert:<br>'No customers found. Try a different search term or add a new customer.'"]
+    CheckEmpty -->|No| RenderTable["Renders dynamic table with rows:<br>- Customer Name<br>- Mobile Number (as tel: link)<br>- Notes snippet<br>- 'View Profile' button (links to /customers/{id})"]
+    
+    EmptyAlert --> SendHtml["HTTP 200 OK HTML delivered to browser"]
+    RenderTable --> SendHtml
+```
+
+### Flow Breakdown & Interdependencies
+1. **Request Reception & Security**: When a staff member accesses `GET /customers`, Spring Security's `SecurityFilterChain` verifies that an authenticated `AppUserDetails` principal exists in the `SecurityContext`. If not authenticated, the user is redirected to `/login` with HTTP 302.
+2. **Global Context Injection**: `GlobalModelAdvice` intercepts the invocation and enriches the Spring MVC `Model` with shop-wide context attributes (`shopName`, `currentUser`, `isOwner`, `currentUri = "/customers"`).
+3. **Controller Parameter Binding**: `CustomerController.listCustomers()` receives the optional `@RequestParam(name = "q", required = false) String query`. It trims whitespace and delegates execution to `CustomerService.search(trimmedQuery)`.
+4. **Service & Repository Query Selection**:
+   - If the search parameter is `null` or whitespace-only, `CustomerService` delegates to `CustomerRepository.findAllByOrderByNameAsc()`, retrieving the entire customer book alphabetically.
+   - If a query string is present (e.g., `"Ramesh"` or `"9876"`), `CustomerService` delegates to `CustomerRepository.searchByNameOrMobile(query)`.
+   - **SQL Injection Safety**: The query uses a bound parameter `:query` inside a custom JPQL `@Query` definition:
+     ```sql
+     SELECT c FROM Customer c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR c.mobile LIKE CONCAT('%', :query, '%') ORDER BY c.name ASC
+     ```
+     This prevents SQL injection while performing case-insensitive partial substring matching on names and partial substring matching on mobile numbers.
+5. **View Rendering**: The controller places `customers`, `query`, and `totalCount` onto the `Model` and returns `"customers/index"`. Thymeleaf processes `templates/customers/index.html` within the master `fragments/layout.html`, rendering search controls, customer count metrics, and responsive table cards.
+
+---
+
+## Scenario 10: Customer Profile Detail & Order History Retrieval Flow (`GET /customers/{id}`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Staff / Tailor
+    participant Browser as Web Browser
+    participant Sec as SecurityConfig FilterChain
+    participant Ctrl as CustomerController
+    participant Svc as CustomerService
+    participant CustRepo as CustomerRepository
+    participant OrderRepo as CustomerOrderRepository
+    participant Clock as Injected Clock (Asia/Kolkata)
+    participant ExHandler as GlobalExceptionHandler
+    participant View as templates/customers/detail.html
+    participant ErrorView as templates/error/404.html
+
+    Tailor->>Browser: Clicks "View Profile" for Customer ID = 42
+    Browser->>Sec: GET /customers/42
+    Sec->>Sec: Verify Authenticated Principal
+    Sec->>Ctrl: Dispatch to CustomerController.showCustomerDetail(id=42, model)
+    
+    Ctrl->>Svc: getById(42)
+    Svc->>CustRepo: findById(42)
+    CustRepo-->>Svc: Optional<Customer>
+    
+    alt Customer Not Found
+        Svc-->>Ctrl: throw new ResourceNotFoundException("Customer not found with id: 42")
+        Ctrl-->>ExHandler: Intercepted by handleResourceNotFound(ex, model)
+        ExHandler->>ErrorView: Render 404.html with errorMessage & HTTP Status 404
+        ErrorView-->>Browser: HTTP 404 Not Found Page
+    else Customer Exists
+        Svc-->>Ctrl: Returns Customer entity
+        Ctrl->>Svc: countEarlierOrders(42)
+        Svc->>OrderRepo: countByCustomerId(42)
+        OrderRepo-->>Svc: long count (e.g., 3)
+        Svc-->>Ctrl: 3
+        
+        Ctrl->>Svc: findLastOrderDate(42)
+        Svc->>OrderRepo: findFirstByCustomerIdOrderByCreatedAtDesc(42)
+        OrderRepo-->>Svc: Optional<CustomerOrder>
+        alt Order Exists
+            Svc->>Clock: order.getCreatedAt().atZone(clock.getZone()).toLocalDate()
+            Clock-->>Svc: LocalDate (e.g., 2026-10-13)
+            Svc-->>Ctrl: LocalDate (2026-10-13)
+        else No Prior Orders
+            Svc-->>Ctrl: null
+        end
+        
+        Ctrl->>Ctrl: model.addAttribute("customer", customer)<br>model.addAttribute("orderCount", orderCount)<br>model.addAttribute("lastOrderDate", lastOrderDate)
+        Ctrl->>View: Render "customers/detail"
+        View-->>Browser: HTTP 200 OK (Customer Profile HTML)
+        Browser-->>Tailor: Displays Customer card, contact phone, order stats, and back link
+    end
+```
+
+### Flow Breakdown & Interdependencies
+1. **Route Dispatch & Authorization**: The request `GET /customers/{id}` is authenticated by Spring Security and dispatched to `CustomerController.showCustomerDetail(@PathVariable("id") Long id, Model model)`.
+2. **Resilient Entity Lookup**:
+   - `CustomerController` calls `customerService.getById(id)`.
+   - `CustomerService` queries `CustomerRepository.findById(id)`.
+   - If the ID does not exist in the database, `CustomerService` throws `ResourceNotFoundException`.
+   - `GlobalExceptionHandler` catches this exception, sets HTTP response status 404, and renders `error/404.html`.
+3. **Historical Metrics Aggregation**:
+   - The controller queries `customerService.countEarlierOrders(id)`: executed via derived query `CustomerOrderRepository.countByCustomerId(customerId)`.
+   - The controller queries `customerService.findLastOrderDate(id)`: executed via derived query `CustomerOrderRepository.findFirstByCustomerIdOrderByCreatedAtDesc(customerId)`.
+   - **Timezone Conversion**: `CustomerOrder.createdAt` is stored as a UTC `Instant`. The service converts it using the injected Indian Standard Time `Clock`:
+     ```java
+     order.getCreatedAt().atZone(clock.getZone()).toLocalDate()
+     ```
+     This guarantees that order dates shown on customer profiles match Indian shop hours regardless of the server host's system timezone.
+4. **View Resolution**: The controller loads `customer`, `orderCount`, and `lastOrderDate` into the model and returns `"customers/detail"`, rendering `templates/customers/detail.html`.
+
+---
+
+## Scenario 11: AJAX Customer Mobile Lookup & JSON Serialization Flow (`GET /api/customers/lookup?mobile=...`)
+
+```mermaid
+flowchart TD
+    JSClient["Order Form / Client JavaScript:<br>fetch('/api/customers/lookup?mobile=9876543210')"] --> SecCheck{"SecurityConfig FilterChain<br>Authenticated Session Check"}
+    SecCheck -->|Unauthenticated| Deny["HTTP 401 Unauthorized / 302 Login"]
+    SecCheck -->|Authenticated| ApiCtrl["CustomerApiController.lookupCustomer(mobile)"]
+    
+    ApiCtrl --> Normalize["PhoneNumbers.normalize(mobile)<br>Strips spaces, dashes, +91 prefix"]
+    Normalize --> CheckValid{"normalized == null || normalized.isBlank()?"}
+    
+    CheckValid -->|True: Invalid / Blank Input| FastFail["CustomerLookupResponse.notFound()<br>{found: false, name: null, orderCount: 0, lastOrderDate: null}"]
+    
+    CheckValid -->|False: Valid Normalized String| SvcFind["CustomerService.findByMobile(normalized)"]
+    SvcFind --> RepoFind["customerRepository.findByMobile(normalized)"]
+    
+    RepoFind --> FoundCheck{"Optional<Customer> Present?"}
+    
+    FoundCheck -->|Not Found| RespNotFound["CustomerLookupResponse.notFound()<br>{found: false, name: null, orderCount: 0, lastOrderDate: null}"]
+    
+    FoundCheck -->|Found| FetchStats["customerService.countEarlierOrders(customer.getId())<br>customerService.findLastOrderDate(customer.getId())"]
+    FetchStats --> RespFound["CustomerLookupResponse.found(customer.getName(), count, lastOrderDate)<br>{found: true, name: '...', orderCount: N, lastOrderDate: 'YYYY-MM-DD'}"]
+    
+    FastFail --> Jackson["Jackson ObjectMapper Serializer"]
+    RespNotFound --> Jackson
+    RespFound --> Jackson
+    
+    Jackson --> JsonResponse["HTTP 200 OK<br>Content-Type: application/json<br>Payload: serialized CustomerLookupResponse record"]
+    JsonResponse --> JSCallback["Client fetch() callback receives JSON object<br>Auto-populates customer name input or flags new customer"]
+```
+
+### Flow Breakdown & Interdependencies
+1. **Client AJAX Trigger**: While a tailor is filling out an order creation form, client JavaScript triggers an asynchronous HTTP GET request to `/api/customers/lookup?mobile=...`.
+2. **Endpoint Identity (`@RestController`)**: Unlike standard HTML controllers that return template names, `CustomerApiController` is annotated with `@RestController`. This marks every handler method with implicit `@ResponseBody`, bypassing Thymeleaf entirely and routing the return value directly through Spring's `HttpMessageConverter` (Jackson).
+3. **Phone Number Normalization**:
+   - `CustomerApiController` passes raw user input to `PhoneNumbers.normalize(mobile)`.
+   - Characters such as spaces, hyphens, and the `+91` country code are stripped down to the standard 10-digit Indian mobile format.
+   - If the input is empty or invalid, the controller short-circuits with `CustomerLookupResponse.notFound()`, avoiding unnecessary database operations.
+4. **Service & Repository Query**:
+   - The normalized mobile number is passed to `CustomerService.findByMobile(normalized)`.
+   - `CustomerRepository.findByMobile(normalized)` executes `SELECT * FROM customer WHERE mobile = :mobile`.
+   - If a matching customer is found, their order count and last order date are computed via `CustomerOrderRepository`.
+5. **DTO Record Serialization**:
+   - The result is wrapped into an immutable `CustomerLookupResponse` Java record:
+     ```java
+     public record CustomerLookupResponse(
+         boolean found,
+         String name,
+         long orderCount,
+         LocalDate lastOrderDate
+     )
+     ```
+   - Jackson serializes this record to a JSON object:
+     - Found: `{"found": true, "name": "Ramesh Patel", "orderCount": 1, "lastOrderDate": "2026-10-13"}`
+     - Not Found: `{"found": false, "name": null, "orderCount": 0, "lastOrderDate": null}`
+   - The browser receives HTTP 200 OK with `Content-Type: application/json` and instantly auto-populates the customer name or shows a "New Customer" badge.
+
+---
+
+## Scenario 12: Garment Catalog & Measurement Template Retrieval Flow (`GarmentService`)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tailor as Master Tailor / Order Wizard
+    participant Caller as Calling Controller / Wizard Service
+    participant GSvc as GarmentService
+    participant GRepo as GarmentRepository
+    participant GFRepo as GarmentFieldRepository
+    participant DB as PostgreSQL (garment & garment_field tables)
+
+    Tailor->>Caller: Initiates Garment Selection Step
+    Caller->>GSvc: listActiveGarments()
+    GSvc->>GRepo: findByActiveTrueOrderByDisplayOrderAsc()
+    GRepo->>DB: SELECT * FROM garment WHERE active = true ORDER BY display_order ASC
+    DB-->>GRepo: Rows (Shirt, Pant, Kurta, Blouse)
+    GRepo-->>GSvc: List<Garment>
+    GSvc-->>Caller: Returns ordered List<Garment>
+    
+    Tailor->>Caller: Selects "Shirt" (Garment ID = 1)
+    Caller->>GSvc: getGarmentById(1)
+    GSvc->>GRepo: findById(1)
+    GRepo->>DB: SELECT * FROM garment WHERE id = 1
+    DB-->>GRepo: Garment Entity (name="Shirt", basePrice=350.00)
+    GRepo-->>GSvc: Optional<Garment>
+    alt Garment Not Found
+        GSvc-->>Caller: throw new ResourceNotFoundException("Garment not found with id: 1")
+    else Garment Found
+        GSvc-->>Caller: Returns Garment entity
+    end
+
+    Tailor->>Caller: Requests measurement entry form for "Shirt"
+    Caller->>GSvc: getActiveFields(1)
+    GSvc->>GRepo: findById(1)
+    alt Garment Verification Fails
+        GSvc-->>Caller: throw new ResourceNotFoundException("Garment not found with id: 1")
+    else Garment Verified
+        GSvc->>GFRepo: findByGarmentIdAndActiveTrueOrderByDisplayOrderAsc(1)
+        GFRepo->>DB: SELECT * FROM garment_field WHERE garment_id = 1 AND active = true ORDER BY display_order ASC
+        DB-->>GFRepo: Rows (Length, Chest, Waist, Shoulder, Sleeve Length, Collar)
+        GFRepo-->>GSvc: List<GarmentField>
+        GSvc-->>Caller: Returns List<GarmentField> measurement templates
+        Caller-->>Tailor: Dynamic measurement form rendered with correct labels and sequence
+    end
+```
+
+### Flow Breakdown & Interdependencies
+1. **Garment Catalog Display**:
+   - When the shop wizard or catalog displays available garments, it calls `GarmentService.listActiveGarments()`.
+   - `GarmentRepository.findByActiveTrueOrderByDisplayOrderAsc()` issues a query filtering on `active = true` sorted by `display_order ASC`.
+   - This ensures inactive garments are hidden and garments appear in the exact business order configured by the shop owner (Shirt first, Pant second, etc.).
+2. **Garment Entity Resolution**:
+   - `GarmentService.getGarmentById(id)` looks up a specific garment by primary key.
+   - If the garment does not exist, it throws `ResourceNotFoundException`, safeguarding against invalid URL parameters or corrupted order drafts.
+3. **Dynamic Measurement Template Generation**:
+   - In tailor shops, every garment type requires different body measurements (a Shirt needs Collar and Chest, while a Pant needs Waist, Inseam, and Bottom).
+   - Calling `GarmentService.getActiveFields(garmentId)` first verifies the garment exists, then delegates to `GarmentFieldRepository.findByGarmentIdAndActiveTrueOrderByDisplayOrderAsc(garmentId)`.
+   - This retrieves all active `GarmentField` definitions configured in migration `V2__seed_defaults.sql`.
+   - The returned list provides the labels, unit names, and order needed to dynamically construct measurement forms in the upcoming Step 3 (Measurement recording).

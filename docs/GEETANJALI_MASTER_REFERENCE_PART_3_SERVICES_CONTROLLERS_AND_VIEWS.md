@@ -144,7 +144,100 @@ Services contain all business rules, calculations, and transactional boundaries 
 
 ---
 
-## 2. Controller & Advice Layer Breakdown (`controller/`, `controller/advice/`)
+### Service 5: [`GarmentService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/GarmentService.java)
+* **Location**: `src/main/java/com/geetanjali/backend/service/GarmentService.java`
+* **Real-Life Analogy**: The garment catalog manager and measurement pattern binder who knows all available clothing types and their required measurement boxes.
+* **Class Explanation**:
+  * Marked with `@Service` and `@Transactional(readOnly = true)`.
+  * Provides query operations for active garments and their configured measurement template fields.
+* **Injected Dependencies**:
+  * `private final GarmentRepository garmentRepository`
+  * `private final GarmentFieldRepository garmentFieldRepository`
+* **Functions & Methods**:
+
+  1. `public GarmentService(GarmentRepository garmentRepository, GarmentFieldRepository garmentFieldRepository)`
+     * **Signature**: Takes `garmentRepository` (`GarmentRepository`), `garmentFieldRepository` (`GarmentFieldRepository`).
+     * **Returns**: Initialized `GarmentService` singleton bean.
+
+  2. `public List<Garment> listActiveGarments()`
+     * **Signature**: Takes no parameters.
+     * **In-Built Functions Used**: `garmentRepository.findByActiveTrueOrderBySortOrderAsc()`.
+     * **Returns**: `List<Garment>` — All active garments sorted by display sort order (e.g., Shirt, Pant, Kurta, Blouse).
+     * **Caller / Destination**: Order creation wizard to render garment category selection tiles.
+
+  3. `public Garment getGarmentById(Long id)`
+     * **Signature**: Takes `id` (`Long`) — Garment primary key.
+     * **In-Built Functions Used**: `garmentRepository.findById(id).orElseThrow(...)`.
+     * **Throws**: `ResourceNotFoundException` if no garment with this ID exists.
+     * **Returns**: `Garment` entity.
+     * **Caller / Destination**: Called by `getActiveFields()` and order management controllers.
+
+  4. `public List<GarmentField> getActiveFields(Long garmentId)`
+     * **Signature**: Takes `garmentId` (`Long`).
+     * **In-Built Functions Used**:
+       * `getGarmentById(garmentId)`: Verifies garment existence, throwing `ResourceNotFoundException` if unknown.
+       * `garmentFieldRepository.findByGarmentIdAndActiveTrueOrderBySortOrderAsc(garmentId)`: Fetches active fields in ascending sort order.
+     * **Returns**: `List<GarmentField>` — Active measurement boxes (Chest, Waist, Inseam, etc.) for that garment.
+     * **Caller / Destination**: Measurement recording screens and order item customization.
+
+---
+
+### Service 6: [`CustomerService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/CustomerService.java)
+* **Location**: `src/main/java/com/geetanjali/backend/service/CustomerService.java`
+* **Real-Life Analogy**: The customer ledger keeper who searches the archives by phone or name, counts past visits, and checks the date of their last suit order.
+* **Class Explanation**:
+  * Marked with `@Service` and `@Transactional(readOnly = true)`.
+  * Encapsulates all read queries, search logic, mobile normalization, and order statistics for customers.
+* **Injected Dependencies**:
+  * `private final CustomerRepository customerRepository`
+  * `private final CustomerOrderRepository customerOrderRepository`
+  * `private final Clock clock` (Asia/Kolkata IST clock from `AppConfig`)
+* **Functions & Methods**:
+
+  1. `public CustomerService(CustomerRepository customerRepository, CustomerOrderRepository customerOrderRepository, Clock clock)`
+     * **Signature**: Constructor injection with 3 dependencies.
+     * **Returns**: Initialized `CustomerService` singleton bean.
+
+  2. `public List<Customer> search(String query)`
+     * **Signature**: Takes `query` (`String`) — Search keyword (name or phone digits).
+     * **In-Built Functions Used**:
+       * `customerRepository.findAllByOrderByNameAsc()`: If `query` is null or blank, returns all customers sorted alphabetically.
+       * `customerRepository.searchByNameOrMobile(cleaned)`: Bound parameter JPQL query with `LOWER()` case-insensitivity.
+     * **Returns**: `List<Customer>` — Matching customers ordered alphabetically by name.
+     * **Caller / Destination**: Called by `CustomerController.listCustomers()`.
+
+  3. `public Optional<Customer> findByMobile(String mobile)`
+     * **Signature**: Takes `mobile` (`String`) — Raw phone number.
+     * **In-Built Functions Used**:
+       * `PhoneNumbers.normalize(mobile)`: Strips `+91`, spaces, hyphens, and trunk zeros into clean 10 digits.
+       * `customerRepository.findByMobile(normalized)`: Exact database lookup.
+     * **Returns**: `Optional<Customer>` — Wrapped customer entity or empty if not found.
+     * **Caller / Destination**: Called by `CustomerApiController.lookupCustomer()`.
+
+  4. `public Customer getById(Long id)`
+     * **Signature**: Takes `id` (`Long`) — Customer primary key.
+     * **In-Built Functions Used**: `customerRepository.findById(id).orElseThrow(...)`.
+     * **Throws**: `ResourceNotFoundException` if customer does not exist (triggers 404 response).
+     * **Returns**: `Customer` entity.
+     * **Caller / Destination**: Called by `CustomerController.showCustomerDetail()`.
+
+  5. `public long countEarlierOrders(Long customerId)`
+     * **Signature**: Takes `customerId` (`Long`).
+     * **In-Built Functions Used**: `customerOrderRepository.countByCustomerId(customerId)`.
+     * **Returns**: `long` — Total count of earlier orders.
+     * **Caller / Destination**: Customer profile view and `CustomerApiController.lookupCustomer()`.
+
+  6. `public Optional<LocalDate> findLastOrderDate(Long customerId)`
+     * **Signature**: Takes `customerId` (`Long`).
+     * **In-Built Functions Used**:
+       * `customerOrderRepository.findFirstByCustomerIdOrderByCreatedAtDesc(customerId)`: Fetches latest order.
+       * `order.getCreatedAt().atZone(clock.getZone()).toLocalDate()`: Converts UTC Instant into local Indian Standard Time date.
+     * **Returns**: `Optional<LocalDate>` — Date of most recent order, or empty if customer has never ordered.
+     * **Caller / Destination**: Customer profile view and `CustomerApiController.lookupCustomer()`.
+
+---
+
+## 2. Controller & Advice Layer Breakdown (`controller/`, `controller/advice/`, `controller/api/`)
 
 ---
 
@@ -257,6 +350,91 @@ Services contain all business rules, calculations, and transactional boundaries 
 
 ---
 
+### Record DTO: [`CustomerLookupResponse.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/api/CustomerLookupResponse.java)
+* **Location**: `src/main/java/com/geetanjali/backend/controller/api/CustomerLookupResponse.java`
+* **Real-Life Analogy**: The quick summary receipt handed across the counter stating whether a customer exists, their name, how many suits they've stitched before, and their last visit date.
+* **Class Explanation**:
+  * An immutable Java `record` used as the response body for `GET /api/customers/lookup?mobile=`.
+  * Java records automatically generate private final fields, constructor, getters, `equals()`, `hashCode()`, and `toString()`.
+  * Jackson automatically serializes this record into JSON `{ "found": true, "name": "...", "orderCount": 1, "lastOrderDate": "2026-10-12" }`.
+* **Fields / Record Components**:
+  * `boolean found` — `true` if customer exists in database, `false` otherwise.
+  * `String name` — Customer full name (or `null` if not found).
+  * `long orderCount` — Number of earlier orders placed (or `0` if not found).
+  * `LocalDate lastOrderDate` — Date of most recent order (or `null` if no past orders).
+* **Factory Methods**:
+  1. `public static CustomerLookupResponse notFound()`: Returns `new CustomerLookupResponse(false, null, 0, null)`.
+  2. `public static CustomerLookupResponse found(String name, long orderCount, LocalDate lastOrderDate)`: Returns populated response with `found = true`.
+
+---
+
+### Controller 5: [`CustomerApiController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/api/CustomerApiController.java)
+* **Location**: `src/main/java/com/geetanjali/backend/controller/api/CustomerApiController.java`
+* **Real-Life Analogy**: The express drive-thru window for instant data lookups without re-rendering the whole showroom.
+* **Class Explanation**:
+  * Marked with `@RestController` and `@RequestMapping("/api/customers")`.
+  * Provides lightweight JSON endpoints intended for AJAX `fetch()` calls from the browser (e.g., during the order creation wizard).
+  * **WHY `@RestController` vs `@Controller`**:
+    * `@Controller` is designed for human web browsing; its handler methods return view name strings (like `"customers/index"`), which Thymeleaf resolves and merges with HTML.
+    * `@RestController` combines `@Controller` and `@ResponseBody`. Instead of returning HTML, Spring's Jackson converter serializes the returned Java record directly into JSON and writes it into the HTTP response body. In Express, `@Controller` is `res.render('view')`, while `@RestController` is `res.json(data)`.
+* **Injected Dependencies**:
+  * `private final CustomerService customerService`
+* **Functions & Methods**:
+
+  1. `public CustomerApiController(CustomerService customerService)` — Constructor injection.
+  2. `public CustomerLookupResponse lookupCustomer(@RequestParam("mobile") String mobile)`
+     * **Annotation**: `@GetMapping("/lookup")`
+     * **Signature**:
+       * Takes: `mobile` (`@RequestParam("mobile") String`) — Mobile number query parameter from the URL.
+     * **In-Built Functions Used**:
+       * `PhoneNumbers.normalize(mobile)`: Cleans input (strips +91, dashes, spaces) before database query.
+       * `customerService.findByMobile(normalized)`: Looks up customer in database.
+       * `customerService.countEarlierOrders(id)`: Counts past orders.
+       * `customerService.findLastOrderDate(id)`: Obtains last order date via IST `Clock`.
+     * **Returns**: `CustomerLookupResponse` — Serialized directly to JSON by Spring MVC Jackson.
+       * If found: `{ "found": true, "name": "Ramesh Patel", "orderCount": 1, "lastOrderDate": "2026-10-12" }`.
+       * If not found: `{ "found": false, "name": null, "orderCount": 0, "lastOrderDate": null }`.
+     * **Caller / Destination**: Client-side JavaScript (`fetch('/api/customers/lookup?mobile=...')`) or external API consumers.
+
+---
+
+### Controller 6: [`CustomerController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/CustomerController.java)
+* **Location**: `src/main/java/com/geetanjali/backend/controller/CustomerController.java`
+* **Real-Life Analogy**: The customer service counter where tailors view the customer directory and inspect individual profile cards.
+* **Class Explanation**:
+  * Marked with `@Controller` and `@RequestMapping("/customers")`.
+  * Thin controller handling web UI routes for customer search, directory listing, and individual profile views. Never touches repositories directly.
+* **Injected Dependencies**:
+  * `private final CustomerService customerService`
+* **Functions & Methods**:
+
+  1. `public CustomerController(CustomerService customerService)` — Constructor injection.
+  2. `public String listCustomers(@RequestParam(value = "q", required = false) String query, Model model)`
+     * **Annotation**: `@GetMapping`
+     * **Signature**:
+       * Takes: `query` (`@RequestParam(value = "q", required = false) String`) — Optional search keyword.
+       * Takes: `model` (`Model`) — View container.
+     * **In-Built Functions Used**:
+       * `customerService.search(query)`: Searches customers by name or phone, or lists all if blank.
+       * `model.addAttribute("customers", customers)`: Injects customer list into template context.
+       * `model.addAttribute("q", query != null ? query.trim() : "")`: Preserves active search term in input box.
+     * **Returns**: `String` view name `"customers/index"`.
+     * **Caller / Destination**: Browser loads `customers/index.html`.
+
+  3. `public String showCustomerDetail(@PathVariable("id") Long id, Model model)`
+     * **Annotation**: `@GetMapping("/{id}")`
+     * **Signature**:
+       * Takes: `id` (`@PathVariable("id") Long`) — Customer primary key from URL path.
+       * Takes: `model` (`Model`) — View container.
+     * **In-Built Functions Used**:
+       * `customerService.getById(id)`: Fetches customer entity. If missing, throws `ResourceNotFoundException`, which `GlobalExceptionHandler` converts to a 404 page.
+       * `customerService.countEarlierOrders(id)`: Queries total past order count.
+       * `customerService.findLastOrderDate(id)`: Obtains last order date.
+     * **Returns**: `String` view name `"customers/detail"`.
+     * **Caller / Destination**: Browser loads `customers/detail.html`.
+
+---
+
 ## 3. Flyway Database Migrations (`resources/db/migration/`)
 
 Database migrations run sequentially on startup before Hibernate initializes. Once applied, migration files are immutable.
@@ -337,9 +515,34 @@ Database migrations run sequentially on startup before Hibernate initializes. On
 ### Template 5: Error Templates (`error/403.html`, `error/404.html`, `error/5xx.html`, `error/error.html`)
 * **Role**: User-friendly error pages styled with shop branding, clear error descriptions, and return-home action links.
 
+### Template 6: [`customers/index.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/customers/index.html)
+* **Role**: Customer directory list and search screen.
+* **Features**:
+  * Clean search bar with input name `q`, autofocus, search button (`🔍 Search`), and conditional `Clear` button.
+  * Active search indicator banner showing `"Showing search results for: Ramesh"`.
+  * Results count badge (e.g. `"3 customer(s)"`).
+  * Empty state with contextual messages when no customers match a search query vs when the directory is completely empty.
+  * Desktop-first data table displaying row numbers, customer names (clickable to profile), phone numbers with monospace formatting, and a `"View Profile →"` action button.
+
+### Template 7: [`customers/detail.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/customers/detail.html)
+* **Role**: Customer profile detail view.
+* **Features**:
+  * Navigation breadcrumb link back to the customer directory (`← Back to Customer Directory`).
+  * Profile header avatar and customer ID badge (`#1`).
+  * Details grid showing:
+    * Mobile number with clickable `tel:` link for direct phone dialing.
+    * Total orders placed count (`<strong th:text="${orderCount}">`).
+    * Last order date (or `"No orders yet"` if empty).
+  * Quick action buttons: `"← Back to Customers"` and `"➕ Create New Order"`.
+
 ### Asset 1: [`static/css/app.css`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/static/css/app.css)
 * **Role**: Desktop-first styling system.
-* **Features**: CSS custom properties (color palette: royal purple `#7b2cbf`, warm gold `#e0a96d`), top navigation bar, form cards, button components, alert message styling, and responsive layout containers.
+* **Features**:
+  * CSS custom properties (color palette: royal purple `#7b2cbf`, warm gold `#e0a96d`).
+  * Top navigation bar, form cards, button components, and alert banners.
+  * Customer search box styles (`.search-box`, `.search-input-group`, `.search-indicator`).
+  * Data table styles (`.data-table`, `.table-header`, `.badge`, `.table-responsive`).
+  * Customer profile styling (`.customer-profile-card`, `.profile-avatar`, `.profile-details-grid`, `.detail-label`, `.phone-link`).
 
 ### Asset 2: [`static/js/app.js`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/static/js/app.js)
 * **Role**: Client-side JavaScript utilities.
