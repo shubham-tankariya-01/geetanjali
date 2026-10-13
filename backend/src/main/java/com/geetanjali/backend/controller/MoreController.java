@@ -39,26 +39,24 @@ public class MoreController {
         return "more";
     }
 
-    // Handles GET /garments: Direct link to garment catalog overview on the More page.
-    // Inputs: model (Model).
-    // Output: String - Thymeleaf template path "more".
+    // Handles GET /garments: Redirects to the Owner garment catalog settings page.
+    // Inputs: None.
+    // Output: String - redirect to "/settings/garments".
     //
     // @GetMapping("/garments") = Maps HTTP GET requests for "/garments" to this handler method.
     @GetMapping("/garments")
-    public String showGarments(Model model) {
-        List<Garment> garments = garmentService.listActiveGarments();
-        model.addAttribute("garments", garments);
-        return "more";
+    public String showGarments() {
+        return "redirect:/settings/garments";
     }
 
-    // Handles GET /settings: Redirects legacy /settings requests to the canonical /more page.
+    // Handles GET /settings: Redirects /settings requests to the garment settings management page.
     // Inputs: None.
-    // Output: String - redirect string to "/more".
+    // Output: String - redirect string to "/settings/garments".
     //
     // @GetMapping("/settings") = Maps HTTP GET requests for "/settings" to this method.
     @GetMapping("/settings")
-    public String redirectToMore() {
-        return "redirect:/more";
+    public String redirectToSettings() {
+        return "redirect:/settings/garments";
     }
 }
 

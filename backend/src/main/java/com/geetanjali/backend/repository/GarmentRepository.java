@@ -16,6 +16,11 @@ public interface GarmentRepository extends JpaRepository<Garment, Long> {
     // Output: Optional<Garment>.
     Optional<Garment> findByName(String name);
 
+    // Finds a garment by its name ignoring case (for duplicate prevention).
+    // Input: name (String).
+    // Output: Optional<Garment>.
+    Optional<Garment> findByNameIgnoreCase(String name);
+
     // Finds all active garments ordered by display sort_order.
     // Input: None.
     // Output: List<Garment>.

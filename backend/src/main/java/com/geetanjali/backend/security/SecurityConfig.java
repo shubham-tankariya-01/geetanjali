@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                 // Allow public access to login, signup, static CSS/JS files, uploaded photos, and error page
                 .requestMatchers("/login", "/signup", "/css/**", "/js/**", "/uploads/**", "/error").permitAll()
+                // Settings routes are strictly restricted to OWNER role
+                .requestMatchers("/settings", "/settings/**").hasRole("OWNER")
                 // Any other route requires the user to be authenticated
                 .anyRequest().authenticated()
             )

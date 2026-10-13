@@ -1265,3 +1265,77 @@ Tailor navigates to `/customers/{id}` -> Customer profile loads name, phone, ord
 
 ### Scenario 18: More & Settings Administration Page Flow
 Tailor navigates to `/more` (or clicks "More" tab in bottom navigation bar). If logged in as `OWNER`, the page displays shop administration cards for Garment catalog management and staff addition (`/signup`). If logged in as regular `TAILOR`, administrative tools are hidden behind a friendly informational notice. Both roles view the Stage 2 & 3+ extensions roadmap.
+
+---
+
+## 6. Garments and Templates Settings Administration (Stage 1 - Step 11)
+
+### Group N: Step 11 Components
+
+#### 79. [`SecurityConfig.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/security/SecurityConfig.java) (Updated)
+* **Owner-Only Route Guard**: Added `.requestMatchers("/settings", "/settings/**").hasRole("OWNER")`.
+* **Access Control**: When authenticated as `OWNER` (`ROLE_OWNER`), complete access to category creation, template editing, and field ordering is permitted. When authenticated as `TAILOR` (`ROLE_TAILOR`), any access to `/settings/**` throws `AccessDeniedException` and renders the custom HTTP 403 Forbidden page (`error/403.html`).
+
+#### 80. [`GarmentRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentRepository.java) (Expanded)
+* **New Method**: `Optional<Garment> findByNameIgnoreCase(String name)` — Performs case-insensitive lookup for existing categories to prevent duplicates and enable soft-deleted category reactivation.
+
+#### 81. [`GarmentFieldRepository.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/repository/GarmentFieldRepository.java) (Expanded)
+* **New Methods**:
+  * `Optional<GarmentField> findByIdAndGarmentId(Long id, Long garmentId)` — Scoped lookup ensuring field belongs to the target garment.
+  * `Optional<GarmentField> findByGarmentIdAndLabelIgnoreCase(Long garmentId, String label)` — Case-insensitive duplicate check within a garment template.
+
+#### 82. [`GarmentForm.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/form/GarmentForm.java) (New)
+* **Role**: Form backing object (DTO) for adding new garment categories.
+* **Fields**: `name` (`@NotBlank`, `@Size(max = 50)`).
+
+#### 83. [`FieldForm.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/dto/form/FieldForm.java) (New)
+* **Role**: Form backing object (DTO) for adding or renaming measurement fields.
+* **Fields**: `label` (`@NotBlank`, `@Size(max = 50)`), `unit` (`@NotBlank`, `@Size(max = 20)`, defaults to `"inch"`).
+
+#### 84. [`GarmentService.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/service/GarmentService.java) (Expanded)
+* **New Mutating Methods (`@Transactional`)**:
+  * `addGarment(GarmentForm form)`: Rejects duplicate names (case-insensitive); calculates next `sort_order` placing it at the end; reactivates soft-deleted category if previously archived.
+  * `removeGarment(Long garmentId)`: Soft-deletes category (`active = false`), preserving foreign key integrity for past customer orders and measurements.
+  * `addField(Long garmentId, FieldForm form)`: Adds measurement field; rejects duplicate active labels; appends to the end of the template sort order; reactivates soft-deleted field if previously archived.
+  * `renameField(Long garmentId, Long fieldId, FieldForm form)`: Renames field label and updates measurement unit with conflict validation.
+  * `moveFieldUp(Long garmentId, Long fieldId)`: Swaps `sort_order` with the immediate upper active neighbor in the template list.
+  * `moveFieldDown(Long garmentId, Long fieldId)`: Swaps `sort_order` with the immediate lower active neighbor in the template list.
+  * `removeField(Long garmentId, Long fieldId)`: Soft-deletes field (`active = false`), preserving historic customer measurement values in `measurement_value`.
+
+#### 85. [`GarmentController.java`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/java/com/geetanjali/backend/controller/GarmentController.java) (New)
+* **Base Path**: `/settings/garments`
+* **Endpoints**:
+  * `GET /settings/garments`: Renders category list and creation form (`settings/garments.html`).
+  * `POST /settings/garments`: Creates category, rejects duplicate names with binding result error, redirects to `/settings/garments`.
+  * `POST /settings/garments/{id}/remove`: Soft-deletes category, redirects to `/settings/garments`.
+  * `GET /settings/garments/{id}`: Renders measurement template fields and add-field form (`settings/garment-template.html`).
+  * `POST /settings/garments/{id}/fields`: Adds new field, redirects to `/settings/garments/{id}`.
+  * `POST /settings/garments/{id}/fields/{fieldId}/rename`: Renames field label and unit, redirects to `/settings/garments/{id}`.
+  * `POST /settings/garments/{id}/fields/{fieldId}/move-up`: Reorders field up, redirects to `/settings/garments/{id}`.
+  * `POST /settings/garments/{id}/fields/{fieldId}/move-down`: Reorders field down, redirects to `/settings/garments/{id}`.
+  * `POST /settings/garments/{id}/fields/{fieldId}/remove`: Soft-deletes field, redirects to `/settings/garments/{id}`.
+
+#### 86. [`settings/garments.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/settings/garments.html) (New)
+* **Features**:
+  * Category creation form with `@NotBlank` validation and duplicate detection error banner.
+  * Table of active categories with `#` count, name, link to template configuration, and soft-delete remove button.
+
+#### 87. [`settings/garment-template.html`](file:///home/shubham/storms/Projects/Geetanjali/backend/src/main/resources/templates/settings/garment-template.html) (New)
+* **Features**:
+  * Add measurement field form (`label`, `unit`).
+  * Ordered template table with sequence numbers.
+  * `⬆️` Move Up and `⬇️` Move Down buttons (with edge-case disabling on first/last rows).
+  * HTML5 `<details>` inline dropdown for renaming label and unit.
+  * Soft-delete remove button with confirmation dialog.
+
+---
+
+### Scenario 19: Garment Category Management & Duplicate Rejection Flow
+Owner navigates to `/settings/garments` -> Active categories (Shirt, Pant, Kurta, Blouse) are rendered. Owner submits "Shirt" -> Controller catches duplicate and displays field error "A garment category named 'Shirt' already exists." Owner submits "Sherwani" -> Successfully created with next sort order, added to active catalog, and flash banner displayed.
+
+### Scenario 20: Measurement Template Field Reordering & Soft-Delete Flow
+Owner clicks "Configure Template →" on `/settings/garments/{id}` -> Template page loads configured fields sorted by `sort_order ASC`. Owner adds new fields ("Collar", "Wrist"). Clicking `⬆️` swaps the field's `sort_order` with its immediate upper neighbor. Clicking `✏️ Rename` opens the inline form to edit label or unit. Clicking `🗑️ Remove` soft-deletes the field (`active = false`), ensuring existing customer measurements for past orders remain intact in the database while new orders omit the field.
+
+### Scenario 21: Owner vs Tailor Security Boundary Verification
+Tailor user attempts to navigate to `/settings/garments` or `/settings/garments/1` -> Spring Security filter chain inspects authority `ROLE_TAILOR`. Because `/settings/**` requires `ROLE_OWNER`, an `AccessDeniedException` is triggered, dispatching to HTTP 403 and rendering `error/403.html`. Owner user navigates to `/settings/**` and is granted unrestricted administration access.
+

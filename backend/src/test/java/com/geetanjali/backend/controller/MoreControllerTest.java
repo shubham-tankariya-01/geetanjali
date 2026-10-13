@@ -47,22 +47,16 @@ class MoreControllerTest {
     }
 
     @Test
-    @DisplayName("showGarments adds garments and returns view 'more'")
+    @DisplayName("showGarments redirects /garments to /settings/garments")
     void testShowGarments() {
-        Garment pant = new Garment("Pant", 2, true);
-        when(garmentService.listActiveGarments()).thenReturn(List.of(pant));
-
-        Model model = new ConcurrentModel();
-        String view = moreController.showGarments(model);
-
-        assertEquals("more", view);
-        assertTrue(model.containsAttribute("garments"));
+        String view = moreController.showGarments();
+        assertEquals("redirect:/settings/garments", view);
     }
 
     @Test
-    @DisplayName("redirectToMore redirects /settings to /more")
-    void testRedirectToMore() {
-        String view = moreController.redirectToMore();
-        assertEquals("redirect:/more", view);
+    @DisplayName("redirectToSettings redirects /settings to /settings/garments")
+    void testRedirectToSettings() {
+        String view = moreController.redirectToSettings();
+        assertEquals("redirect:/settings/garments", view);
     }
 }

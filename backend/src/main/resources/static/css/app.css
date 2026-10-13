@@ -720,4 +720,29 @@ body {
     transform: scale(1.12);
 }
 
+.btn-danger {
+    background-color: #dc3545;
+    color: #ffffff;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: #ffffff;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #000000;
+    border-color: #ffc107;
+}
+
+.btn-warning:hover {
+    background-color: #ffca2c;
+    border-color: #ffc720;
+    color: #000000;
+}
+
+
 
