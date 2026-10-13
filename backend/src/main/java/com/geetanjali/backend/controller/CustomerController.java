@@ -1,7 +1,9 @@
 package com.geetanjali.backend.controller;
 
+import com.geetanjali.backend.dto.response.GarmentLatestMeasurement;
 import com.geetanjali.backend.entity.Customer;
 import com.geetanjali.backend.service.CustomerService;
+import com.geetanjali.backend.service.MeasurementService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +15,7 @@ import java.util.List;
 
 // CustomerController: Web MVC controller handling HTTP requests for the customer directory and customer profiles.
 // In Express, this corresponds to `customerRouter.get('/customers', ...)` and `customerRouter.get('/customers/:id', ...)`.
-// Kept intentionally thin: calls only CustomerService, never touches repositories directly.
+// Kept intentionally thin: calls only service methods, never touches repositories directly.
 //
 // @Controller = Tells Spring MVC that this class handles HTTP web requests and renders Thymeleaf HTML templates.
 @Controller
@@ -22,11 +24,13 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final MeasurementService measurementService;
 
-    // Constructor injection: Spring provides the CustomerService bean automatically.
-    // Input: customerService (CustomerService).
-    public CustomerController(CustomerService customerService) {
+    // Constructor injection: Spring provides the service beans automatically.
+    // Inputs: customerService (CustomerService), measurementService (MeasurementService).
+    public CustomerController(CustomerService customerService, MeasurementService measurementService) {
         this.customerService = customerService;
+        this.measurementService = measurementService;
     }
 
     // Handles GET /customers?q=...: Displays the customer directory list with a search box.
@@ -55,13 +59,14 @@ public class CustomerController {
         return "customers/index";
     }
 
-    // Handles GET /customers/{id}: Displays a basic customer detail page showing name, phone, and order summary.
+    // Handles GET /customers/{id}: Displays customer detail page showing name, phone, order summary,
+    // and the latest measurements recorded for each active garment (Shirt, Pant, Kurta, Blouse).
     // Throws ResourceNotFoundException if customer with this ID is missing, automatically triggering the 404 page.
     //
-    // Express comparison: `app.get('/customers/:id', (req, res) => res.render('customers/detail', { customer }))`.
+    // Express comparison: `app.get('/customers/:id', (req, res) => res.render('customers/detail', { customer, garmentMeasurements }))`.
     //
     // Input: id (@PathVariable("id") Long) - customer primary key from URL.
-    // Input: model (Model) - passes customer details and order summary to Thymeleaf.
+    // Input: model (Model) - passes customer details, order summary, and measurements to Thymeleaf.
     // Output: String - Thymeleaf template path "customers/detail".
     //
     // @GetMapping = Maps HTTP GET requests for "/customers/{id}" to this method.
@@ -76,9 +81,13 @@ public class CustomerController {
         long orderCount = customerService.countEarlierOrders(id);
         LocalDate lastOrderDate = customerService.findLastOrderDate(id).orElse(null);
 
+        // Job 3: Fetch newest measurement snapshot per active garment for this customer
+        List<GarmentLatestMeasurement> garmentMeasurements = measurementService.getLatestPerGarment(customer);
+
         model.addAttribute("customer", customer);
         model.addAttribute("orderCount", orderCount);
         model.addAttribute("lastOrderDate", lastOrderDate);
+        model.addAttribute("garmentMeasurements", garmentMeasurements);
 
         return "customers/detail";
     }

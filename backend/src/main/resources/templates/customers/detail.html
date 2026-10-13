@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  customers/detail.html: Customer detail profile page.
+  customers/detail.html: Customer detail profile page with order statistics and garment measurement snapshots.
   In EJS, this is like `views/customers/detail.ejs`.
 -->
 <head th:replace="~{fragments/layout :: page-head(${customer.name} + ' - Customer Profile')}"></head>
@@ -55,9 +55,52 @@
                 </div>
             </div>
 
-            <div class="profile-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <div class="profile-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
                 <a th:href="@{/customers}" class="btn btn-outline">← Back to Customers</a>
                 <a th:href="@{/orders/new}" class="btn btn-primary">➕ Create New Order</a>
+            </div>
+        </div>
+
+        <!-- Latest Measurements Section (Step 3: Measurement engine) -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; font-size: 1.25rem;">📏 Saved Measurements</h3>
+                <span class="text-muted" style="font-size: 0.875rem;">Latest snapshot per garment</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                <!-- Card for each active garment -->
+                <div th:each="gm : ${garmentMeasurements}" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <strong th:text="${gm.garment.name}" style="font-size: 1.1rem; color: #1e293b;">Shirt</strong>
+                        <span th:if="${gm.hasMeasurement()}" class="badge badge-success" style="font-size: 0.75rem; background: #ecfdf5; color: #047857; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid #a7f3d0;">
+                            Snapshot #<span th:text="${gm.measurement.id}">1</span>
+                        </span>
+                        <span th:unless="${gm.hasMeasurement()}" style="font-size: 0.75rem; background: #f1f5f9; color: #64748b; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                            Not recorded
+                        </span>
+                    </div>
+
+                    <!-- Measurement values table -->
+                    <div th:if="${gm.hasMeasurement()}">
+                        <table style="width: 100%; font-size: 0.875rem; border-collapse: collapse;">
+                            <tbody>
+                                <tr th:each="val : ${gm.values}" style="border-bottom: 1px dashed #e2e8f0;">
+                                    <td th:text="${val.field.label}" style="padding: 0.35rem 0; color: #475569;">Chest</td>
+                                    <td style="padding: 0.35rem 0; text-align: right; font-weight: 600; color: #0f172a;">
+                                        <span th:text="${val.value}">38.0</span>
+                                        <span th:text="${val.field.unit}" style="font-size: 0.75rem; font-weight: normal; color: #64748b;">inch</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty state for this garment -->
+                    <div th:unless="${gm.hasMeasurement()}" style="color: #94a3b8; font-size: 0.875rem; padding: 0.5rem 0; font-style: italic;">
+                        No measurements recorded yet.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
