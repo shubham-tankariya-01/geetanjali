@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPhoneLookup();
     initGarmentSelection();
     initNotesTapChips();
+    initPhotoUpload();
 });
 
 /**
@@ -195,5 +196,208 @@ function initNotesTapChips() {
 
             notesInput.focus();
         });
+    });
+}
+
+/**
+ * Initializes camera/file photo uploads for Wizard Step 3: Item details.
+ *
+ * Flow:
+ * 1. "Add photo" button triggers hidden <input type="file"> with rear-camera preference (capture="environment").
+ * 2. Canvas shrinks the picture to ~1280px wide JPEG to stay well under the 5 MB limit.
+ * 3. Asynchronously POSTs the file with the Spring Security CSRF header to /api/photos.
+ * 4. Appends a thumbnail with an X button and hidden inputs (photoUrls, photoPublicIds).
+ * 5. Tapping X calls DELETE /api/photos?publicId=... to remove the file from storage and the DOM.
+ */
+function initPhotoUpload() {
+    const addPhotoBtn = document.getElementById('addPhotoBtn');
+    const photoFileInput = document.getElementById('photoFileInput');
+    const thumbnailsContainer = document.getElementById('photoThumbnailsContainer');
+    const uploadStatus = document.getElementById('photoUploadStatus');
+    const uploadStatusText = document.getElementById('photoUploadStatusText');
+
+    if (!addPhotoBtn || !photoFileInput || !thumbnailsContainer) {
+        return; // Not on the item details screen
+    }
+
+    // Helper to get CSRF credentials from <head> meta tags
+    const getCsrf = () => {
+        const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+        return { token, header };
+    };
+
+    // Helper to show/hide status banner
+    const showStatus = (text) => {
+        if (uploadStatus && uploadStatusText) {
+            uploadStatusText.textContent = text;
+            uploadStatus.style.display = 'flex';
+        }
+    };
+    const hideStatus = () => {
+        if (uploadStatus) {
+            uploadStatus.style.display = 'none';
+        }
+    };
+
+    // Clicking the visible styled button triggers the hidden file picker/camera
+    addPhotoBtn.addEventListener('click', () => {
+        photoFileInput.click();
+    });
+
+    // Helper to shrink image to ~1280px wide JPEG using browser HTML5 canvas
+    const shrinkImage = (file, maxWidth = 1280, quality = 0.85) => {
+        return new Promise((resolve) => {
+            if (!file.type || !file.type.startsWith('image/')) {
+                // If not standard image or unable to read, resolve with original file
+                resolve(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    // If larger than maxWidth, scale down proportionally
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            // Fallback to original file if blob creation fails
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = () => resolve(file); // Fallback on image parse error
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    // Helper to wire up deletion on any thumbnail X button
+    const attachRemoveHandler = (button, cardElement) => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const publicId = button.getAttribute('data-public-id') || button.getAttribute('data-url');
+            if (!publicId) {
+                cardElement.remove();
+                return;
+            }
+
+            button.disabled = true;
+            cardElement.style.opacity = '0.4';
+
+            try {
+                const { token, header } = getCsrf();
+                const headers = {};
+                if (token) {
+                    headers[header] = token;
+                }
+
+                const response = await fetch(`/api/photos?publicId=${encodeURIComponent(publicId)}`, {
+                    method: 'DELETE',
+                    headers: headers
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Delete failed with HTTP status ${response.status}`);
+                }
+
+                // Smoothly remove card from page
+                cardElement.remove();
+            } catch (err) {
+                console.error('Failed to delete photo:', err);
+                alert('Could not remove photo. Please try again.');
+                button.disabled = false;
+                cardElement.style.opacity = '1';
+            }
+        });
+    };
+
+    // Wire up existing thumbnails (if re-rendered after validation failure)
+    const existingButtons = thumbnailsContainer.querySelectorAll('.btn-remove-photo');
+    existingButtons.forEach(btn => {
+        const card = btn.closest('.photo-thumbnail-card');
+        if (card) {
+            attachRemoveHandler(btn, card);
+        }
+    });
+
+    // Handle user camera capture or file selection
+    photoFileInput.addEventListener('change', async () => {
+        const file = photoFileInput.files && photoFileInput.files[0];
+        if (!file) {
+            return;
+        }
+
+        try {
+            showStatus('Optimizing image size (scaling to ~1280px)...');
+            const processedBlob = await shrinkImage(file);
+
+            showStatus('Uploading photo to server...');
+            const formData = new FormData();
+            formData.append('file', processedBlob, file.name || 'photo.jpg');
+
+            const { token, header } = getCsrf();
+            const headers = {};
+            if (token) {
+                headers[header] = token;
+            }
+
+            const response = await fetch('/api/photos', {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || `Upload failed with HTTP ${response.status}`);
+            }
+
+            const result = await response.json(); // { url: "/uploads/....jpg", publicId: "....jpg" }
+
+            // Create thumbnail card in the DOM
+            const card = document.createElement('div');
+            card.className = 'photo-thumbnail-card';
+            card.setAttribute('data-url', result.url);
+            card.innerHTML = `
+                <img src="${result.url}" alt="Fabric Photo" class="photo-thumbnail-img">
+                <button type="button"
+                        class="btn-remove-photo"
+                        data-url="${result.url}"
+                        data-public-id="${result.publicId}"
+                        title="Remove Photo">&times;</button>
+                <input type="hidden" name="photoUrls" value="${result.url}">
+                <input type="hidden" name="photoPublicIds" value="${result.publicId}">
+            `;
+
+            thumbnailsContainer.appendChild(card);
+            attachRemoveHandler(card.querySelector('.btn-remove-photo'), card);
+
+        } catch (err) {
+            console.error('Photo upload error:', err);
+            alert(`Photo upload failed: ${err.message}`);
+        } finally {
+            hideStatus();
+            photoFileInput.value = ''; // Reset input to allow re-uploading the same file if needed
+        }
     });
 }

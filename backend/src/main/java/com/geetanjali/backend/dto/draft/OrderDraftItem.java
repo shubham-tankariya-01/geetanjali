@@ -37,6 +37,9 @@ public class OrderDraftItem implements Serializable {
     // List of uploaded cloth/fabric reference photo web URLs (e.g. "/uploads/uuid.jpg").
     private List<String> photoUrls = new ArrayList<>();
 
+    // List of uploaded cloth/fabric reference photo public IDs (e.g. "uuid.jpg").
+    private List<String> photoPublicIds = new ArrayList<>();
+
     // Zero-argument constructor required for serialization and Java bean conventions.
     public OrderDraftItem() {
     }
@@ -149,6 +152,33 @@ public class OrderDraftItem implements Serializable {
     public void removePhotoUrl(String photoUrl) {
         if (this.photoUrls != null) {
             this.photoUrls.remove(photoUrl);
+        }
+    }
+
+    // Getter for photoPublicIds.
+    public List<String> getPhotoPublicIds() {
+        return photoPublicIds;
+    }
+
+    // Setter for photoPublicIds.
+    public void setPhotoPublicIds(List<String> photoPublicIds) {
+        this.photoPublicIds = (photoPublicIds != null) ? new ArrayList<>(photoPublicIds) : new ArrayList<>();
+    }
+
+    // Adds a photo public ID to the list.
+    public void addPhotoPublicId(String photoPublicId) {
+        if (photoPublicId != null && !photoPublicId.isBlank()) {
+            if (this.photoPublicIds == null) {
+                this.photoPublicIds = new ArrayList<>();
+            }
+            this.photoPublicIds.add(photoPublicId);
+        }
+    }
+
+    // Removes a photo public ID from the list.
+    public void removePhotoPublicId(String photoPublicId) {
+        if (this.photoPublicIds != null) {
+            this.photoPublicIds.remove(photoPublicId);
         }
     }
 }

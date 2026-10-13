@@ -133,20 +133,64 @@
             </div>
 
             <!-- =========================================================================
-                 SECTION 4: CLOTH & PATTERN PHOTOS (Placeholders for Step 6)
+                 SECTION 4: CLOTH & PATTERN PHOTOS
                  ========================================================================= -->
             <div class="card" style="margin-bottom: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">
-                        📷 Fabric &amp; Design Photos
-                    </h3>
-                    <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">Step 6</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">
+                            📷 Fabric &amp; Design Photos
+                        </h3>
+                        <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.85rem;">
+                            Snap fabric swatches or design references. Shrunk to ~1280px to save data.
+                        </p>
+                    </div>
                 </div>
 
-                <div style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1.5rem; text-align: center; color: #64748b; background: #f8fafc;">
-                    <div style="font-size: 1.8rem; margin-bottom: 0.25rem;">📸</div>
-                    <div style="font-weight: 500; font-size: 0.9rem;">Cloth photo uploads will be enabled in Step 6</div>
-                    <span class="text-muted" style="font-size: 0.8rem;">Tailors can capture pattern photos directly into local storage.</span>
+                <!-- Hidden camera file input: accept images with rear camera environment hint -->
+                <input type="file"
+                       id="photoFileInput"
+                       accept="image/jpeg,image/png,image/webp"
+                       capture="environment"
+                       style="display: none;">
+
+                <!-- Add Photo Trigger Button -->
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <button type="button"
+                            id="addPhotoBtn"
+                            class="btn btn-outline"
+                            style="display: inline-flex; align-items: center; gap: 0.5rem; background: #ffffff; border: 1.5px dashed var(--primary-color, #7b2cbf); color: var(--primary-color, #7b2cbf); padding: 0.6rem 1.25rem; font-weight: 600;">
+                        <span>📸</span>
+                        <span>Add Photo (Camera / Gallery)</span>
+                    </button>
+                    <span class="text-muted" style="font-size: 0.8rem;">
+                        Max 5 MB. Formats: JPEG, PNG, WebP.
+                    </span>
+                </div>
+
+                <!-- Async upload progress & status alert -->
+                <div id="photoUploadStatus" style="display: none; margin-top: 0.75rem; font-size: 0.85rem; color: #2563eb; background: #eff6ff; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #bfdbfe;">
+                    <span id="photoUploadSpinner">⏳</span>
+                    <span id="photoUploadStatusText" style="margin-left: 0.35rem; font-weight: 500;">Uploading photo...</span>
+                </div>
+
+                <!-- Photo thumbnails grid -->
+                <div id="photoThumbnailsContainer" class="photo-thumbnails-grid">
+                    <!-- Re-render existing uploaded photos if form reloaded on validation error -->
+                    <th:block th:if="${itemForm.photoUrls != null and not #lists.isEmpty(itemForm.photoUrls)}">
+                        <div th:each="photoUrl, iter : ${itemForm.photoUrls}"
+                             class="photo-thumbnail-card"
+                             th:attr="data-url=${photoUrl}">
+                            <img th:src="${photoUrl}" alt="Fabric Photo" class="photo-thumbnail-img">
+                            <button type="button"
+                                    class="btn-remove-photo"
+                                    th:attr="data-url=${photoUrl}, data-public-id=${itemForm.photoPublicIds != null and iter.index < #lists.size(itemForm.photoPublicIds) ? itemForm.photoPublicIds[iter.index] : photoUrl}"
+                                    title="Remove Photo">&times;</button>
+                            <input type="hidden" name="photoUrls" th:value="${photoUrl}">
+                            <input type="hidden" name="photoPublicIds"
+                                   th:value="${itemForm.photoPublicIds != null and iter.index < #lists.size(itemForm.photoPublicIds) ? itemForm.photoPublicIds[iter.index] : photoUrl}">
+                        </div>
+                    </th:block>
                 </div>
             </div>
 

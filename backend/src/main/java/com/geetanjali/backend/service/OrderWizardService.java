@@ -123,6 +123,7 @@ public class OrderWizardService {
         item.setDeliveryDate(form.getDeliveryDate());
         item.setPrice(form.getPrice());
         item.setPhotoUrls(form.getPhotoUrls());
+        item.setPhotoPublicIds(form.getPhotoPublicIds());
 
         // Add to the draft items list
         orderDraft.addItem(item);

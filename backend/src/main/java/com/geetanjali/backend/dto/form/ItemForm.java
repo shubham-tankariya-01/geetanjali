@@ -45,8 +45,11 @@ public class ItemForm {
     // Action button clicked: "more" (Save item & add more) or "finish" (Save item & finish).
     private String action = "finish";
 
-    // List of uploaded cloth/pattern photo URLs (populated in Step 6; stays empty for now).
+    // List of uploaded cloth/pattern photo URLs (e.g. "/uploads/uuid.jpg").
     private List<String> photoUrls = new ArrayList<>();
+
+    // List of uploaded cloth/pattern photo public IDs (e.g. "uuid.jpg").
+    private List<String> photoPublicIds = new ArrayList<>();
 
     // Default zero-argument constructor required by Spring form binding.
     public ItemForm() {
@@ -108,5 +111,13 @@ public class ItemForm {
 
     public void setPhotoUrls(List<String> photoUrls) {
         this.photoUrls = (photoUrls != null) ? new ArrayList<>(photoUrls) : new ArrayList<>();
+    }
+
+    public List<String> getPhotoPublicIds() {
+        return photoPublicIds;
+    }
+
+    public void setPhotoPublicIds(List<String> photoPublicIds) {
+        this.photoPublicIds = (photoPublicIds != null) ? new ArrayList<>(photoPublicIds) : new ArrayList<>();
     }
 }
