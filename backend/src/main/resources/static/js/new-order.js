@@ -11,6 +11,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     initPhoneLookup();
     initGarmentSelection();
+    initNotesTapChips();
 });
 
 /**
@@ -165,6 +166,34 @@ function initGarmentSelection() {
             // Remove selected class from all cards and add to clicked card
             garmentCards.forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
+        });
+    });
+}
+
+/**
+ * Initializes quick-tap chips for custom styling notes in Wizard Step 3.
+ */
+function initNotesTapChips() {
+    const chips = document.querySelectorAll('.tap-chip');
+    const notesInput = document.getElementById('itemNotes');
+    if (!chips || chips.length === 0 || !notesInput) {
+        return;
+    }
+
+    chips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            e.preventDefault();
+            const textToAdd = chip.getAttribute('data-note') || chip.textContent.trim();
+            const current = notesInput.value.trim();
+
+            if (!current) {
+                notesInput.value = textToAdd;
+            } else {
+                // If text already exists, append with comma
+                notesInput.value = current + ', ' + textToAdd;
+            }
+
+            notesInput.focus();
         });
     });
 }

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  fragments/item-form.html: Shared item entry form fragment.
+  Used by:
+  1. Wizard Step 3 (orders/wizard-item.html)
+  2. Order item editing (reused in later steps)
+-->
+<body>
+
+    <div th:fragment="item-form(formAction, isEdit)">
+        <form th:action="${formAction}" th:object="${itemForm}" method="post" id="itemDetailsForm">
+
+            <!-- =========================================================================
+                 SECTION 1: MEASUREMENTS
+                 ========================================================================= -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">
+                            📏 Garment Measurements (<span th:text="${garment.name}">Shirt</span>)
+                        </h3>
+                        <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.85rem;">
+                            Enter values in inches. All fields are editable; blank boxes are permitted.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Prefill notification banner if filled from prior order -->
+                <div th:if="${prefillInfo != null}"
+                     style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.65rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💡</span>
+                    <span>Prefilled from <strong><span th:text="${prefillInfo.date()}">12 Sep 2026</span></strong> snapshot. You can modify any values.</span>
+                </div>
+
+                <!-- Measurement Fields Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem;">
+                    <div th:each="field : ${garmentFields}"
+                         style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem;">
+                        <label th:for="'m_' + ${field.id}"
+                               style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; color: #334155;">
+                            <span th:text="${field.label}">Chest</span>
+                            <span class="text-muted" style="font-weight: normal; font-size: 0.75rem;" th:text="'(' + ${field.unit} + ')'">inch</span>
+                        </label>
+                        <input type="number"
+                               step="0.25"
+                               min="0"
+                               th:id="'m_' + ${field.id}"
+                               th:name="'measurements[' + ${field.id} + ']'"
+                               th:value="${itemForm.measurements != null ? itemForm.measurements.get(field.id) : ''}"
+                               class="form-control"
+                               placeholder="0.0"
+                               style="text-align: right; font-weight: 600;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================================
+                 SECTION 2: STYLING NOTES & TAP CHIPS
+                 ========================================================================= -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: #1e293b;">
+                    📝 Styling Instructions &amp; Notes
+                </h3>
+                <p class="text-muted" style="margin: 0 0 0.75rem 0; font-size: 0.85rem;">
+                    Tap any quick tag to append instructions, or type custom tailoring notes below.
+                </p>
+
+                <!-- Tap Chips Container -->
+                <div class="tap-chips-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <button type="button" class="tap-chip" data-note="Extra Lining">Extra Lining</button>
+                    <button type="button" class="tap-chip" data-note="Padding">Padding</button>
+                    <button type="button" class="tap-chip" data-note="Loose Fit">Loose Fit</button>
+                    <button type="button" class="tap-chip" data-note="Slim Fit">Slim Fit</button>
+                    <button type="button" class="tap-chip" data-note="Mandarin Collar">Mandarin Collar</button>
+                    <button type="button" class="tap-chip" data-note="2 Pockets">2 Pockets</button>
+                    <button type="button" class="tap-chip" data-note="Side Slits">Side Slits</button>
+                </div>
+
+                <!-- Notes Textarea -->
+                <textarea id="itemNotes"
+                          th:field="*{notes}"
+                          rows="3"
+                          class="form-control"
+                          placeholder="e.g. Extra lining inside, front left pocket with button..."></textarea>
+            </div>
+
+            <!-- =========================================================================
+                 SECTION 3: DELIVERY DATE & PRICING
+                 ========================================================================= -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.15rem; color: #1e293b;">
+                    📅 Delivery Date &amp; Pricing
+                </h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                    <!-- Promised Delivery Date -->
+                    <div class="form-group">
+                        <label for="itemDeliveryDate" style="font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                            Promised Delivery Date <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="date"
+                               id="itemDeliveryDate"
+                               th:field="*{deliveryDate}"
+                               th:min="${minDate}"
+                               class="form-control"
+                               required>
+                        <div class="field-error" th:if="${#fields.hasErrors('deliveryDate')}" th:errors="*{deliveryDate}"></div>
+                        <span class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                            Select today or any upcoming date.
+                        </span>
+                    </div>
+
+                    <!-- Stitching Price -->
+                    <div class="form-group">
+                        <label for="itemPrice" style="font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                            Stitching Price (₹) <span style="color: #ef4444;">*</span>
+                        </label>
+                        <input type="number"
+                               id="itemPrice"
+                               th:field="*{price}"
+                               step="1"
+                               min="0"
+                               class="form-control"
+                               placeholder="0"
+                               required>
+                        <div class="field-error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+                        <span class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                            Base tailoring charge for this garment.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================================
+                 SECTION 4: CLOTH & PATTERN PHOTOS (Placeholders for Step 6)
+                 ========================================================================= -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #1e293b;">
+                        📷 Fabric &amp; Design Photos
+                    </h3>
+                    <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">Step 6</span>
+                </div>
+
+                <div style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1.5rem; text-align: center; color: #64748b; background: #f8fafc;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.25rem;">📸</div>
+                    <div style="font-weight: 500; font-size: 0.9rem;">Cloth photo uploads will be enabled in Step 6</div>
+                    <span class="text-muted" style="font-size: 0.8rem;">Tailors can capture pattern photos directly into local storage.</span>
+                </div>
+            </div>
+
+            <!-- =========================================================================
+                 SECTION 5: ACTION BUTTONS
+                 ========================================================================= -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                <a th:href="@{/orders/new/garment}" class="btn btn-outline">
+                    ← Back to Garment
+                </a>
+
+                <div style="display: flex; gap: 0.75rem;" th:if="${!isEdit}">
+                    <button type="submit" name="action" value="more" class="btn btn-outline" style="background: #f8fafc; border-color: #cbd5e1;">
+                        ➕ Save Item &amp; Add More
+                    </button>
+                    <button type="submit" name="action" value="finish" class="btn btn-primary">
+                        💾 Save Item &amp; Finish →
+                    </button>
+                </div>
+
+                <div th:if="${isEdit}">
+                    <button type="submit" class="btn btn-primary">
+                        💾 Update Item
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+</body>
+</html>

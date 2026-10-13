@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  orders/wizard-summary.html: Order Creation Wizard - Step 4: Review Draft Summary.
+  In EJS, this corresponds to `views/orders/wizard-summary.ejs`.
+-->
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 4: Review Summary')}"></th:block>
+</head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Progress bar for Step 4 -->
+        <div th:replace="~{fragments/layout :: wizard-progress(4)}"></div>
+
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Customer Context Card -->
+            <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Customer Order Summary</span>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-top: 0.2rem;">
+                        👤 <span th:text="${draft.customerName}">Ramesh Patel</span>
+                        <span style="font-weight: normal; color: #64748b; font-size: 0.95rem; margin-left: 0.5rem;">
+                            (📱 <span th:text="${draft.customerMobile}">9876543210</span>)
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    <span class="badge badge-success" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                        Total Items: <strong th:text="${draft.itemCount}">1</strong>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Draft Items List Card -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; font-size: 1.2rem; color: #1e293b;">
+                        🛒 Order Items in Draft Cart
+                    </h3>
+                    <a th:href="@{/orders/new/garment}" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                        ➕ Add Another Item
+                    </a>
+                </div>
+
+                <div th:if="${draft.items.isEmpty()}" style="text-align: center; padding: 2rem; color: #64748b;">
+                    No items in draft yet. <a th:href="@{/orders/new/garment}">Choose a garment</a> to add your first item.
+                </div>
+
+                <div th:unless="${draft.items.isEmpty()}" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div th:each="item, stat : ${draft.items}"
+                         style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div>
+                                <span style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600;">
+                                    Item #<span th:text="${stat.count}">1</span>
+                                </span>
+                                <h4 style="margin: 0.15rem 0 0 0; font-size: 1.15rem; color: #1e293b;" th:text="${item.garment.name}">
+                                    Shirt
+                                </h4>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.2rem; font-weight: 700; color: #047857;">
+                                    ₹<span th:text="${item.price}">450.00</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.8rem;">
+                                    Delivery: <strong th:text="${item.deliveryDate}">2026-10-20</strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Notes if present -->
+                        <div th:if="${item.notes != null and !item.notes.isBlank()}"
+                             style="background: #f8fafc; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.85rem; color: #475569; margin-bottom: 0.75rem;">
+                            <strong>Notes:</strong> <span th:text="${item.notes}">Mandarin collar, 2 pockets</span>
+                        </div>
+
+                        <!-- Measurement Numbers Badges -->
+                        <div th:if="${item.measurementValues != null and !item.measurementValues.isEmpty()}"
+                             style="display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem;">
+                            <span th:each="entry : ${item.measurementValues}"
+                                  style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.2rem 0.5rem; color: #334155;">
+                                Field #<span th:text="${entry.key}">1</span>: <strong th:text="${entry.value}">30.0</strong>"
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Bill Sum -->
+                <div th:if="${!draft.items.isEmpty()}"
+                     style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #e2e8f0; padding-top: 1rem; margin-top: 1.5rem;">
+                    <span style="font-size: 1.1rem; font-weight: 600; color: #1e293b;">Total Estimated Bill:</span>
+                    <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color, #7b2cbf);">
+                        ₹<span th:text="${draft.totalPrice}">450.00</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Final Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                <a th:href="@{/orders/new/garment}" class="btn btn-outline">
+                    ➕ Add Another Garment Item
+                </a>
+                <button type="button" class="btn btn-primary" onclick="alert('Step 6 & 7 will finalize payment and save the order into database!')">
+                    Proceed to Payment &amp; Finalize (Step 7) →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

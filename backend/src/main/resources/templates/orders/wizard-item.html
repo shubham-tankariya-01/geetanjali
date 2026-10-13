@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  orders/wizard-item.html: Order Creation Wizard - Step 3: Item Details & Measurements.
+  In EJS, this corresponds to `views/orders/wizard-item.ejs`.
+  Embeds the shared `fragments/item-form.html` fragment.
+-->
+<head>
+    <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 3: Item Details')}"></th:block>
+    <!-- Wizard interactive client script (includes chip tap handler) -->
+    <script th:src="@{/js/new-order.js}" defer></script>
+</head>
+<body>
+
+    <!-- Header bar with shop branding and logged-in tailor info -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Progress bar for Step 3 -->
+        <div th:replace="~{fragments/layout :: wizard-progress(3)}"></div>
+
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Order Context Summary Banner -->
+            <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Current Order Draft</span>
+                    <div style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin-top: 0.2rem;">
+                        👤 <span th:text="${draft.customerName}">Ramesh Patel</span>
+                        <span style="font-weight: normal; color: #64748b; font-size: 0.95rem; margin-left: 0.5rem;">
+                            (📱 <span th:text="${draft.customerMobile}">9876543210</span>)
+                        </span>
+                    </div>
+                </div>
+
+                <div style="text-align: right;">
+                    <div style="font-size: 0.85rem; color: #64748b;">
+                        Configuring: <strong style="color: var(--primary-color, #7b2cbf);" th:text="${garment.name}">Shirt</strong>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.15rem;" th:if="${draft.itemCount > 0}">
+                        Cart: <strong th:text="${draft.itemCount}">1</strong> item(s) already added
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embed shared item form fragment -->
+            <div th:replace="~{fragments/item-form :: item-form(@{/orders/new/item}, false)}"></div>
+        </div>
+    </div>
+
+    <!-- Sticky bottom navigation bar -->
+    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
+</body>
+</html>

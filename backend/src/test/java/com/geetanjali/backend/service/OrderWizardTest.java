@@ -2,6 +2,11 @@ package com.geetanjali.backend.service;
 
 import com.geetanjali.backend.dto.draft.OrderDraft;
 import com.geetanjali.backend.dto.form.CustomerStepForm;
+import com.geetanjali.backend.dto.form.ItemForm;
+import com.geetanjali.backend.dto.draft.OrderDraftItem;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Map;
 import com.geetanjali.backend.entity.Customer;
 import com.geetanjali.backend.entity.Garment;
 import com.geetanjali.backend.exception.ResourceNotFoundException;
@@ -124,6 +129,65 @@ class OrderWizardTest {
         when(garmentRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> orderWizardService.selectGarment(999L));
+    }
+
+    @Test
+    @DisplayName("saveItem copies values into new OrderDraftItem, adds to draft, and clears working garment")
+    void testSaveItem_copiesValuesAndAppendsToDraft() {
+        Garment shirt = new Garment("Shirt", 1, true);
+        setEntityId(shirt, 1L);
+        orderDraft.setCurrentGarment(shirt);
+
+        ItemForm form = new ItemForm(LocalDate.of(2026, 10, 20), new BigDecimal("450.00"));
+        form.setNotes("Double stitching, mandarin collar");
+        form.setMeasurements(Map.of(101L, new BigDecimal("30.0"), 102L, new BigDecimal("38.5")));
+
+        OrderDraftItem savedItem = orderWizardService.saveItem(form);
+
+        assertNotNull(savedItem);
+        assertEquals(shirt, savedItem.getGarment());
+        assertEquals("Double stitching, mandarin collar", savedItem.getNotes());
+        assertEquals(new BigDecimal("450.00"), savedItem.getPrice());
+        assertEquals(2, savedItem.getMeasurementValues().size());
+
+        // Draft assertions
+        assertEquals(1, orderDraft.getItemCount());
+        assertEquals(new BigDecimal("450.00"), orderDraft.getTotalPrice());
+        assertNull(orderDraft.getCurrentGarment(), "Working garment should be cleared after save");
+    }
+
+    @Test
+    @DisplayName("Adding two items leaves two items in the draft with combined total price")
+    void testSaveMultipleItems_retainsAllItemsInDraft() {
+        Garment shirt = new Garment("Shirt", 1, true);
+        Garment pant = new Garment("Pant", 2, true);
+        setEntityId(shirt, 1L);
+        setEntityId(pant, 2L);
+
+        // Item 1: Shirt
+        orderDraft.setCurrentGarment(shirt);
+        ItemForm shirtForm = new ItemForm(LocalDate.of(2026, 10, 20), new BigDecimal("400.00"));
+        orderWizardService.saveItem(shirtForm);
+
+        // Item 2: Pant
+        orderDraft.setCurrentGarment(pant);
+        ItemForm pantForm = new ItemForm(LocalDate.of(2026, 10, 22), new BigDecimal("550.00"));
+        orderWizardService.saveItem(pantForm);
+
+        // Assert: 2 items in cart
+        assertEquals(2, orderDraft.getItemCount(), "Adding two items must leave two items in the draft");
+        assertEquals("Shirt", orderDraft.getItems().get(0).getGarment().getName());
+        assertEquals("Pant", orderDraft.getItems().get(1).getGarment().getName());
+        assertEquals(new BigDecimal("950.00"), orderDraft.getTotalPrice(), "Total price must equal 400 + 550");
+    }
+
+    @Test
+    @DisplayName("saveItem throws IllegalStateException if called without a selected garment")
+    void testSaveItem_throwsWhenNoGarmentSelected() {
+        orderDraft.setCurrentGarment(null);
+        ItemForm form = new ItemForm(LocalDate.of(2026, 10, 20), new BigDecimal("300.00"));
+
+        assertThrows(IllegalStateException.class, () -> orderWizardService.saveItem(form));
     }
 
     private void setEntityId(Object entity, Long id) {

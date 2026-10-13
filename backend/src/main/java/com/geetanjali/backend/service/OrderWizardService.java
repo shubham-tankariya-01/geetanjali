@@ -11,6 +11,7 @@ import com.geetanjali.backend.repository.GarmentRepository;
 import com.geetanjali.backend.util.PhoneNumbers;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.geetanjali.backend.dto.form.ItemForm;
 import java.util.Optional;
 
 // OrderWizardService: Coordinates the multi-step order placement wizard and manages the session draft.
@@ -102,5 +103,34 @@ public class OrderWizardService {
         orderDraft.setCurrentItem(new OrderDraftItem(garment));
 
         return garment;
+    }
+
+    // Step 3: Copies validated form inputs into an OrderDraftItem and appends it to the cart.
+    // Clears the current garment and working item so that the draft is ready for the next garment or final summary.
+    //
+    // Input: form (ItemForm) - validated item form.
+    // Output: OrderDraftItem - the created draft item.
+    public OrderDraftItem saveItem(ItemForm form) {
+        Garment garment = orderDraft.getCurrentGarment();
+        if (garment == null) {
+            throw new IllegalStateException("Cannot save item without a selected garment");
+        }
+
+        OrderDraftItem item = new OrderDraftItem();
+        item.setGarment(garment);
+        item.setMeasurementValues(form.getMeasurements());
+        item.setNotes(form.getNotes());
+        item.setDeliveryDate(form.getDeliveryDate());
+        item.setPrice(form.getPrice());
+        item.setPhotoUrls(form.getPhotoUrls());
+
+        // Add to the draft items list
+        orderDraft.addItem(item);
+
+        // Reset current working garment for next item
+        orderDraft.setCurrentGarment(null);
+        orderDraft.setCurrentItem(null);
+
+        return item;
     }
 }

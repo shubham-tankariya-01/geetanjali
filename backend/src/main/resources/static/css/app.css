@@ -634,3 +634,30 @@ body {
     border-color: #10b981 !important;
 }
 
+/* Tap Chips for Quick Notes */
+.tap-chip {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    border-radius: 20px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.tap-chip:hover {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+.tap-chip:active {
+    background-color: #cbd5e1;
+    transform: translateY(0);
+}
+
+
