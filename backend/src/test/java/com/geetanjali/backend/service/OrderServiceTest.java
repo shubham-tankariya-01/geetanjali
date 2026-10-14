@@ -85,7 +85,7 @@ class OrderServiceTest {
                 fixedClock
         );
 
-        tailorUser = new AppUser(null, "9876543210", "hash", "Ketan Owner", null);
+        tailorUser = new AppUser(null, "9876543210", "hash", "Ketan Tankariya", null);
     }
 
     @Test

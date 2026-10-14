@@ -63,7 +63,7 @@ class DeliveryServiceTest {
         fixedClock = Clock.fixed(Instant.parse("2026-10-14T10:00:00Z"), ZoneId.of("Asia/Kolkata"));
         deliveryService = new DeliveryService(customerOrderRepository, orderItemRepository, deliveryOverrideRepository, fixedClock);
 
-        ownerUser = new AppUser(null, "Owner Ketan", "9876543210", "hash", Role.OWNER);
+        ownerUser = new AppUser(null, "Ketan Tankariya", "9876543210", "hash", Role.OWNER);
         ownerUser.setId(1L);
 
         tailorUser = new AppUser(null, "Tailor Sumit", "7894561230", "hash", Role.TAILOR);
