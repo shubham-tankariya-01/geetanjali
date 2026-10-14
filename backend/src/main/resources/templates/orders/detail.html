@@ -242,34 +242,41 @@
                     </div>
                 </div>
 
-                <!-- Measurements Snapshot Details Block -->
-                <details style="margin-top: 0.85rem; border: 1.5px solid var(--md-outline); border-radius: var(--radius-sm); padding: 0.75rem 1rem; background: var(--md-surface-container-low);">
-                    <summary style="cursor: pointer; font-weight: 600; color: var(--md-on-surface); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
-                        <span class="material-symbols-rounded icon-sm">straighten</span>
-                        <span>Measurements Snapshot</span>
-                        <span style="color: var(--md-on-surface-variant); font-weight: normal; font-size: 0.85rem;"
-                              th:text="'(' + (${item.measurement != null and item.measurement.values != null} ? ${item.measurement.values.size()} : 0) + ' recorded)'">
-                            (6 recorded)
+                <!-- Garment Measurements Block (Always visible in detailed view) -->
+                <div style="margin-top: 1rem; border: 1.5px solid var(--md-outline); border-radius: var(--radius-sm); padding: 0.85rem 1rem; background: var(--md-surface-container-low);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.45rem; font-weight: 700; color: var(--md-on-surface); font-size: 0.95rem;">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">straighten</span>
+                            <span>Garment Measurements</span>
+                            <span style="color: var(--md-on-surface-variant); font-weight: 500; font-size: 0.85rem;"
+                                  th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}"
+                                  th:text="'(' + ${item.measurement.values.size()} + ' parameters)'">
+                                (6 parameters)
+                            </span>
+                        </div>
+                        <span th:if="${item.measurement != null}" class="badge badge-success" style="font-size: 0.75rem;">
+                            Snapshot #<span th:text="${item.measurement.id}">1</span>
                         </span>
-                    </summary>
+                    </div>
 
-                    <div style="margin-top: 0.75rem; border-top: 1.5px solid var(--md-outline); padding-top: 0.75rem;">
+                    <div>
                         <div th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}"
                              style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
                             <div th:each="val : ${item.measurement.values}"
                                  style="background: var(--md-surface); border: 1.5px solid var(--md-outline); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm);">
-                                <div style="font-size: 0.75rem; color: var(--md-on-surface-variant); text-transform: uppercase;" th:text="${val.field.label}">Chest</div>
+                                <div style="font-size: 0.75rem; color: var(--md-on-surface-variant); text-transform: uppercase; font-weight: 600;" th:text="${val.field.label}">Chest</div>
                                 <div style="font-size: 1.1rem; font-weight: 700; color: var(--md-on-surface); margin-top: 0.15rem;">
                                     <span th:text="${val.value}">40.0</span>
                                     <span style="font-size: 0.75rem; font-weight: normal; color: var(--md-on-surface-variant);" th:text="${val.field.unit}">inch</span>
                                 </div>
                             </div>
                         </div>
-                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}" style="color: var(--md-on-surface-variant); font-size: 0.85rem;">
+                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}"
+                             style="color: var(--md-on-surface-variant); font-size: 0.88rem; font-style: italic;">
                             No measurements recorded for this garment item.
                         </div>
                     </div>
-                </details>
+                </div>
             </div>
         </div>
 

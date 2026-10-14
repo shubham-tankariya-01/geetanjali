@@ -211,7 +211,7 @@ a:hover {
 }
 
 .top-bar-inner {
-    max-width: 1200px;
+    max-width: 1440px;
     width: 100%;
     margin: 0 auto;
     display: flex;
@@ -1485,4 +1485,60 @@ textarea.form-control {
     .step-title {
         display: none;
     }
+}
+
+/* --------------------------------------------------------------------------
+   Custom Themed Scrollbar & Profile Layout Extensions
+   -------------------------------------------------------------------------- */
+.themed-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-outline-variant) var(--md-surface-container-low);
+}
+
+.themed-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.themed-scrollbar::-webkit-scrollbar-track {
+    background: var(--md-surface-container-low);
+    border-radius: var(--radius-full);
+}
+
+.themed-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--md-outline-variant);
+    border-radius: var(--radius-full);
+}
+
+.themed-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-lime);
+}
+
+/* Customer Profile 2-Column Responsive Layout */
+.customer-profile-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 1.75rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .customer-profile-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.customer-order-tile {
+    background: var(--md-surface-container-low);
+    border: 1.5px solid var(--md-outline);
+    border-radius: var(--radius-md);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    transition: transform var(--md-duration-short) var(--md-easing), box-shadow var(--md-duration-short) var(--md-easing);
+}
+
+.customer-order-tile:hover {
+    border-color: var(--md-primary);
+    box-shadow: var(--shadow-2);
 }

@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   home/index.html: Tailor Shop Main Home Dashboard (Material You MD3).
-  Responsive metrics, fast customer search, recent orders feed, and quick actions.
+  Full-display widescreen layout with responsive metrics, fast customer search, and recent orders feed.
 -->
 <head th:replace="~{fragments/layout :: page-head('Dashboard')}"></head>
 <body>
@@ -10,11 +10,11 @@
     <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 1040px;">
+    <div class="container dashboard-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Hero Welcome Card -->
+        <!-- Hero Welcome Card (Full Width) -->
         <div class="card card-hero" style="margin-bottom: 1.75rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
                 <div>
@@ -38,9 +38,9 @@
             </div>
         </div>
 
-        <!-- Quick Metrics Grid -->
-        <div class="grid grid-3" style="margin-bottom: 1.75rem;">
-            <!-- Stat Tile 1: Recent Orders -->
+        <!-- Quick Metrics Grid (Full Widescreen Responsive Row) -->
+        <div class="grid" th:classappend="${hasPendingBalance ? 'grid-4' : 'grid-3'}" style="margin-bottom: 1.75rem;">
+            <!-- Stat Tile 1: Recent Active Bookings -->
             <div class="stat-card">
                 <div class="stat-icon">
                     <span class="material-symbols-rounded icon-lg">receipt_long</span>
@@ -58,43 +58,38 @@
                 </div>
                 <div class="stat-info">
                     <div class="stat-value">Directory</div>
-                    <div class="stat-label">Customer Profiles →</div>
+                    <div class="stat-label">Customer Profiles &rarr;</div>
                 </div>
             </a>
 
-            <!-- Stat Tile 3: Garments Catalog -->
+            <!-- Stat Tile 3: Garments Catalog & Shop Settings -->
             <a th:href="@{/more}" class="stat-card" style="text-decoration: none;">
                 <div class="stat-icon tertiary">
                     <span class="material-symbols-rounded icon-lg">tune</span>
                 </div>
                 <div class="stat-info">
                     <div class="stat-value">Settings</div>
-                    <div class="stat-label">Catalog &amp; Shop →</div>
+                    <div class="stat-label">Catalog &amp; Shop &rarr;</div>
                 </div>
             </a>
-        </div>
 
-        <!-- Pending Payments Summary Card (Shown only when pending total > 0) -->
-        <div th:if="${hasPendingBalance}" class="card" style="margin-bottom: 1.75rem; border-left: 5px solid var(--md-error); background: #fffbfa; padding: 1.25rem 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 48px; height: 48px; border-radius: 50%; background: #ffdad6; color: var(--md-error); display: flex; align-items: center; justify-content: center;">
-                        <span class="material-symbols-rounded" style="font-size: 26px;">pending_actions</span>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--md-error);">
-                            Pending <span th:text="${@orderNumberFormatter.formatMoney(pendingTotal)}">Rs. 9,500</span>
-                        </div>
-                        <div style="font-size: 0.88rem; color: var(--md-on-surface-variant);">
-                            Uncollected balance across active orders
-                        </div>
-                    </div>
+            <!-- Stat Tile 4: Pending Payments Summary Tile (Shown only when pending total > 0) -->
+            <div th:if="${hasPendingBalance}" class="stat-card" style="border-left: 4.5px solid var(--md-error); background: #fffbfa;">
+                <div class="stat-icon" style="background: #ffdad6; color: var(--md-error);">
+                    <span class="material-symbols-rounded icon-lg">pending_actions</span>
                 </div>
-                <div>
-                    <a th:href="@{/payments/pending}" class="btn btn-outline" style="color: var(--md-error); border-color: var(--md-error); font-weight: 600;">
-                        <span>View</span>
-                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                    </a>
+                <div class="stat-info" style="flex: 1;">
+                    <div class="stat-value" style="color: var(--md-error); font-size: 1.35rem;"
+                         th:text="'Pending ' + ${@orderNumberFormatter.formatMoney(pendingTotal)}">
+                        Pending Rs. 9,500
+                    </div>
+                    <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.15rem;">
+                        <span style="font-size: 0.82rem; color: var(--md-on-surface-variant);">Uncollected Balance</span>
+                        <a th:href="@{/payments/pending}" class="badge badge-danger" style="text-decoration: none; font-weight: 700; padding: 0.2rem 0.55rem; font-size: 0.78rem;">
+                            <span>View</span>
+                            <span class="material-symbols-rounded icon-sm" style="font-size: 13px;">arrow_forward</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,8 +113,8 @@
             </form>
         </div>
 
-        <!-- Recent Orders Card -->
-        <div class="card table-card" style="padding: 0; overflow: hidden;">
+        <!-- Recent Orders Card (Full Width Table) -->
+        <div class="card table-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
             <div class="table-header">
                 <div class="table-header-left">
                     <div class="table-header-icon orders-icon">

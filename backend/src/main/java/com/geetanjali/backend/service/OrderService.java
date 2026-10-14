@@ -244,11 +244,25 @@ public class OrderService {
 
     // Retrieves an order by its primary key ID, or throws ResourceNotFoundException if missing.
     // Automatically mapped to HTTP 404 by GlobalExceptionHandler.
+    // Also ensures that each garment item has its measurement snapshot populated for detailed view display.
     // Input: id (Long).
     // Output: CustomerOrder entity.
     public CustomerOrder getOrderOrThrow(Long id) {
-        return customerOrderRepository.findById(id)
+        CustomerOrder order = customerOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        // When viewing order details, ensure measurement values are available for every item.
+        // If an item does not have a snapshot directly linked, fall back to the customer's latest snapshot for that garment.
+        if (order.getCustomer() != null && order.getItems() != null) {
+            for (OrderItem item : order.getItems()) {
+                if (item.getMeasurement() == null && item.getGarment() != null) {
+                    measurementService.getLatestMeasurement(order.getCustomer().getId(), item.getGarment().getId())
+                            .ifPresent(item::setMeasurement);
+                }
+            }
+        }
+
+        return order;
     }
 
     // Retrieves a specific OrderItem belonging to an order, or throws ResourceNotFoundException if missing or mismatched.
