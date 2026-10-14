@@ -48,7 +48,7 @@
             <hr style="border: none; border-top: 1.5px solid var(--md-outline); margin: 1.5rem 0;" />
 
             <!-- Profile Details Grid -->
-            <div class="grid grid-3">
+            <div class="grid grid-4">
                 <div style="background: var(--md-surface-container-low); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 1.5px solid var(--md-outline);">
                     <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem;">Mobile Number</span>
                     <a th:href="'tel:' + ${customer.mobile}" class="phone-display" style="font-size: 1.1rem; font-weight: 600; color: var(--md-primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
@@ -71,6 +71,15 @@
                         <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">calendar_month</span>
                         <span th:if="${lastOrderDate != null}" th:text="${lastOrderDate}">2026-10-12</span>
                         <span th:if="${lastOrderDate == null}" style="color: var(--md-on-surface-variant); font-weight: 400; font-size: 0.95rem;">No orders yet</span>
+                    </div>
+                </div>
+
+                <div style="background: var(--md-surface-container-low); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 1.5px solid var(--md-outline);">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem;">Total Outstanding</span>
+                    <div style="font-size: 1.1rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;"
+                         th:style="${totalOutstanding != null and totalOutstanding.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'color: var(--md-error);' : 'color: var(--md-success);'}">
+                        <span class="material-symbols-rounded icon-sm" th:text="${totalOutstanding != null and totalOutstanding.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'pending' : 'check_circle'}">payments</span>
+                        <span th:text="${@orderNumberFormatter.formatMoney(totalOutstanding)}">Rs. 0</span>
                     </div>
                 </div>
             </div>

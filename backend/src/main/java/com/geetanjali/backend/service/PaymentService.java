@@ -1,20 +1,30 @@
 package com.geetanjali.backend.service;
 
+import com.geetanjali.backend.dto.PendingPaymentRow;
+import com.geetanjali.backend.dto.PendingPaymentsSummary;
 import com.geetanjali.backend.dto.form.PaymentForm;
 import com.geetanjali.backend.entity.CustomerOrder;
+import com.geetanjali.backend.entity.OrderItem;
 import com.geetanjali.backend.entity.Payment;
+import com.geetanjali.backend.enums.ItemStatus;
 import com.geetanjali.backend.enums.PaymentMode;
 import com.geetanjali.backend.exception.BusinessRuleException;
 import com.geetanjali.backend.exception.ResourceNotFoundException;
 import com.geetanjali.backend.repository.CustomerOrderRepository;
 import com.geetanjali.backend.repository.PaymentRepository;
+import com.geetanjali.backend.util.OrderNumberFormatter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 // PaymentService: Business service managing payments, advance deposits, and settlement ledgers.
 // In Express, this corresponds to `services/paymentService.js`.
@@ -28,23 +38,33 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final CustomerOrderRepository customerOrderRepository;
     private final Clock clock;
+    private final OrderNumberFormatter orderNumberFormatter;
 
-    // Full constructor injection: Spring supplies PaymentRepository, CustomerOrderRepository, and Clock bean.
-    // Inputs: paymentRepository (PaymentRepository), customerOrderRepository (CustomerOrderRepository), clock (Clock).
+    // Full constructor injection: Spring supplies PaymentRepository, CustomerOrderRepository, Clock, and OrderNumberFormatter beans.
+    // Inputs: paymentRepository, customerOrderRepository, clock, orderNumberFormatter.
     // @Autowired = Tells Spring to use this constructor when creating the bean with multiple constructor choices.
     @org.springframework.beans.factory.annotation.Autowired
     public PaymentService(PaymentRepository paymentRepository,
                           CustomerOrderRepository customerOrderRepository,
-                          Clock clock) {
+                          Clock clock,
+                          OrderNumberFormatter orderNumberFormatter) {
         this.paymentRepository = paymentRepository;
         this.customerOrderRepository = customerOrderRepository;
         this.clock = clock;
+        this.orderNumberFormatter = orderNumberFormatter;
+    }
+
+    // Convenience constructor for tests that provide PaymentRepository, CustomerOrderRepository, and Clock.
+    public PaymentService(PaymentRepository paymentRepository,
+                          CustomerOrderRepository customerOrderRepository,
+                          Clock clock) {
+        this(paymentRepository, customerOrderRepository, clock, new OrderNumberFormatter(clock));
     }
 
     // Convenience constructor for unit tests that only mock PaymentRepository and Clock.
     // Inputs: paymentRepository (PaymentRepository), clock (Clock).
     public PaymentService(PaymentRepository paymentRepository, Clock clock) {
-        this(paymentRepository, null, clock);
+        this(paymentRepository, null, clock, new OrderNumberFormatter(clock));
     }
 
     // Records an advance deposit payment for an order if the amount is greater than zero.
@@ -147,5 +167,123 @@ public class PaymentService {
             }
         }
         return total;
+    }
+
+    // Computes human-friendly delivery/overdue status text:
+    // 1. If any item in the order was delivered: "delivered N days ago"
+    // 2. Otherwise: "due in N days" or "overdue by N days" from the earliest item delivery date
+    //
+    // Inputs:
+    //   order (CustomerOrder) - order to inspect.
+    //   today (LocalDate) - current date in Asia/Kolkata timezone.
+    // Output:
+    //   String - formatted status label.
+    public String computeDueText(CustomerOrder order, LocalDate today) {
+        if (order == null || order.getItems() == null || order.getItems().isEmpty()) {
+            return "due in 0 days";
+        }
+
+        // Branch 1: If ANY item was already delivered to the customer
+        boolean anyDelivered = order.getItems().stream().anyMatch(OrderItem::isDelivered);
+        if (anyDelivered) {
+            // Find earliest delivery date among delivered items
+            LocalDate deliveredDate = order.getItems().stream()
+                    .filter(OrderItem::isDelivered)
+                    .map(item -> {
+                        if (item.getDeliveredAt() != null) {
+                            return item.getDeliveredAt().atZone(clock.getZone()).toLocalDate();
+                        }
+                        return item.getDeliveryDate();
+                    })
+                    .filter(Objects::nonNull)
+                    .min(LocalDate::compareTo)
+                    .orElse(today);
+
+            long daysAgo = ChronoUnit.DAYS.between(deliveredDate, today);
+            if (daysAgo < 0) {
+                daysAgo = 0;
+            }
+            return "delivered " + daysAgo + (daysAgo == 1 ? " day ago" : " days ago");
+        }
+
+        // Branch 2: No items delivered yet; compute status from earliest item delivery date
+        LocalDate earliestDeliveryDate = order.getItems().stream()
+                .map(OrderItem::getDeliveryDate)
+                .filter(Objects::nonNull)
+                .min(LocalDate::compareTo)
+                .orElse(today);
+
+        if (earliestDeliveryDate.isBefore(today)) {
+            long days = ChronoUnit.DAYS.between(earliestDeliveryDate, today);
+            return "overdue by " + days + (days == 1 ? " day" : " days");
+        } else if (earliestDeliveryDate.isAfter(today)) {
+            long days = ChronoUnit.DAYS.between(today, earliestDeliveryDate);
+            return "due in " + days + (days == 1 ? " day" : " days");
+        } else {
+            return "due in 0 days";
+        }
+    }
+
+    // Computes the shop-wide pending payments summary by iterating orders.
+    // Filters only orders where balance > 0, calculates total outstanding balance,
+    // and sorts rows chronologically by earliest promised delivery date (oldest first).
+    //
+    // Output: PendingPaymentsSummary - aggregate containing total outstanding and sorted rows.
+    public PendingPaymentsSummary getPendingPaymentsSummary() {
+        if (customerOrderRepository == null) {
+            return new PendingPaymentsSummary(BigDecimal.ZERO, List.of());
+        }
+
+        LocalDate today = clock.instant().atZone(clock.getZone()).toLocalDate();
+        List<PendingPaymentRow> rows = new ArrayList<>();
+
+        // Loop all orders in memory (tailor shop dataset is small, so in-memory loop is fast and clean)
+        List<CustomerOrder> allOrders = customerOrderRepository.findAll();
+        for (CustomerOrder order : allOrders) {
+            // Only orders with an outstanding balance > 0 are included
+            if (order.getBalance().compareTo(BigDecimal.ZERO) > 0) {
+                LocalDate earliestDeliveryDate = order.getItems().stream()
+                        .map(OrderItem::getDeliveryDate)
+                        .filter(Objects::nonNull)
+                        .min(LocalDate::compareTo)
+                        .orElse(order.getCreatedAt() != null ? order.getCreatedAt().atZone(clock.getZone()).toLocalDate() : today);
+
+                String dueText = computeDueText(order, today);
+                String formattedOrderNo = (orderNumberFormatter != null) ? orderNumberFormatter.format(order) : ("TS-" + order.getOrderNo());
+
+                String customerName = (order.getCustomer() != null) ? order.getCustomer().getName() : "Customer";
+                String customerPhone = (order.getCustomer() != null) ? order.getCustomer().getMobile() : "";
+                Long customerId = (order.getCustomer() != null) ? order.getCustomer().getId() : null;
+
+                rows.add(new PendingPaymentRow(
+                        order.getId(),
+                        order.getOrderNo(),
+                        formattedOrderNo,
+                        customerName,
+                        customerPhone,
+                        customerId,
+                        order.getBalance(),
+                        earliestDeliveryDate,
+                        dueText
+                ));
+            }
+        }
+
+        // Sort by earliest delivery date, oldest first (ascending order)
+        rows.sort(Comparator.comparing(PendingPaymentRow::earliestDeliveryDate));
+
+        // Sum the balances across all unpaid orders
+        BigDecimal totalOutstanding = rows.stream()
+                .map(PendingPaymentRow::balance)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new PendingPaymentsSummary(totalOutstanding, rows);
+    }
+
+    // Returns the total pending balance across all orders in the shop.
+    //
+    // Output: BigDecimal - cumulative outstanding balance.
+    public BigDecimal getTotalPendingBalance() {
+        return getPendingPaymentsSummary().totalOutstanding();
     }
 }

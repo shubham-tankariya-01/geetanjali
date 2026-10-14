@@ -82,4 +82,14 @@ public class Customer {
     public void setMobile(String mobile) {
         this.mobile = mobile;
     }
+
+    // Convenience alias for getName() to support standard full name referencing.
+    public String getFullName() {
+        return name;
+    }
+
+    // Convenience alias for getMobile() to support standard phone referencing.
+    public String getPhone() {
+        return mobile;
+    }
 }

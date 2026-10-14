@@ -171,4 +171,73 @@ class PaymentServiceTest {
 
         assertEquals(new BigDecimal("550.50"), total);
     }
+
+    @Test
+    @DisplayName("getPendingPaymentsSummary includes only orders with balance > 0 and sorts by earliest delivery date oldest first")
+    void testGetPendingPaymentsSummary_filtersPaidOrdersAndSortsChronologically() {
+        // Order 1: Earliest delivery Oct 20, balance 800 (from setUp)
+        // Order 2: Fully paid order (Total 500, Paid 500)
+        Customer customer2 = new Customer("Sita Devi", "9876509999");
+        CustomerOrder order2 = new CustomerOrder(1002L, customer2, null, fixedClock.instant());
+        order2.setId(20L);
+        OrderItem item2 = new OrderItem(order2, null, null, "Saree", new BigDecimal("500.00"), LocalDate.of(2026, 10, 18));
+        order2.setItems(List.of(item2));
+        Payment payment2 = new Payment(order2, new BigDecimal("500.00"), "CASH", LocalDate.of(2026, 10, 15));
+        order2.setPayments(List.of(payment2));
+
+        // Order 3: Earliest delivery Oct 12 (earlier than Order 1), balance 300
+        Customer customer3 = new Customer("Gita Sharma", "9876508888");
+        CustomerOrder order3 = new CustomerOrder(1003L, customer3, null, fixedClock.instant());
+        order3.setId(30L);
+        OrderItem item3 = new OrderItem(order3, null, null, "Kurta", new BigDecimal("600.00"), LocalDate.of(2026, 10, 12));
+        order3.setItems(List.of(item3));
+        Payment payment3 = new Payment(order3, new BigDecimal("300.00"), "UPI", LocalDate.of(2026, 10, 14));
+        order3.setPayments(List.of(payment3));
+
+        when(customerOrderRepository.findAll()).thenReturn(List.of(order, order2, order3));
+
+        com.geetanjali.backend.dto.PendingPaymentsSummary summary = paymentService.getPendingPaymentsSummary();
+
+        // Total outstanding should be Order 1 (800) + Order 3 (300) = 1100 (Order 2 is excluded because balance is 0)
+        assertEquals(new BigDecimal("1100.00"), summary.totalOutstanding());
+        assertEquals(2, summary.rows().size());
+
+        // Chronological order: Order 3 (Oct 12) must come before Order 1 (Oct 20)
+        assertEquals(30L, summary.rows().get(0).orderId());
+        assertEquals(new BigDecimal("300.00"), summary.rows().get(0).balance());
+        assertEquals(10L, summary.rows().get(1).orderId());
+        assertEquals(new BigDecimal("800.00"), summary.rows().get(1).balance());
+    }
+
+    @Test
+    @DisplayName("computeDueText returns 'delivered N days ago' when any item in the order was delivered")
+    void testComputeDueText_deliveredItem_returnsDeliveredNDaysAgo() {
+        // Today is fixed at 2026-10-15
+        OrderItem item = order.getItems().get(0);
+        item.markDone(Instant.parse("2026-10-14T10:00:00Z"));
+        // Delivered 2 days ago on 2026-10-13
+        item.markDelivered(Instant.parse("2026-10-13T10:00:00Z"));
+
+        String text = paymentService.computeDueText(order, LocalDate.of(2026, 10, 15));
+        assertEquals("delivered 2 days ago", text);
+    }
+
+    @Test
+    @DisplayName("computeDueText returns 'due in N days' when promised delivery date is in future")
+    void testComputeDueText_futureDelivery_returnsDueInNDays() {
+        // Today is 2026-10-15, item promised delivery is 2026-10-20 (5 days in future)
+        String text = paymentService.computeDueText(order, LocalDate.of(2026, 10, 15));
+        assertEquals("due in 5 days", text);
+    }
+
+    @Test
+    @DisplayName("computeDueText returns 'overdue by N days' when delivery date is in past without delivery")
+    void testComputeDueText_pastDelivery_returnsOverdueByNDays() {
+        // Change item promised delivery to 3 days ago: 2026-10-12
+        OrderItem item = order.getItems().get(0);
+        item.setDeliveryDate(LocalDate.of(2026, 10, 12));
+
+        String text = paymentService.computeDueText(order, LocalDate.of(2026, 10, 15));
+        assertEquals("overdue by 3 days", text);
+    }
 }

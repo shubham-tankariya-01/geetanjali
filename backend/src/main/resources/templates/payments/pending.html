@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  payments/pending.html: Pending Payments Ledger page.
+  Displays the total shop outstanding balance at the top and lists all orders with balance > 0,
+  sorted chronologically by earliest promised delivery date (oldest first).
+-->
+<head th:replace="~{fragments/layout :: page-head('Pending Payments')}"></head>
+<body>
+
+    <!-- Unified Material You Top App Bar -->
+    <header th:replace="~{fragments/layout :: top-bar}"></header>
+
+    <div class="container" style="max-width: 1040px;">
+        <!-- Flash messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Back Link Navigation -->
+        <div style="margin-bottom: 1.25rem;">
+            <a th:href="@{/}" class="back-link">
+                <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                <span>Back to Dashboard</span>
+            </a>
+        </div>
+
+        <!-- Hero Card: Total Outstanding Summary -->
+        <div class="card card-hero" style="margin-bottom: 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+                <div>
+                    <span class="badge badge-danger" style="margin-bottom: 0.5rem;">
+                        <span class="material-symbols-rounded icon-sm">pending_actions</span>
+                        <span>Outstanding Ledger</span>
+                    </span>
+                    <h2 style="font-size: 2rem; font-weight: 800; color: var(--md-error); margin: 0.25rem 0;">
+                        Total Pending: <span th:text="${@orderNumberFormatter.formatMoney(totalOutstanding)}">Rs. 0</span>
+                    </h2>
+                    <p style="margin: 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">
+                        Uncollected balance across all active customer orders.
+                    </p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="stat-card" style="padding: 1rem 1.5rem; background: var(--md-surface-container-high);">
+                        <div class="stat-icon" style="background: var(--md-error-container); color: var(--md-on-error-container);">
+                            <span class="material-symbols-rounded icon-lg">receipt_long</span>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" th:text="${#lists.size(pendingRows)}">0</div>
+                            <div class="stat-label">Unpaid Orders</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Card: Orders with Pending Balance -->
+        <div class="card table-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
+            <div class="table-header">
+                <div class="table-header-left">
+                    <div class="table-header-icon orders-icon">
+                        <span class="material-symbols-rounded">payments</span>
+                    </div>
+                    <div>
+                        <h3 class="table-header-title">Unsettled Orders</h3>
+                        <p class="table-header-subtitle">Sorted by earliest delivery date (oldest first)</p>
+                    </div>
+                </div>
+                <div class="table-header-right">
+                    <span class="badge badge-neutral">
+                        <span class="material-symbols-rounded icon-sm">sort</span>
+                        <span>Oldest Delivery First</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="table-container" style="margin: 0;">
+                <table class="data-table" th:if="${pendingRows != null and !pendingRows.isEmpty()}">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;">
+                                <span class="material-symbols-rounded">tag</span>
+                                <span>Order Number</span>
+                            </th>
+                            <th style="min-width: 220px;">
+                                <span class="material-symbols-rounded">person</span>
+                                <span>Customer</span>
+                            </th>
+                            <th style="min-width: 180px;">
+                                <span class="material-symbols-rounded">event</span>
+                                <span>Status / Due</span>
+                            </th>
+                            <th style="width: 160px; text-align: right;">
+                                <span class="material-symbols-rounded">account_balance_wallet</span>
+                                <span>Balance</span>
+                            </th>
+                            <th style="width: 150px; text-align: center;">
+                                <span class="material-symbols-rounded">settings</span>
+                                <span>Action</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${pendingRows}">
+                            <!-- Order Number Badge linking to order detail -->
+                            <td>
+                                <a th:href="@{/orders/{id}(id=${row.orderId})}"
+                                   class="badge badge-neutral"
+                                   style="text-decoration: none; font-weight: 700; font-size: 0.9rem;"
+                                   th:text="${row.orderNumber}">
+                                    TS-2026-0001
+                                </a>
+                            </td>
+
+                            <!-- Customer Name and Phone Number -->
+                            <td>
+                                <div>
+                                    <strong style="color: var(--md-on-surface); font-size: 0.95rem;" th:text="${row.customerName}">
+                                        Customer Name
+                                    </strong>
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.85rem; margin-top: 0.2rem;">
+                                        <span class="material-symbols-rounded icon-sm">call</span>
+                                        <span th:text="${row.customerPhone}">9876543210</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Due / Delivery Text -->
+                            <td>
+                                <!-- Delivered case -->
+                                <span th:if="${row.dueText.startsWith('delivered')}" class="chip badge-primary" style="font-weight: 600;">
+                                    <span class="material-symbols-rounded icon-sm">local_shipping</span>
+                                    <span th:text="${row.dueText}">delivered 2 days ago</span>
+                                </span>
+                                <!-- Overdue case -->
+                                <span th:if="${row.dueText.startsWith('overdue')}" class="chip badge-danger" style="font-weight: 600;">
+                                    <span class="material-symbols-rounded icon-sm">warning</span>
+                                    <span th:text="${row.dueText}">overdue by 3 days</span>
+                                </span>
+                                <!-- Due in future or due in 0 days -->
+                                <span th:if="${!row.dueText.startsWith('delivered') and !row.dueText.startsWith('overdue')}" class="chip badge-secondary" style="font-weight: 600;">
+                                    <span class="material-symbols-rounded icon-sm">schedule</span>
+                                    <span th:text="${row.dueText}">due in 4 days</span>
+                                </span>
+                            </td>
+
+                            <!-- Balance in bold red -->
+                            <td style="text-align: right;">
+                                <strong style="color: var(--md-error); font-size: 1.05rem;"
+                                        th:text="${@orderNumberFormatter.formatMoney(row.balance)}">
+                                    Rs. 400
+                                </strong>
+                            </td>
+
+                            <!-- Action button opening that order's payments section -->
+                            <td style="text-align: center;">
+                                <a th:href="@{/orders/{id}(id=${row.orderId})} + '#payments-section'"
+                                   class="btn btn-sm btn-primary"
+                                   style="text-decoration: none; padding: 0.4rem 0.85rem;">
+                                    <span class="material-symbols-rounded icon-sm">payments</span>
+                                    <span>Payments</span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Empty State: No pending payments -->
+                <div th:if="${pendingRows == null or pendingRows.isEmpty()}" style="text-align: center; padding: 3.5rem 1.5rem;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--md-success-container); color: var(--md-on-success-container); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                        <span class="material-symbols-rounded" style="font-size: 36px;">check_circle</span>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--md-on-surface); margin: 0 0 0.5rem;">
+                        No Pending Payments!
+                    </h3>
+                    <p style="color: var(--md-on-surface-variant); font-size: 0.95rem; margin: 0;">
+                        All customer orders are fully paid. The accounts ledger is completely balanced.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

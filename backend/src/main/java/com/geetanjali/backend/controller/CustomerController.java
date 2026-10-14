@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -85,6 +86,11 @@ public class CustomerController {
         // Fetch customer's full order history (newest first)
         List<CustomerOrder> orders = customerService.getCustomerOrders(id);
 
+        // Calculate cumulative unpaid balance across all of this customer's orders
+        BigDecimal totalOutstanding = orders.stream()
+                .map(CustomerOrder::getBalance)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         // Job 3: Fetch newest measurement snapshot per active garment for this customer
         List<GarmentLatestMeasurement> garmentMeasurements = measurementService.getLatestPerGarment(customer);
 
@@ -92,6 +98,7 @@ public class CustomerController {
         model.addAttribute("orders", orders);
         model.addAttribute("orderCount", orderCount);
         model.addAttribute("lastOrderDate", lastOrderDate);
+        model.addAttribute("totalOutstanding", totalOutstanding);
         model.addAttribute("garmentMeasurements", garmentMeasurements);
 
         return "customers/detail";
