@@ -10,7 +10,7 @@
     <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 900px;">
+    <div class="container settings-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
@@ -25,83 +25,105 @@
             <span style="color: var(--md-on-surface-variant);">Template</span>
         </div>
 
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="page-title-group">
-                <h2>
-                    <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">straighten</span>
-                    <span><span th:text="${garment.name}">Shirt</span> — Measurement Template</span>
-                </h2>
-                <p>Configure the measurement fields recorded by tailors when taking orders for this garment.</p>
-            </div>
-            <div>
-                <span class="chip badge-primary" style="font-size: 0.8rem;">
-                    <span class="material-symbols-rounded icon-sm">shield_person</span>
-                    <span>Owner Access</span>
-                </span>
+        <!-- Page Header Card -->
+        <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline);">
+                        <span class="material-symbols-rounded icon-lg">straighten</span>
+                    </div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.65rem; font-weight: 700; color: var(--md-on-surface);">
+                            <span th:text="${garment.name}">Shirt</span> &mdash; Measurement Template
+                        </h2>
+                        <p style="margin: 0.15rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">
+                            Configure the measurement specifications recorded by tailors when taking orders for this garment.
+                        </p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="chip badge-primary" style="font-size: 0.85rem; font-weight: 700;">
+                        <span class="material-symbols-rounded icon-sm">shield_person</span>
+                        <span>Owner Access</span>
+                    </span>
+                </div>
             </div>
         </div>
 
-        <!-- Section 1: Add New Measurement Field Form -->
-        <div class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border-top: 4px solid var(--md-primary);">
-            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
-                <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_circle</span>
-                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Add Measurement Field</h3>
-            </div>
-            <p style="color: var(--md-on-surface-variant); font-size: 0.875rem; margin: 0 0 1.25rem 0;">
-                New fields are placed at the end of the template. Tailors will enter values for these fields during the order wizard.
-            </p>
-
-            <form th:action="@{/settings/garments/{id}/fields(id=${garment.id})}" th:object="${fieldForm}" method="post">
-                <div style="display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap;">
-                    <!-- Field Label input -->
-                    <div style="flex: 2; min-width: 220px;">
-                        <label for="fieldLabel" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
-                            Field Label
-                        </label>
-                        <input type="text"
-                               id="fieldLabel"
-                               th:field="*{label}"
-                               class="form-control"
-                               placeholder="e.g. Chest, Waist, Length, Shoulder, Sleeve"
-                               required
-                               maxlength="50"
-                               autofocus />
-                        <div class="field-error" th:if="${#fields.hasErrors('label')}" th:errors="*{label}">
-                            Field label is invalid.
-                        </div>
+        <!-- Widescreen 2-Column Split Layout -->
+        <div class="settings-split-layout">
+            <!-- Left Column: Add Field Form & Field Sequencing Guide -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- Add New Measurement Field Form Card -->
+                <div class="card card-elevated" style="box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
+                    <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
+                        <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_circle</span>
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--md-on-surface);">Add Measurement Field</h3>
                     </div>
+                    <p style="color: var(--md-on-surface-variant); font-size: 0.875rem; margin: 0 0 1.25rem 0;">
+                        New fields are appended to the template. Tailors will enter values for these fields during the order creation wizard.
+                    </p>
 
-                    <!-- Unit input -->
-                    <div style="flex: 1; min-width: 130px;">
-                        <label for="fieldUnit" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
-                            Unit
-                        </label>
-                        <input type="text"
-                               id="fieldUnit"
-                               th:field="*{unit}"
-                               class="form-control"
-                               placeholder="inch"
-                               required
-                               maxlength="20" />
-                        <div class="field-error" th:if="${#fields.hasErrors('unit')}" th:errors="*{unit}">
-                            Unit is invalid.
+                    <form th:action="@{/settings/garments/{id}/fields(id=${garment.id})}" th:object="${fieldForm}" method="post">
+                        <!-- Field Label input -->
+                        <div style="margin-bottom: 1rem;">
+                            <label for="fieldLabel" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
+                                Field Label
+                            </label>
+                            <input type="text"
+                                   id="fieldLabel"
+                                   th:field="*{label}"
+                                   class="form-control"
+                                   placeholder="e.g. Chest, Waist, Length, Sleeve"
+                                   required
+                                   maxlength="50"
+                                   autofocus />
+                            <div class="field-error" th:if="${#fields.hasErrors('label')}" th:errors="*{label}">
+                                Field label is invalid.
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Submit button -->
-                    <div style="padding-top: 1.55rem;">
-                        <button type="submit" class="btn btn-primary">
+                        <!-- Unit input -->
+                        <div style="margin-bottom: 1.25rem;">
+                            <label for="fieldUnit" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
+                                Measurement Unit
+                            </label>
+                            <input type="text"
+                                   id="fieldUnit"
+                                   th:field="*{unit}"
+                                   class="form-control"
+                                   placeholder="inch"
+                                   required
+                                   maxlength="20" />
+                            <div class="field-error" th:if="${#fields.hasErrors('unit')}" th:errors="*{unit}">
+                                Unit is invalid.
+                            </div>
+                        </div>
+
+                        <!-- Submit button -->
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
                             <span class="material-symbols-rounded icon-sm">add</span>
                             <span>Add Field</span>
                         </button>
-                    </div>
+                    </form>
                 </div>
-            </form>
-        </div>
 
-        <!-- Section 2: Active Measurement Fields Table -->
-        <div class="card table-card" style="box-shadow: var(--shadow-2); padding: 0; overflow: hidden;">
+                <!-- Guidance & Sequence Card -->
+                <div class="card card-flat" style="border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg); padding: 1.35rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.65rem;">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">tune</span>
+                        <strong style="color: var(--md-on-surface); font-size: 0.95rem;">Template Management</strong>
+                    </div>
+                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem; color: var(--md-on-surface-variant); line-height: 1.6;">
+                        <li>Fields appear on the tailor's measurement form in the exact order shown.</li>
+                        <li>Use the sequence up/down arrows to organize fields intuitively for your tailors.</li>
+                        <li>Historical measurements captured in past orders remain unchanged even if a field is modified or removed.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Active Measurement Fields Table -->
+            <div class="card table-card" style="box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg); padding: 0; overflow: hidden;">
             <div class="table-header">
                 <div class="table-header-left">
                     <div class="table-header-icon measurements-icon">
@@ -252,6 +274,7 @@
                 </table>
             </div>
         </div>
+    </div>
     </div>
 
 </body>

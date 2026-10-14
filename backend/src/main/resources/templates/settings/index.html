@@ -8,23 +8,33 @@
 <body>
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 800px;">
+    <div class="container settings-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card" style="box-shadow: var(--shadow-2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center;">
+        <!-- Breadcrumb & Back Link -->
+        <div style="margin-bottom: 1.25rem;">
+            <a th:href="@{/more}" class="back-link">
+                <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                <span>Back to More &amp; Settings</span>
+            </a>
+        </div>
+
+        <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline);">
                     <span class="material-symbols-rounded icon-lg">settings</span>
                 </div>
                 <div>
-                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Shop Settings</h2>
-                    <p style="margin: 0.15rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
+                    <h2 style="font-size: 1.65rem; font-weight: 700; margin: 0; color: var(--md-on-surface);">Shop Settings</h2>
+                    <p style="margin: 0.15rem 0 0 0; font-size: 0.95rem; color: var(--md-on-surface-variant);">
                         Garment types, measurement field configurations, and staff management hub.
                     </p>
                 </div>
             </div>
+        </div>
 
-            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
+        <div class="card card-elevated" style="box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <a th:href="@{/settings/garments}" class="btn btn-primary" th:if="${isOwner}">
                     <span class="material-symbols-rounded icon-sm">checkroom</span>
                     <span>Manage Garments &amp; Templates</span>
@@ -34,7 +44,7 @@
                     <span>Add Staff Member</span>
                 </a>
                 <a th:href="@{/}" class="btn btn-outline">
-                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                    <span class="material-symbols-rounded icon-sm">dashboard</span>
                     <span>Dashboard</span>
                 </a>
             </div>

@@ -3,7 +3,7 @@
 <!--
   more.html: Application hub providing links to Garment catalog (Owner only),
   staff onboarding, shop account settings, and upcoming Stage 2 & Stage 3+ modules.
-  Material You MD3 redesign with organic hero card, tactile tiles, and zero emojis.
+  Material You MD3 redesign with full-display widescreen layout, tactile tiles, and zero emojis.
 -->
 <head th:replace="~{fragments/layout :: page-head('More & Settings')}"></head>
 <body>
@@ -11,7 +11,7 @@
     <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 920px;">
+    <div class="container settings-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
@@ -19,7 +19,7 @@
         <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2);">
+                    <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline);">
                         <span class="material-symbols-rounded icon-lg">tune</span>
                     </div>
                     <div>
@@ -43,19 +43,21 @@
         </div>
 
         <!-- SECTION 1: OWNER ONLY ADMINISTRATION -->
-        <div th:if="${isOwner}" class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border-left: 4px solid var(--md-primary);">
-            <div style="margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">admin_panel_settings</span>
-                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Shop Administration</h3>
-                    <span class="chip badge-primary" style="font-size: 0.75rem;">Owner Access</span>
+        <div th:if="${isOwner}" class="card card-elevated" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
+            <div style="margin-bottom: 1.25rem; border-bottom: 1.5px solid var(--md-outline); padding-bottom: 0.85rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">admin_panel_settings</span>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--md-on-surface);">Shop Administration Hub</h3>
+                    </div>
+                    <span class="chip badge-primary" style="font-size: 0.8rem; font-weight: 700;">Owner Privileges</span>
                 </div>
                 <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
-                    Configuration tools and staff management available exclusively to the shop owner.
+                    Configuration tools, garment templates, and staff accounts available exclusively to the shop owner.
                 </p>
             </div>
 
-            <div class="grid grid-2">
+            <div class="grid grid-3" style="gap: 1.25rem;">
                 <!-- Card 1: Garment Catalog & Measurement Templates -->
                 <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
@@ -69,7 +71,7 @@
                         <p style="font-size: 0.875rem; color: var(--md-on-surface-variant); margin: 0 0 0.85rem 0;">
                             Configure stitched garment categories, measurement field specifications, and base prices.
                         </p>
-                        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem;" th:if="${garments != null}">
+                        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem;" th:if="${garments != null}">
                             <span th:each="g : ${garments}" class="chip badge-neutral" style="font-size: 0.75rem;">
                                 <span th:text="${g.name}">Shirt</span>
                             </span>
@@ -92,7 +94,7 @@
                             <span class="chip badge-secondary" style="font-size: 0.75rem;">Staff Access</span>
                         </div>
                         <p style="font-size: 0.875rem; color: var(--md-on-surface-variant); margin: 0 0 1rem 0;">
-                            Register new staff tailors to allow assistants to record measurements, take orders, and update stitching.
+                            Register new staff tailors to allow assistants to record measurements, take customer orders, and update stitching statuses.
                         </p>
                     </div>
                     <a th:href="@{/signup}" class="btn btn-primary" style="width: 100%;">
@@ -100,126 +102,166 @@
                         <span>Add Staff Member</span>
                     </a>
                 </div>
+
+                <!-- Card 3: Financial & Operational Short-Cuts -->
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">account_balance_wallet</span>
+                                <strong style="font-size: 1.1rem; color: var(--md-on-surface);">Financial Ledgers</strong>
+                            </div>
+                            <span class="chip badge-neutral" style="font-size: 0.75rem;">Balances</span>
+                        </div>
+                        <p style="font-size: 0.875rem; color: var(--md-on-surface-variant); margin: 0 0 1rem 0;">
+                            Track shop-wide uncollected balances, customer payment receipts, and delivery block override audit logs.
+                        </p>
+                    </div>
+                    <a th:href="@{/payments/pending}" class="btn btn-outline" style="width: 100%;">
+                        <span>View Pending Payments</span>
+                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
+                    </a>
+                </div>
             </div>
         </div>
 
         <!-- Non-Owner Informational Banner -->
-        <div th:unless="${isOwner}" class="card card-flat" style="margin-bottom: 1.75rem; border-left: 4px solid var(--md-outline);">
+        <div th:unless="${isOwner}" class="card card-elevated" style="margin-bottom: 1.75rem; border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg); background: var(--md-surface-container-low);">
             <div style="display: flex; align-items: center; gap: 0.85rem;">
                 <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">info</span>
                 <div>
-                    <strong style="color: var(--md-on-surface);">Staff Tailor View</strong>
+                    <strong style="color: var(--md-on-surface); font-size: 1.05rem;">Staff Tailor Workspace</strong>
                     <p style="margin: 0.15rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.875rem;">
-                        Garment template configuration and staff account onboarding are restricted to Shop Owners.
+                        Garment template catalog settings and staff onboarding are restricted to Shop Owners. As a tailor, you can book orders, record measurements, and update stitching states.
                     </p>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 2: ROADMAP & FUTURE EXTENSIONS -->
-        <div class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2);">
-            <div style="margin-bottom: 1.25rem;">
+        <!-- SECTION 2: PLATFORM CAPABILITIES & STAGES -->
+        <div class="card card-elevated" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
+            <div style="margin-bottom: 1.25rem; border-bottom: 1.5px solid var(--md-outline); padding-bottom: 0.85rem;">
                 <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <span class="material-symbols-rounded icon-md" style="color: var(--md-tertiary);">rocket_launch</span>
-                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Upcoming Modules (Stage 2 &amp; Stage 3+)</h3>
+                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">auto_awesome</span>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--md-on-surface);">Platform Modules &amp; Capabilities</h3>
                 </div>
                 <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
-                    Tailor-shop productivity features engineered for subsequent stages.
+                    Tailor-shop productivity features engineered for Geetanjali Tailors.
                 </p>
             </div>
 
-            <div class="grid grid-3">
+            <div class="grid grid-3" style="gap: 1.25rem;">
                 <!-- Stitching Workbench -->
-                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
                             <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">handyman</span>
-                            <span>Workbench</span>
+                            <span>Stitching Status</span>
                         </span>
-                        <span class="chip badge-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 2</span>
+                        <span class="chip badge-success" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Active</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
-                        Track garments through PENDING &rarr; DONE &rarr; DELIVERED states with delivery due date alerts.
+                    <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
+                        Track garments through PENDING &rarr; DONE &rarr; DELIVERED states with delivery due date sorting.
                     </p>
                 </div>
 
                 <!-- Delivery Override Audit Ledger -->
-                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
                             <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">rule</span>
-                            <span>Overrides</span>
+                            <span>Delivery Block &amp; Override</span>
                         </span>
-                        <span class="chip badge-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 2</span>
+                        <span class="chip badge-success" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Active</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
-                        Audited emergency delivery authorization when trusted customers collect garments before settling balance.
+                    <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
+                        Audited owner delivery authorization when trusted customers collect garments before settling balance.
                     </p>
                 </div>
 
-                <!-- Daily Collections & Revenue Reports -->
-                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
+                <!-- Immutable Measurement Snapshots -->
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
-                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">monitoring</span>
-                            <span>Analytics</span>
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">straighten</span>
+                            <span>Snapshot Engine</span>
                         </span>
-                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 3+</span>
+                        <span class="chip badge-success" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Active</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
-                        Daily cash drawer balance, UPI collection ledgers, and revenue breakdowns by garment type.
+                    <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
+                        Immutable point-in-time measurements preserve historical records, with smart numeric deduplication.
                     </p>
                 </div>
 
-                <!-- WhatsApp Notifications -->
-                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
+                <!-- WhatsApp & SMS Pickup Alerts -->
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
                             <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">chat</span>
-                            <span>SMS Alerts</span>
+                            <span>Customer Alerts</span>
                         </span>
-                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 3+</span>
+                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Upcoming</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
+                    <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
                         Automated customer pickup reminders when stitching completes, with digital balance receipts.
                     </p>
                 </div>
 
+                <!-- Daily Collections & Revenue Reports -->
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">monitoring</span>
+                            <span>Revenue Reports</span>
+                        </span>
+                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Upcoming</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
+                        Daily cash drawer balances, UPI collection ledgers, and revenue breakdowns by garment type.
+                    </p>
+                </div>
+
                 <!-- Backup & CSV Export -->
-                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
                             <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">cloud_download</span>
                             <span>Data Export</span>
                         </span>
-                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 3+</span>
+                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Upcoming</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
-                        Export full customer directories, order history, and measurement archives to Excel/CSV.
+                    <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
+                        Export customer directories, complete order ledgers, and measurement archives to Excel/CSV.
                     </p>
                 </div>
             </div>
         </div>
 
         <!-- SECTION 3: QUICK NAVIGATION SHORTCUTS -->
-        <div class="card card-flat" style="margin-bottom: 2rem;">
-            <h4 style="margin: 0 0 1rem 0; font-size: 1.05rem; font-weight: 600; color: var(--md-on-surface); display: flex; align-items: center; gap: 0.45rem;">
-                <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">bolt</span>
-                <span>Quick Navigation</span>
-            </h4>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <a th:href="@{/}" class="btn btn-outline btn-sm">
-                    <span class="material-symbols-rounded icon-sm">dashboard</span>
-                    <span>Dashboard</span>
-                </a>
-                <a th:href="@{/customers}" class="btn btn-outline btn-sm">
-                    <span class="material-symbols-rounded icon-sm">group</span>
-                    <span>Customers</span>
-                </a>
-                <a th:href="@{/orders/new}" class="btn btn-secondary btn-sm">
-                    <span class="material-symbols-rounded icon-sm">add</span>
-                    <span>New Order</span>
-                </a>
+        <div class="card card-elevated" style="margin-bottom: 2rem; border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">bolt</span>
+                    <strong style="font-size: 1.05rem; color: var(--md-on-surface);">Quick Navigation</strong>
+                </div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a th:href="@{/}" class="btn btn-outline btn-sm">
+                        <span class="material-symbols-rounded icon-sm">dashboard</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a th:href="@{/orders}" class="btn btn-outline btn-sm">
+                        <span class="material-symbols-rounded icon-sm">shopping_bag</span>
+                        <span>All Orders</span>
+                    </a>
+                    <a th:href="@{/customers}" class="btn btn-outline btn-sm">
+                        <span class="material-symbols-rounded icon-sm">group</span>
+                        <span>Customers</span>
+                    </a>
+                    <a th:href="@{/orders/new}" class="btn btn-secondary btn-sm">
+                        <span class="material-symbols-rounded icon-sm">add</span>
+                        <span>New Order</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>

@@ -74,24 +74,21 @@
             </a>
 
             <!-- Stat Tile 4: Pending Payments Summary Tile (Shown only when pending total > 0) -->
-            <div th:if="${hasPendingBalance}" class="stat-card" style="border-left: 4.5px solid var(--md-error); background: #fffbfa;">
-                <div class="stat-icon" style="background: #ffdad6; color: var(--md-error);">
+            <a th:if="${hasPendingBalance}" th:href="@{/payments/pending}" class="stat-card" style="text-decoration: none;">
+                <div class="stat-icon" style="background-color: #FEE2E2; color: var(--md-error); border: 1.5px solid var(--md-outline);">
                     <span class="material-symbols-rounded icon-lg">pending_actions</span>
                 </div>
-                <div class="stat-info" style="flex: 1;">
-                    <div class="stat-value" style="color: var(--md-error); font-size: 1.35rem;"
-                         th:text="'Pending ' + ${@orderNumberFormatter.formatMoney(pendingTotal)}">
-                        Pending Rs. 9,500
+                <div class="stat-info">
+                    <div class="stat-value" style="color: var(--md-error); font-size: 1.5rem;"
+                         th:text="${@orderNumberFormatter.formatMoney(pendingTotal)}">
+                        Rs. 9,500
                     </div>
-                    <div class="stat-label" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.15rem;">
-                        <span style="font-size: 0.82rem; color: var(--md-on-surface-variant);">Uncollected Balance</span>
-                        <a th:href="@{/payments/pending}" class="badge badge-danger" style="text-decoration: none; font-weight: 700; padding: 0.2rem 0.55rem; font-size: 0.78rem;">
-                            <span>View</span>
-                            <span class="material-symbols-rounded icon-sm" style="font-size: 13px;">arrow_forward</span>
-                        </a>
+                    <div class="stat-label" style="color: var(--md-error); font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
+                        <span>Pending Dues</span>
+                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- Fast Customer Search Card -->

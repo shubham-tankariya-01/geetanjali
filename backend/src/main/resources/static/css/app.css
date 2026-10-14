@@ -1542,3 +1542,17 @@ textarea.form-control {
     border-color: var(--md-primary);
     box-shadow: var(--shadow-2);
 }
+
+/* Settings Split Executive Layout for Widescreen */
+.settings-split-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .settings-split-layout {
+        grid-template-columns: 1fr;
+    }
+}
