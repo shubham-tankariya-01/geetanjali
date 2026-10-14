@@ -61,7 +61,9 @@ public class CustomerOrder {
     // @OneToMany = One customer order can receive multiple payments (advance + delivery balance).
     // mappedBy = "order" = Specifies the field in Payment that owns the relationship.
     // fetch = FetchType.LAZY = Loaded on demand when payments are accessed.
+    // @OrderBy = Guarantees payments are always loaded oldest first (by paid_on date, then insertion id).
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @jakarta.persistence.OrderBy("paidOn ASC, id ASC")
     private List<Payment> payments = new ArrayList<>();
 
     // Default zero-argument constructor: JPA/Hibernate requires this.

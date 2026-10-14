@@ -1,11 +1,17 @@
 package com.geetanjali.backend.service;
 
+import com.geetanjali.backend.dto.form.PaymentForm;
 import com.geetanjali.backend.entity.Customer;
 import com.geetanjali.backend.entity.CustomerOrder;
+import com.geetanjali.backend.entity.OrderItem;
 import com.geetanjali.backend.entity.Payment;
 import com.geetanjali.backend.enums.PaymentMode;
+import com.geetanjali.backend.exception.BusinessRuleException;
+import com.geetanjali.backend.exception.ResourceNotFoundException;
+import com.geetanjali.backend.repository.CustomerOrderRepository;
 import com.geetanjali.backend.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -18,21 +24,26 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-// PaymentServiceTest: Unit tests for advance recording and total paid calculations.
+// PaymentServiceTest: Unit tests for advance recording, addPayment business rules, and ledger calculations.
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
+
+    @Mock
+    private CustomerOrderRepository customerOrderRepository;
 
     private Clock fixedClock;
     private PaymentService paymentService;
@@ -45,10 +56,18 @@ class PaymentServiceTest {
                 Instant.parse("2026-10-15T10:00:00Z"),
                 ZoneId.of("Asia/Kolkata")
         );
-        paymentService = new PaymentService(paymentRepository, fixedClock);
+        paymentService = new PaymentService(paymentRepository, customerOrderRepository, fixedClock);
 
         Customer customer = new Customer("Ramesh Patel", "9876501234");
         order = new CustomerOrder(1001L, customer, null, fixedClock.instant());
+        order.setId(10L);
+
+        // Add an item with price 1000 so order total is 1000
+        OrderItem item = new OrderItem(order, null, null, "Test", new BigDecimal("1000.00"), LocalDate.of(2026, 10, 20));
+        order.setItems(List.of(item));
+        // Add an advance of 200 so remaining balance is 800
+        Payment advance = new Payment(order, new BigDecimal("200.00"), "UPI", LocalDate.of(2026, 10, 15));
+        order.setPayments(List.of(advance));
     }
 
     @Test
@@ -81,6 +100,65 @@ class PaymentServiceTest {
 
         assertNull(payment);
         verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("addPayment successfully saves valid payment when amount <= balance and date <= today")
+    void testAddPayment_validPayment_savesSuccessfully() {
+        when(customerOrderRepository.findById(10L)).thenReturn(Optional.of(order));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PaymentForm form = new PaymentForm(new BigDecimal("400.00"), PaymentMode.CASH, LocalDate.of(2026, 10, 15), "/orders/10");
+        Payment saved = paymentService.addPayment(10L, form);
+
+        assertNotNull(saved);
+        assertEquals(new BigDecimal("400.00"), saved.getAmount());
+        assertEquals("CASH", saved.getMode());
+        assertEquals(LocalDate.of(2026, 10, 15), saved.getPaidOn());
+        verify(paymentRepository).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("addPayment throws BusinessRuleException when amount <= 0")
+    void testAddPayment_amountZeroOrNegative_throwsException() {
+        when(customerOrderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        PaymentForm formZero = new PaymentForm(BigDecimal.ZERO, PaymentMode.CASH, LocalDate.of(2026, 10, 15), "/orders/10");
+        assertThrows(BusinessRuleException.class, () -> paymentService.addPayment(10L, formZero));
+
+        PaymentForm formNeg = new PaymentForm(new BigDecimal("-50.00"), PaymentMode.CASH, LocalDate.of(2026, 10, 15), "/orders/10");
+        assertThrows(BusinessRuleException.class, () -> paymentService.addPayment(10L, formNeg));
+    }
+
+    @Test
+    @DisplayName("addPayment throws BusinessRuleException when amount exceeds current balance")
+    void testAddPayment_amountExceedsBalance_throwsException() {
+        when(customerOrderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        // Balance is 800 (1000 total - 200 advance). Attempting to pay 850 should fail.
+        PaymentForm formExcess = new PaymentForm(new BigDecimal("850.00"), PaymentMode.UPI, LocalDate.of(2026, 10, 15), "/orders/10");
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> paymentService.addPayment(10L, formExcess));
+        org.junit.jupiter.api.Assertions.assertTrue(ex.getMessage().contains("cannot exceed remaining balance"));
+    }
+
+    @Test
+    @DisplayName("addPayment throws BusinessRuleException when payment date is in the future")
+    void testAddPayment_futureDate_throwsException() {
+        when(customerOrderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        // Today is 2026-10-15. Date 2026-10-16 is in the future.
+        PaymentForm formFuture = new PaymentForm(new BigDecimal("300.00"), PaymentMode.UPI, LocalDate.of(2026, 10, 16), "/orders/10");
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class, () -> paymentService.addPayment(10L, formFuture));
+        assertEquals("Payment date cannot be in the future.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("addPayment throws ResourceNotFoundException when order does not exist")
+    void testAddPayment_orderNotFound_throwsException() {
+        when(customerOrderRepository.findById(99L)).thenReturn(Optional.empty());
+
+        PaymentForm form = new PaymentForm(new BigDecimal("100.00"), PaymentMode.CASH, LocalDate.of(2026, 10, 15), "/orders/99");
+        assertThrows(ResourceNotFoundException.class, () -> paymentService.addPayment(99L, form));
     }
 
     @Test

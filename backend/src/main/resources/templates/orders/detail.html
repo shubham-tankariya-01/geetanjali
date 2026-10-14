@@ -202,6 +202,172 @@
                 </details>
             </div>
         </div>
+
+        <!-- Section: Payments Ledger (Oldest first) -->
+        <div style="margin-top: 2.5rem; margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">payments</span>
+                    <h3 style="margin: 0; color: var(--md-on-surface); font-size: 1.3rem;">
+                        Payments (<span th:text="${#lists.size(order.payments)}">1</span>)
+                    </h3>
+                </div>
+
+                <!-- Add Payment Button (opens dialog) -->
+                <div>
+                    <button th:if="${!order.paid}"
+                            type="button"
+                            class="btn btn-primary"
+                            onclick="document.getElementById('addPaymentDialog').showModal()">
+                        <span class="material-symbols-rounded icon-sm">add_card</span>
+                        <span>Add Payment</span>
+                    </button>
+                    <span th:if="${order.paid}" class="chip badge-success">
+                        <span class="material-symbols-rounded icon-sm">check_circle</span>
+                        <span>Paid in Full</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Payments List Table Card -->
+            <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
+                <div class="table-container" style="margin: 0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 140px;"><span class="material-symbols-rounded">tag</span><span>Payment</span></th>
+                                <th style="min-width: 140px;"><span class="material-symbols-rounded">event</span><span>Date</span></th>
+                                <th style="min-width: 120px;"><span class="material-symbols-rounded">payments</span><span>Mode</span></th>
+                                <th style="text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">currency_rupee</span><span>Amount</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="payment, iterStat : ${order.payments}">
+                                <!-- Number: #1 (Advance) or #N -->
+                                <td>
+                                    <span class="badge badge-neutral" style="font-weight: 700;">
+                                        #<span th:text="${iterStat.count}">1</span>
+                                        <span th:if="${iterStat.first}" style="font-size: 0.75rem; font-weight: normal; margin-left: 0.2rem;">(Advance)</span>
+                                    </span>
+                                </td>
+
+                                <!-- Payment Date -->
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.9rem;">
+                                        <span class="material-symbols-rounded icon-sm">calendar_today</span>
+                                        <span th:text="${#temporals.format(payment.paidOn, 'dd MMM yyyy')}">14 Oct 2026</span>
+                                    </div>
+                                </td>
+
+                                <!-- Payment Mode -->
+                                <td>
+                                    <span class="chip badge-secondary" style="font-weight: 600;">
+                                        <span class="material-symbols-rounded icon-sm" th:text="${payment.mode == 'UPI' ? 'qr_code_2' : 'payments'}">payments</span>
+                                        <span th:text="${payment.mode}">CASH</span>
+                                    </span>
+                                </td>
+
+                                <!-- Amount (oldest first, formatted as Rs. 1,500) -->
+                                <td style="text-align: right; padding-right: 1.5rem;">
+                                    <strong style="color: var(--md-success); font-size: 1.05rem;"
+                                            th:text="${@orderNumberFormatter.formatMoney(payment.amount)}">
+                                        Rs. 500
+                                    </strong>
+                                </td>
+                            </tr>
+                            <tr th:if="${order.payments == null or order.payments.isEmpty()}">
+                                <td colspan="4" style="text-align: center; color: var(--md-on-surface-variant); padding: 1.5rem;">
+                                    No payments recorded yet.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Payment Modal Dialog -->
+        <dialog id="addPaymentDialog"
+                style="margin: auto; border: 2px solid var(--md-outline); border-radius: 18px; background: var(--md-surface-container); color: var(--md-on-surface); padding: 2rem; max-width: 440px; width: 90%; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_card</span>
+                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Add Payment</h3>
+                </div>
+                <button type="button" onclick="document.getElementById('addPaymentDialog').close()"
+                        style="background: transparent; border: none; color: var(--md-on-surface-variant); cursor: pointer; padding: 0.25rem;">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <div style="background: var(--md-surface-container-high); border: 1px solid var(--md-outline); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--md-on-surface-variant);">Remaining Balance:</span>
+                <strong style="color: var(--md-error); font-size: 1.05rem;" th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</strong>
+            </div>
+
+            <form th:action="@{'/orders/' + ${order.id} + '/payments'}" method="post">
+                <input type="hidden" name="returnTo" th:value="@{'/orders/' + ${order.id}}" />
+
+                <!-- Amount Input -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label" for="paymentAmount">Amount (₹)</label>
+                    <input type="number"
+                           id="paymentAmount"
+                           name="amount"
+                           class="form-control"
+                           step="any"
+                           min="0.01"
+                           th:max="${order.balance}"
+                           th:value="${order.balance}"
+                           required
+                           placeholder="Enter amount" />
+                    <small style="font-size: 0.75rem; color: var(--md-on-surface-variant); display: block; margin-top: 0.25rem;">
+                        Amount must not exceed remaining balance (<span th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</span>).
+                    </small>
+                </div>
+
+                <!-- Cash / UPI Switch -->
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label class="form-label">Payment Mode</label>
+                    <div style="display: flex; gap: 1.5rem; margin-top: 0.4rem;">
+                        <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="mode" value="CASH" checked />
+                            <span>Cash</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="mode" value="UPI" />
+                            <span>UPI</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Date Input (default today in Asia/Kolkata) -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" for="paymentDate">Payment Date</label>
+                    <input type="date"
+                           id="paymentDate"
+                           name="paidOn"
+                           class="form-control"
+                           th:value="${today != null ? today : @orderNumberFormatter.today}"
+                           th:max="${today != null ? today : @orderNumberFormatter.today}"
+                           required />
+                    <small style="font-size: 0.75rem; color: var(--md-on-surface-variant); display: block; margin-top: 0.25rem;">
+                        Date cannot be in the future.
+                    </small>
+                </div>
+
+                <!-- Form Actions -->
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('addPaymentDialog').close()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-symbols-rounded icon-sm">save</span>
+                        <span>Save Payment</span>
+                    </button>
+                </div>
+            </form>
+        </dialog>
     </div>
 
     <!-- Full-Size Photo Modal / Lightbox Pop-up -->

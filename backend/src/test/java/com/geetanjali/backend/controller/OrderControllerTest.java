@@ -48,13 +48,16 @@ class OrderControllerTest {
     @Mock
     private GarmentService garmentService;
 
+    @Mock
+    private com.geetanjali.backend.service.PaymentService paymentService;
+
     private Clock fixedClock;
     private OrderController controller;
 
     @BeforeEach
     void setUp() {
         fixedClock = Clock.fixed(Instant.parse("2026-10-13T10:00:00Z"), ZoneId.of("Asia/Kolkata"));
-        controller = new OrderController(orderService, orderWizardService, garmentService, fixedClock);
+        controller = new OrderController(orderService, orderWizardService, garmentService, paymentService, fixedClock);
     }
 
     @Test
@@ -142,5 +145,79 @@ class OrderControllerTest {
 
         assertEquals("redirect:/orders/15", view);
         verify(orderService).updateOrderItem(eq(15L), eq(25L), any(ItemForm.class));
+    }
+
+    @Test
+    @DisplayName("addPayment saves payment and redirects to safe internal returnTo URL")
+    void testAddPayment_validForm_redirectsToInternalReturnTo() {
+        com.geetanjali.backend.dto.form.PaymentForm form = new com.geetanjali.backend.dto.form.PaymentForm(
+                new BigDecimal("200.00"),
+                com.geetanjali.backend.enums.PaymentMode.UPI,
+                LocalDate.of(2026, 10, 13),
+                "/orders/15"
+        );
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "paymentForm");
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.addPayment(15L, form, bindingResult, redirectAttributes);
+
+        assertEquals("redirect:/orders/15", view);
+        verify(paymentService).addPayment(eq(15L), eq(form));
+        assertEquals("Payment recorded successfully.", redirectAttributes.getFlashAttributes().get("successMessage"));
+    }
+
+    @Test
+    @DisplayName("addPayment blocks external open redirect and falls back to /orders/{orderId}")
+    void testAddPayment_openRedirectAttempt_fallsBackToOrderPage() {
+        com.geetanjali.backend.dto.form.PaymentForm form = new com.geetanjali.backend.dto.form.PaymentForm(
+                new BigDecimal("200.00"),
+                com.geetanjali.backend.enums.PaymentMode.CASH,
+                LocalDate.of(2026, 10, 13),
+                "https://malicious-phishing.com/steal"
+        );
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "paymentForm");
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.addPayment(15L, form, bindingResult, redirectAttributes);
+
+        assertEquals("redirect:/orders/15", view);
+        verify(paymentService).addPayment(eq(15L), eq(form));
+    }
+
+    @Test
+    @DisplayName("addPayment blocks protocol-relative open redirect //evil.com")
+    void testAddPayment_protocolRelativeRedirect_fallsBackToOrderPage() {
+        com.geetanjali.backend.dto.form.PaymentForm form = new com.geetanjali.backend.dto.form.PaymentForm(
+                new BigDecimal("200.00"),
+                com.geetanjali.backend.enums.PaymentMode.CASH,
+                LocalDate.of(2026, 10, 13),
+                "//evil.com"
+        );
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "paymentForm");
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.addPayment(15L, form, bindingResult, redirectAttributes);
+
+        assertEquals("redirect:/orders/15", view);
+    }
+
+    @Test
+    @DisplayName("addPayment catches BusinessRuleException and flashes errorMessage")
+    void testAddPayment_businessRuleException_flashesErrorMessage() {
+        com.geetanjali.backend.dto.form.PaymentForm form = new com.geetanjali.backend.dto.form.PaymentForm(
+                new BigDecimal("9999.00"),
+                com.geetanjali.backend.enums.PaymentMode.CASH,
+                LocalDate.of(2026, 10, 13),
+                "/orders/15"
+        );
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "paymentForm");
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        when(paymentService.addPayment(eq(15L), any())).thenThrow(new com.geetanjali.backend.exception.BusinessRuleException("Exceeds remaining balance"));
+
+        String view = controller.addPayment(15L, form, bindingResult, redirectAttributes);
+
+        assertEquals("redirect:/orders/15", view);
+        assertEquals("Exceeds remaining balance", redirectAttributes.getFlashAttributes().get("errorMessage"));
     }
 }

@@ -66,4 +66,13 @@ public class OrderNumberFormatter {
             return "Rs. " + formatter.format(amount);
         }
     }
+
+    // Returns today's calendar date in the shop's local timezone (Asia/Kolkata).
+    // Why from Clock? Hardcoding LocalDate.now() would read the host server's local clock (e.g. UTC).
+    // Using the injected Clock ensures consistency with business hours in Asia/Kolkata.
+    // Input: None.
+    // Output: LocalDate today in Asia/Kolkata.
+    public LocalDate getToday() {
+        return clock.instant().atZone(clock.getZone()).toLocalDate();
+    }
 }

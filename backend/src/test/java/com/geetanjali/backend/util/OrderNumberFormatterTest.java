@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,5 +73,11 @@ class OrderNumberFormatterTest {
     void testFormatMoney_fractionalAmounts() {
         assertEquals("Rs. 450.50", formatter.formatMoney(new BigDecimal("450.50")));
         assertEquals("Rs. 1,500.75", formatter.formatMoney(new BigDecimal("1500.75")));
+    }
+
+    @Test
+    @DisplayName("Returns today's date in Asia/Kolkata timezone from clock")
+    void testGetToday() {
+        assertEquals(LocalDate.of(2026, 10, 14), formatter.getToday());
     }
 }

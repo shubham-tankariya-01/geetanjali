@@ -14,4 +14,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Input: orderId (Long).
     // Output: List<Payment>.
     List<Payment> findByOrderId(Long orderId);
+
+    // Finds all payments made towards a specific order, sorted oldest first (by paid_on date, then insertion id).
+    // Input: orderId (Long).
+    // Output: List<Payment>.
+    List<Payment> findByOrderIdOrderByPaidOnAscIdAsc(Long orderId);
 }

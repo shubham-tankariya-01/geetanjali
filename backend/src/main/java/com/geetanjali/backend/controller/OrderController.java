@@ -1,13 +1,16 @@
 package com.geetanjali.backend.controller;
 
 import com.geetanjali.backend.dto.form.ItemForm;
+import com.geetanjali.backend.dto.form.PaymentForm;
 import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.entity.Garment;
 import com.geetanjali.backend.entity.GarmentField;
 import com.geetanjali.backend.entity.OrderItem;
+import com.geetanjali.backend.exception.BusinessRuleException;
 import com.geetanjali.backend.service.GarmentService;
 import com.geetanjali.backend.service.OrderService;
 import com.geetanjali.backend.service.OrderWizardService;
+import com.geetanjali.backend.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,18 +42,31 @@ public class OrderController {
     private final OrderService orderService;
     private final OrderWizardService orderWizardService;
     private final GarmentService garmentService;
+    private final PaymentService paymentService;
     private final Clock clock;
 
-    // Constructor injection: Spring automatically injects dependencies.
-    // Inputs: orderService (OrderService), orderWizardService (OrderWizardService), garmentService (GarmentService), clock (Clock).
+    // Full constructor injection: Spring automatically injects all service dependencies.
+    // Inputs: orderService, orderWizardService, garmentService, paymentService, clock.
+    // @Autowired = Tells Spring to use this constructor when creating the bean with multiple constructor choices.
+    @org.springframework.beans.factory.annotation.Autowired
     public OrderController(OrderService orderService,
                            OrderWizardService orderWizardService,
                            GarmentService garmentService,
+                           PaymentService paymentService,
                            Clock clock) {
         this.orderService = orderService;
         this.orderWizardService = orderWizardService;
         this.garmentService = garmentService;
+        this.paymentService = paymentService;
         this.clock = clock;
+    }
+
+    // Convenience constructor for tests that do not test payment endpoints.
+    public OrderController(OrderService orderService,
+                           OrderWizardService orderWizardService,
+                           GarmentService garmentService,
+                           Clock clock) {
+        this(orderService, orderWizardService, garmentService, null, clock);
     }
 
     // Handles GET /orders: Displays the customer orders overview list.
@@ -84,7 +100,54 @@ public class OrderController {
         // Pass entity directly to template (open-in-view allows on-demand lazy loading of items, photos, and measurements)
         model.addAttribute("order", order);
 
+        // Pass today's date from the injected Clock (Asia/Kolkata)
+        model.addAttribute("today", clock.instant().atZone(clock.getZone()).toLocalDate());
+
         return "orders/detail";
+    }
+
+    // Handles POST /orders/{id}/payments: Records a new payment towards an order.
+    // Enforces: amount > 0, amount <= current balance, date not in future.
+    // Inputs:
+    //   id (@PathVariable("id") Long) - primary key ID of the CustomerOrder.
+    //   form (@Valid @ModelAttribute("paymentForm") PaymentForm) - form DTO containing payment details.
+    //   bindingResult (BindingResult) - validation errors holder.
+    //   redirectAttributes (RedirectAttributes) - flash messages.
+    // Output: String - redirect to safe return URL.
+    //
+    // @PostMapping("/{id}/payments") = Maps HTTP POST requests for adding payments.
+    @PostMapping("/{id}/payments")
+    public String addPayment(@PathVariable("id") Long id,
+                             @jakarta.validation.Valid @ModelAttribute("paymentForm") com.geetanjali.backend.dto.form.PaymentForm form,
+                             BindingResult bindingResult,
+                             RedirectAttributes redirectAttributes) {
+        String targetUrl = resolveSafeReturnUrl(form != null ? form.getReturnTo() : null, id);
+
+        // Server-side form validation error
+        if (bindingResult.hasErrors()) {
+            String firstError = bindingResult.getAllErrors().getFirst().getDefaultMessage();
+            redirectAttributes.addFlashAttribute("errorMessage", firstError);
+            return "redirect:" + targetUrl;
+        }
+
+        try {
+            paymentService.addPayment(id, form);
+            redirectAttributes.addFlashAttribute("successMessage", "Payment recorded successfully.");
+        } catch (BusinessRuleException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+
+        return "redirect:" + targetUrl;
+    }
+
+    // Resolves and sanitizes the return URL to prevent open-redirect vulnerabilities.
+    // Accepts returnTo ONLY if it starts with a single '/' and never '//' or 'http'.
+    // Defaults to "/orders/" + orderId.
+    private String resolveSafeReturnUrl(String returnTo, Long orderId) {
+        if (returnTo != null && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.toLowerCase().contains("http")) {
+            return returnTo;
+        }
+        return "/orders/" + orderId;
     }
 
     // Handles GET /orders/{orderId}/add-items: Starts the order wizard to append new items to an existing order.
