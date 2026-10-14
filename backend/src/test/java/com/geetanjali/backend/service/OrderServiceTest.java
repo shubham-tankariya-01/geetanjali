@@ -10,7 +10,9 @@ import com.geetanjali.backend.entity.Garment;
 import com.geetanjali.backend.entity.ItemPhoto;
 import com.geetanjali.backend.entity.Measurement;
 import com.geetanjali.backend.entity.OrderItem;
+import com.geetanjali.backend.enums.ItemStatus;
 import com.geetanjali.backend.enums.PaymentMode;
+import com.geetanjali.backend.exception.BusinessRuleException;
 import com.geetanjali.backend.repository.CustomerOrderRepository;
 import com.geetanjali.backend.repository.CustomerRepository;
 import com.geetanjali.backend.repository.ItemPhotoRepository;
@@ -187,5 +189,52 @@ class OrderServiceTest {
 
         assertNotNull(placedOrder);
         verify(paymentService, never()).recordAdvance(any(), any(), any());
+    }
+
+    @Test
+    void testMarkDone_pendingItem_success() {
+        Long orderId = 1L;
+        Long itemId = 5L;
+
+        Customer customer = new Customer("Aarav", "9876543210");
+        CustomerOrder order = new CustomerOrder(1001L, customer, tailorUser, fixedClock.instant());
+        order.setId(orderId);
+
+        Garment kurta = new Garment("Kurta", 1, true);
+        OrderItem item = new OrderItem(order, kurta, null, "Fine stitch", new BigDecimal("800.00"), LocalDate.of(2026, 10, 20));
+        item.setId(itemId);
+        order.getItems().add(item);
+
+        when(customerOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderItem updated = orderService.markDone(orderId, itemId);
+
+        assertEquals(ItemStatus.DONE, updated.getStatus());
+        assertEquals(fixedClock.instant(), updated.getDoneAt());
+        verify(orderItemRepository).save(item);
+    }
+
+    @Test
+    void testMarkDone_alreadyDone_throwsBusinessRuleException() {
+        Long orderId = 1L;
+        Long itemId = 5L;
+
+        Customer customer = new Customer("Aarav", "9876543210");
+        CustomerOrder order = new CustomerOrder(1001L, customer, tailorUser, fixedClock.instant());
+        order.setId(orderId);
+
+        Garment kurta = new Garment("Kurta", 1, true);
+        OrderItem item = new OrderItem(order, kurta, null, "Fine stitch", new BigDecimal("800.00"), LocalDate.of(2026, 10, 20));
+        item.setId(itemId);
+        item.markDone(fixedClock.instant());
+        order.getItems().add(item);
+
+        when(customerOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+
+        assertThrows(BusinessRuleException.class, () -> orderService.markDone(orderId, itemId));
+        verify(orderItemRepository, never()).save(any());
     }
 }

@@ -4,7 +4,7 @@
   orders/detail.html: Customer Order Detail view (Material You MD3).
   Displays customer header, financial ledger, and garment item cards with measurements and photo lightbox.
 -->
-<head th:replace="~{fragments/layout :: page-head('Order ' + ${@orderNumberFormatter.format(order)})}"></head>
+<head th:replace="~{fragments/layout :: page-head('Order Details')}"></head>
 <body>
 
     <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
@@ -31,11 +31,11 @@
                             Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span>
                         </h2>
                         <!-- Step 1 Balance Chip: Green 'Paid' or Red 'Balance Rs. 400' -->
-                        <span th:if="${order.paid}" class="badge badge-success">
+                        <span th:if="${order.isPaid()}" class="badge badge-success">
                             <span class="material-symbols-rounded icon-sm">check_circle</span>
                             <span>Paid</span>
                         </span>
-                        <span th:unless="${order.paid}" class="badge badge-danger">
+                        <span th:unless="${order.isPaid()}" class="badge badge-danger">
                             <span class="material-symbols-rounded icon-sm">pending</span>
                             <span th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Balance Rs. 400</span>
                         </span>
@@ -78,7 +78,7 @@
                         Paid: <strong th:text="${@orderNumberFormatter.formatMoney(order.paid)}">Rs. 1,100</strong>
                     </div>
                     <div style="border-top: 1.5px solid var(--md-outline); padding-top: 0.5rem; font-size: 1.15rem; font-weight: 700;"
-                         th:styleappend="${order.paid} ? 'color: var(--md-success);' : 'color: var(--md-error);'">
+                         th:styleappend="${order.isPaid()} ? 'color: var(--md-success);' : 'color: var(--md-error);'">
                         Balance: <span th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</span>
                     </div>
                 </div>
@@ -107,10 +107,11 @@
                         <span style="font-size: 1.3rem; font-weight: 700; color: var(--md-on-surface);" th:text="${item.garment.name}">
                             Shirt
                         </span>
+                        <!-- Status chip: Pending / Done / Delivered -->
                         <span class="badge"
-                              th:classappend="${item.status == 'DELIVERED' ? 'badge-success' : (item.status == 'DONE' ? 'badge-primary' : 'badge-warning')}"
-                              th:text="${item.status}">
-                            PENDING
+                              th:classappend="${item.isDelivered() ? 'badge-success' : (item.isDone() ? 'badge-secondary' : 'badge-warning')}"
+                              th:text="${item.isDelivered() ? 'Delivered' : (item.isDone() ? 'Done' : 'Pending')}">
+                            Pending
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.85rem;">
@@ -118,6 +119,18 @@
                              th:text="${@orderNumberFormatter.formatMoney(item.price)}">
                             Rs. 500
                         </div>
+
+                        <!-- Mark done button: allowed only from PENDING -->
+                        <form th:if="${item.isPending()}"
+                              th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/done'}"
+                              method="post"
+                              style="margin: 0; display: inline;">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <span class="material-symbols-rounded icon-sm">check_circle</span>
+                                <span>Mark Done</span>
+                            </button>
+                        </form>
+
                         <a th:href="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/edit'}"
                            class="btn btn-sm btn-outline">
                             <span class="material-symbols-rounded icon-sm">edit</span>
@@ -215,14 +228,14 @@
 
                 <!-- Add Payment Button (opens dialog) -->
                 <div>
-                    <button th:if="${!order.paid}"
+                    <button th:if="${!order.isPaid()}"
                             type="button"
                             class="btn btn-primary"
                             onclick="document.getElementById('addPaymentDialog').showModal()">
                         <span class="material-symbols-rounded icon-sm">add_card</span>
                         <span>Add Payment</span>
                     </button>
-                    <span th:if="${order.paid}" class="chip badge-success">
+                    <span th:if="${order.isPaid()}" class="chip badge-success">
                         <span class="material-symbols-rounded icon-sm">check_circle</span>
                         <span>Paid in Full</span>
                     </span>

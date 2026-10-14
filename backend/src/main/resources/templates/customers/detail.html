@@ -131,11 +131,11 @@
                                         th:text="${@orderNumberFormatter.formatMoney(order.total)}">Rs. 750</strong>
                             </td>
                             <td>
-                                <span th:if="${order.paid}" class="chip badge-success">
+                                <span th:if="${order.isPaid()}" class="chip badge-success">
                                     <span class="material-symbols-rounded icon-sm">check_circle</span>
                                     <span>Paid</span>
                                 </span>
-                                <span th:unless="${order.paid}" class="chip badge-due">
+                                <span th:unless="${order.isPaid()}" class="chip badge-due">
                                     <span class="material-symbols-rounded icon-sm">pending</span>
                                     <span th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Balance Rs. 250</span>
                                 </span>

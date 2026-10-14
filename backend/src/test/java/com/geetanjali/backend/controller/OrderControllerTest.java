@@ -220,4 +220,28 @@ class OrderControllerTest {
         assertEquals("redirect:/orders/15", view);
         assertEquals("Exceeds remaining balance", redirectAttributes.getFlashAttributes().get("errorMessage"));
     }
+
+    @Test
+    @DisplayName("markItemDone calls orderService.markDone, sets success flash and redirects to order page")
+    void testMarkItemDone_success_redirectsWithFlash() {
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.markItemDone(10L, 5L, redirectAttributes);
+
+        assertEquals("redirect:/orders/10", view);
+        verify(orderService).markDone(10L, 5L);
+        assertEquals("Item marked as completed (stitching done).", redirectAttributes.getFlashAttributes().get("successMessage"));
+    }
+
+    @Test
+    @DisplayName("markItemDone catches BusinessRuleException, sets error flash and redirects to order page")
+    void testMarkItemDone_businessRuleException_redirectsWithErrorFlash() {
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        when(orderService.markDone(10L, 5L)).thenThrow(new com.geetanjali.backend.exception.BusinessRuleException("Cannot mark item as DONE"));
+
+        String view = controller.markItemDone(10L, 5L, redirectAttributes);
+
+        assertEquals("redirect:/orders/10", view);
+        assertEquals("Cannot mark item as DONE", redirectAttributes.getFlashAttributes().get("errorMessage"));
+    }
 }

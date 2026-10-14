@@ -236,6 +236,26 @@ public class OrderService {
         return item;
     }
 
+    // Marks an individual garment order item as completed (stitched).
+    // Preconditions:
+    // 1. Order and item must exist, and item must belong to the order.
+    // 2. Item status must currently be PENDING.
+    // Sets status to DONE and doneAt to now from the injected Clock.
+    //
+    // Inputs:
+    //   orderId (Long) - database ID of the CustomerOrder.
+    //   itemId (Long) - database ID of the OrderItem.
+    // Output: OrderItem - updated and persisted order item.
+    //
+    // Ensures database changes commit atomically and roll back automatically on runtime exception.
+    @Transactional
+    public OrderItem markDone(Long orderId, Long itemId) {
+        OrderItem item = getOrderItemOrThrow(orderId, itemId);
+        Instant now = clock.instant();
+        item.markDone(now);
+        return orderItemRepository.save(item);
+    }
+
     // Prepares an ItemForm DTO pre-filled with the saved values of an OrderItem (notes, price, date, measurements, photos).
     // Input: item (OrderItem) - existing order item.
     // Output: ItemForm - populated form DTO.

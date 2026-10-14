@@ -1,7 +1,11 @@
 package com.geetanjali.backend.entity;
 
+import com.geetanjali.backend.enums.ItemStatus;
+import com.geetanjali.backend.exception.BusinessRuleException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -63,9 +67,11 @@ public class OrderItem {
     @Column(name = "delivery_date", nullable = false)
     private LocalDate deliveryDate;
 
-    // @Column = Lifecycle status: 'PENDING' (default), 'DONE' (stitched), or 'DELIVERED' (handed to customer).
+    // Maps Java enum constants ("PENDING", "DONE", "DELIVERED") to VARCHAR in PostgreSQL.
+    @Enumerated(EnumType.STRING)
+    // Lifecycle status: PENDING (default), DONE (stitched), or DELIVERED (handed to customer).
     @Column(name = "status", nullable = false)
-    private String status = "PENDING";
+    private ItemStatus status = ItemStatus.PENDING;
 
     // @Column = Timestamp when stitching was marked complete.
     @Column(name = "done_at")
@@ -95,7 +101,7 @@ public class OrderItem {
         this.notes = notes;
         this.price = price;
         this.deliveryDate = deliveryDate;
-        this.status = "PENDING";
+        this.status = ItemStatus.PENDING;
     }
 
     // Getter for id.
@@ -196,18 +202,55 @@ public class OrderItem {
         this.deliveryDate = deliveryDate;
     }
 
+    // Domain helper to transition this garment item from PENDING to DONE status.
+    // Precondition: The item MUST currently be in PENDING status.
+    // Why enforce in domain entity? Encapsulates business lifecycle rules at the domain layer
+    // so invalid state transitions cannot happen anywhere without triggering BusinessRuleException.
+    // Input: Instant now - timestamp when stitching was completed (from Asia/Kolkata Clock).
+    // Throws: BusinessRuleException if current status is not PENDING.
+    public void markDone(Instant now) {
+        if (this.status != ItemStatus.PENDING) {
+            throw new BusinessRuleException(
+                    "Cannot mark item #" + (this.id != null ? this.id : "") + " as DONE because current status is " + this.status + " (expected PENDING)."
+            );
+        }
+        this.status = ItemStatus.DONE;
+        this.doneAt = (now != null) ? now : Instant.now();
+    }
+
+    // Checks if the garment item is pending stitching.
+    public boolean isPending() {
+        return this.status == ItemStatus.PENDING;
+    }
+
+    // Checks if the garment item stitching is complete.
+    public boolean isDone() {
+        return this.status == ItemStatus.DONE;
+    }
+
+    // Checks if the garment item has been delivered to customer.
+    public boolean isDelivered() {
+        return this.status == ItemStatus.DELIVERED;
+    }
+
     // Getter for status.
     // Input: None.
-    // Output: String ("PENDING", "DONE", "DELIVERED").
-    public String getStatus() {
+    // Output: ItemStatus (PENDING, DONE, DELIVERED).
+    public ItemStatus getStatus() {
         return status;
     }
 
     // Setter for status.
-    // Input: String status.
+    // Input: ItemStatus status.
     // Output: None (void).
+    public void setStatus(ItemStatus status) {
+        this.status = (status != null) ? status : ItemStatus.PENDING;
+    }
+
+    // String overload for status setter for backwards compatibility.
+    // Input: String status.
     public void setStatus(String status) {
-        this.status = status;
+        this.status = (status != null) ? ItemStatus.valueOf(status.toUpperCase()) : ItemStatus.PENDING;
     }
 
     // Getter for doneAt.

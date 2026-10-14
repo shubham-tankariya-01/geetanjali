@@ -150,6 +150,29 @@ public class OrderController {
         return "/orders/" + orderId;
     }
 
+    // Handles POST /orders/{id}/items/{itemId}/done: Marks a garment item as stitched (DONE).
+    // Precondition: Only allowed when item status is PENDING.
+    // Authorized for both TAILOR and OWNER roles.
+    // Inputs:
+    //   id (@PathVariable("id") Long) - Order ID.
+    //   itemId (@PathVariable("itemId") Long) - Order item ID.
+    //   redirectAttributes (RedirectAttributes) - Passes flash messages across redirect.
+    // Output: String - Redirect to "/orders/" + id.
+    //
+    // Maps incoming HTTP POST requests for marking an item done to this handler method.
+    @PostMapping("/{id}/items/{itemId}/done")
+    public String markItemDone(@PathVariable("id") Long id,
+                               @PathVariable("itemId") Long itemId,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            orderService.markDone(id, itemId);
+            redirectAttributes.addFlashAttribute("successMessage", "Item marked as completed (stitching done).");
+        } catch (BusinessRuleException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
     // Handles GET /orders/{orderId}/add-items: Starts the order wizard to append new items to an existing order.
     // Pre-populates the customer into the session draft, sets the existingOrderId, and skips Step 1 by redirecting directly to Step 2.
     //

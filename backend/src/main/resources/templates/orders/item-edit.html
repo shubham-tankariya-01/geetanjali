@@ -5,7 +5,7 @@
   Material You MD3 redesign reusing the shared item-form fragment. Zero emojis, no bottom bar.
 -->
 <head>
-    <th:block th:replace="~{fragments/layout :: page-head('Edit Item - Order ' + ${@orderNumberFormatter.format(order)})}"></th:block>
+    <th:block th:replace="~{fragments/layout :: page-head('Edit Garment Item')}"></th:block>
     <!-- Interactive client script for chip clicks and photo management -->
     <script th:src="@{/js/new-order.js}" defer></script>
 </head>
@@ -51,8 +51,8 @@
                     <span th:text="${garment.name}">Shirt</span>
                 </span>
                 <span class="chip"
-                      th:classappend="${item.status.name() == 'DELIVERED' ? 'badge-success' : (item.status.name() == 'DONE' ? 'badge-secondary' : 'badge-neutral')}"
-                      th:text="${item.status}">PENDING</span>
+                      th:classappend="${item.isDelivered() ? 'badge-success' : (item.isDone() ? 'badge-secondary' : 'badge-warning')}"
+                      th:text="${item.isDelivered() ? 'Delivered' : (item.isDone() ? 'Done' : 'Pending')}">Pending</span>
             </div>
         </div>
 

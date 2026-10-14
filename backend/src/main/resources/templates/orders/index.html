@@ -108,10 +108,10 @@
 
                             <!-- Balance Chip: green 'Paid' or red 'Balance Rs. 400' -->
                             <td>
-                                <span th:if="${ord.paid}" class="badge badge-success" style="white-space: nowrap;">
+                                <span th:if="${ord.isPaid()}" class="badge badge-success" style="white-space: nowrap;">
                                     Paid
                                 </span>
-                                <span th:unless="${ord.paid}" class="badge badge-danger" style="white-space: nowrap;"
+                                <span th:unless="${ord.isPaid()}" class="badge badge-danger" style="white-space: nowrap;"
                                       th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">
                                     Balance Rs. 400
                                 </span>

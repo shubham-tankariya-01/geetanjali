@@ -5,7 +5,7 @@
   Material You MD3 redesign with celebratory success aura, financial ledger, and zero emojis.
 -->
 <head>
-    <th:block th:replace="~{fragments/layout :: page-head('Order Booked - ' + ${@orderNumberFormatter.format(order)})}"></th:block>
+    <th:block th:replace="~{fragments/layout :: page-head('Order Booked Successfully')}"></th:block>
 </head>
 <body>
 
@@ -37,11 +37,11 @@
 
                 <!-- Step 1 Balance Chip: green "Paid" or red "Balance Rs. 400" -->
                 <div style="margin-bottom: 0.75rem;">
-                    <span th:if="${order.paid}" class="badge badge-success">
+                    <span th:if="${order.isPaid()}" class="badge badge-success">
                         <span class="material-symbols-rounded icon-sm">check_circle</span>
                         <span>Paid</span>
                     </span>
-                    <span th:unless="${order.paid}" class="badge badge-danger">
+                    <span th:unless="${order.isPaid()}" class="badge badge-danger">
                         <span class="material-symbols-rounded icon-sm">pending</span>
                         <span th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Balance Rs. 400</span>
                     </span>
@@ -109,7 +109,7 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; border-top: 1.5px dashed var(--md-outline); padding-top: 0.85rem; font-size: 1.2rem; font-weight: 800;"
-                         th:styleappend="${order.paid} ? 'color: var(--md-success);' : 'color: var(--md-error);'">
+                         th:styleappend="${order.isPaid()} ? 'color: var(--md-success);' : 'color: var(--md-error);'">
                         <span>Balance:</span>
                         <span th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 250</span>
                     </div>
