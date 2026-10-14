@@ -131,11 +131,68 @@
                             </button>
                         </form>
 
+                        <!-- Mark delivered button: allowed from PENDING or DONE, hidden when DELIVERED -->
+                        <form th:if="${!item.isDelivered()}"
+                              th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/deliver'}"
+                              method="post"
+                              style="margin: 0; display: inline;">
+                            <button type="submit" class="btn btn-sm btn-outline">
+                                <span class="material-symbols-rounded icon-sm">local_shipping</span>
+                                <span>Mark Delivered</span>
+                            </button>
+                        </form>
+
                         <a th:href="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/edit'}"
                            class="btn btn-sm btn-outline">
                             <span class="material-symbols-rounded icon-sm">edit</span>
                             <span>Edit Item</span>
                         </a>
+                    </div>
+                </div>
+
+                <!--/* Overridden delivery note: small note 'Delivered with override: <reason>' */-->
+                <div th:if="${item.deliveryOverride != null}"
+                     style="margin-bottom: 0.85rem; background: var(--md-surface-container-low); border: 1.5px dashed var(--md-outline); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; color: var(--md-on-surface-variant);">
+                    <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">verified_user</span>
+                    <span>Delivered with override: <strong th:text="${item.deliveryOverride.reason}">Regular customer</strong></span>
+                </div>
+
+                <!-- Delivery Blocked Warning Panel (shown when delivery attempted with balance > 0) -->
+                <div th:if="${blockedItemId != null and blockedItemId == item.id}"
+                     style="margin-bottom: 0.85rem; background-color: var(--md-error-container); color: var(--md-on-error-container); border: 1.5px solid var(--md-error); border-radius: var(--radius-sm); padding: 0.85rem 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.05rem;">
+                        <span class="material-symbols-rounded icon-md">block</span>
+                        <span>Balance <span th:text="${@orderNumberFormatter.formatMoney(blockedBalance)}">Rs. 400</span> pending</span>
+                    </div>
+
+                    <!-- Tailor View: Cannot override, prompt to ask owner -->
+                    <div th:if="${currentUser == null or currentUser.role.name() != 'OWNER'}" style="margin-top: 0.5rem; font-size: 0.95rem;">
+                        <span>Delivery is blocked because payment is pending. <strong>Ask the owner to approve.</strong></span>
+                    </div>
+
+                    <!-- Owner View: Reason box (max 500 chars) and Override button -->
+                    <div th:if="${currentUser != null and currentUser.role.name() == 'OWNER'}" style="margin-top: 0.75rem;">
+                        <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">
+                            As the owner, you may override the block and deliver this item immediately:
+                        </p>
+                        <form th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/override'}"
+                              method="post"
+                              th:object="${overrideForm}"
+                              style="display: flex; flex-direction: column; gap: 0.5rem; max-width: 520px;">
+                            <input type="text"
+                                   name="reason"
+                                   class="form-input"
+                                   placeholder="Reason for override (required, max 500 chars)"
+                                   required
+                                   maxlength="500"
+                                   style="background: #ffffff; color: #18191E; border: 1.5px solid var(--md-outline); border-radius: var(--radius-xs); padding: 0.5rem 0.75rem; font-size: 0.9rem;" />
+                            <div>
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <span class="material-symbols-rounded icon-sm">verified_user</span>
+                                    <span>Override and deliver</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 

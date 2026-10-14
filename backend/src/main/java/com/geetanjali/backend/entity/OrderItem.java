@@ -87,6 +87,12 @@ public class OrderItem {
     @OneToMany(mappedBy = "orderItem", fetch = FetchType.LAZY)
     private List<ItemPhoto> photos = new ArrayList<>();
 
+    // Audit records for delivery overrides if item was handed over with unpaid balance.
+    // mappedBy = "orderItem" = Specifies the field in DeliveryOverride that owns the relationship.
+    // fetch = FetchType.LAZY = Overrides are lazily loaded on demand.
+    @OneToMany(mappedBy = "orderItem", fetch = FetchType.LAZY)
+    private List<DeliveryOverride> deliveryOverrides = new ArrayList<>();
+
     // Default zero-argument constructor: JPA/Hibernate requires this.
     public OrderItem() {
     }
@@ -231,6 +237,39 @@ public class OrderItem {
     // Checks if the garment item has been delivered to customer.
     public boolean isDelivered() {
         return this.status == ItemStatus.DELIVERED;
+    }
+
+    // Domain helper to transition this garment item to DELIVERED status.
+    // Preconditions: Item must be in PENDING or DONE status; never already DELIVERED.
+    // WHY: Encapsulates domain lifecycle rules ensuring a delivered item cannot be delivered again.
+    // Input: Instant now - timestamp of delivery handover (from Asia/Kolkata Clock).
+    // Throws: BusinessRuleException if already in DELIVERED status.
+    public void markDelivered(Instant now) {
+        if (this.status == ItemStatus.DELIVERED) {
+            throw new BusinessRuleException(
+                    "Cannot deliver item #" + (this.id != null ? this.id : "") + " because it is already DELIVERED."
+            );
+        }
+        this.status = ItemStatus.DELIVERED;
+        this.deliveredAt = (now != null) ? now : Instant.now();
+        if (this.doneAt == null) {
+            this.doneAt = this.deliveredAt;
+        }
+    }
+
+    // Getter for deliveryOverrides collection.
+    public List<DeliveryOverride> getDeliveryOverrides() {
+        return deliveryOverrides;
+    }
+
+    // Setter for deliveryOverrides collection.
+    public void setDeliveryOverrides(List<DeliveryOverride> deliveryOverrides) {
+        this.deliveryOverrides = deliveryOverrides;
+    }
+
+    // Convenience helper getter returning the delivery override audit record, if any exists.
+    public DeliveryOverride getDeliveryOverride() {
+        return (deliveryOverrides != null && !deliveryOverrides.isEmpty()) ? deliveryOverrides.get(0) : null;
     }
 
     // Getter for status.

@@ -1,17 +1,25 @@
 package com.geetanjali.backend.controller;
 
 import com.geetanjali.backend.dto.form.ItemForm;
+import com.geetanjali.backend.dto.form.OverrideForm;
 import com.geetanjali.backend.dto.form.PaymentForm;
+import com.geetanjali.backend.entity.AppUser;
 import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.entity.Garment;
 import com.geetanjali.backend.entity.GarmentField;
 import com.geetanjali.backend.entity.OrderItem;
+import com.geetanjali.backend.exception.BalancePendingException;
 import com.geetanjali.backend.exception.BusinessRuleException;
+import com.geetanjali.backend.security.AppUserDetails;
+import com.geetanjali.backend.service.DeliveryService;
 import com.geetanjali.backend.service.GarmentService;
 import com.geetanjali.backend.service.OrderService;
 import com.geetanjali.backend.service.OrderWizardService;
 import com.geetanjali.backend.service.PaymentService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -43,30 +51,42 @@ public class OrderController {
     private final OrderWizardService orderWizardService;
     private final GarmentService garmentService;
     private final PaymentService paymentService;
+    private final DeliveryService deliveryService;
     private final Clock clock;
 
     // Full constructor injection: Spring automatically injects all service dependencies.
-    // Inputs: orderService, orderWizardService, garmentService, paymentService, clock.
-    // @Autowired = Tells Spring to use this constructor when creating the bean with multiple constructor choices.
-    @org.springframework.beans.factory.annotation.Autowired
+    // Inputs: orderService, orderWizardService, garmentService, paymentService, deliveryService, clock.
+    // Injects all required service beans and clock into this controller.
+    @Autowired
     public OrderController(OrderService orderService,
                            OrderWizardService orderWizardService,
                            GarmentService garmentService,
                            PaymentService paymentService,
+                           DeliveryService deliveryService,
                            Clock clock) {
         this.orderService = orderService;
         this.orderWizardService = orderWizardService;
         this.garmentService = garmentService;
         this.paymentService = paymentService;
+        this.deliveryService = deliveryService;
         this.clock = clock;
     }
 
-    // Convenience constructor for tests that do not test payment endpoints.
+    // Convenience constructor for tests that do not inject DeliveryService.
+    public OrderController(OrderService orderService,
+                           OrderWizardService orderWizardService,
+                           GarmentService garmentService,
+                           PaymentService paymentService,
+                           Clock clock) {
+        this(orderService, orderWizardService, garmentService, paymentService, null, clock);
+    }
+
+    // Convenience constructor for tests that do not test payment or delivery endpoints.
     public OrderController(OrderService orderService,
                            OrderWizardService orderWizardService,
                            GarmentService garmentService,
                            Clock clock) {
-        this(orderService, orderWizardService, garmentService, null, clock);
+        this(orderService, orderWizardService, garmentService, null, null, clock);
     }
 
     // Handles GET /orders: Displays the customer orders overview list.
@@ -102,6 +122,11 @@ public class OrderController {
 
         // Pass today's date from the injected Clock (Asia/Kolkata)
         model.addAttribute("today", clock.instant().atZone(clock.getZone()).toLocalDate());
+
+        // Provide empty OverrideForm DTO for override modal form binding if not already set
+        if (!model.containsAttribute("overrideForm")) {
+            model.addAttribute("overrideForm", new OverrideForm());
+        }
 
         return "orders/detail";
     }
@@ -167,6 +192,72 @@ public class OrderController {
         try {
             orderService.markDone(id, itemId);
             redirectAttributes.addFlashAttribute("successMessage", "Item marked as completed (stitching done).");
+        } catch (BusinessRuleException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
+    // Handles POST /orders/{id}/items/{itemId}/deliver: Marks a garment item as delivered to the customer.
+    // Preconditions: Item is in PENDING or DONE; order balance must be zero.
+    // If order has an unpaid balance, deliveryService throws BalancePendingException,
+    // which triggers the red balance warning panel.
+    // Inputs:
+    //   id (@PathVariable("id") Long) - Order ID.
+    //   itemId (@PathVariable("itemId") Long) - Garment item ID.
+    //   redirectAttributes (RedirectAttributes) - Passes flash attributes across redirect.
+    // Output: String - Redirect to "/orders/" + id.
+    //
+    // Maps incoming HTTP POST requests for delivering a garment to this handler method.
+    @PostMapping("/{id}/items/{itemId}/deliver")
+    public String deliverItem(@PathVariable("id") Long id,
+                             @PathVariable("itemId") Long itemId,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            deliveryService.deliverItem(id, itemId);
+            redirectAttributes.addFlashAttribute("successMessage", "Item delivered successfully.");
+        } catch (BalancePendingException ex) {
+            // Flash blocked item ID and exact pending balance to display the warning panel on redirect
+            redirectAttributes.addFlashAttribute("blockedItemId", itemId);
+            redirectAttributes.addFlashAttribute("blockedBalance", ex.getBalance());
+        } catch (BusinessRuleException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
+    // Handles POST /orders/{id}/items/{itemId}/override: Allows shop OWNER to authorize delivery despite unpaid balance.
+    // Preconditions: Authenticated user must have OWNER role; reason must not be blank (max 500 chars).
+    // Inputs:
+    //   id (@PathVariable("id") Long) - Order ID.
+    //   itemId (@PathVariable("itemId") Long) - Garment item ID.
+    //   form (@Valid @ModelAttribute("overrideForm") OverrideForm) - Form DTO with justification reason.
+    //   bindingResult (BindingResult) - Holds validation errors.
+    //   userDetails (@AuthenticationPrincipal AppUserDetails) - Current logged-in staff member.
+    //   redirectAttributes (RedirectAttributes) - Passes flash messages.
+    // Output: String - Redirect to "/orders/" + id.
+    //
+    // Maps incoming HTTP POST requests for owner delivery overrides to this handler method.
+    @PostMapping("/{id}/items/{itemId}/override")
+    public String deliverWithOverride(@PathVariable("id") Long id,
+                                      @PathVariable("itemId") Long itemId,
+                                      @Valid @ModelAttribute("overrideForm") OverrideForm form,
+                                      BindingResult bindingResult,
+                                      @AuthenticationPrincipal AppUserDetails userDetails,
+                                      RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            String errorMsg = bindingResult.getAllErrors().get(0).getDefaultMessage();
+            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+            redirectAttributes.addFlashAttribute("blockedItemId", itemId);
+            return "redirect:/orders/" + id;
+        }
+
+        try {
+            AppUser currentUser = (userDetails != null) ? userDetails.getUser() : null;
+            deliveryService.deliverWithOverride(id, itemId, form.getReason(), currentUser);
+            redirectAttributes.addFlashAttribute("successMessage", "Item delivered with owner override.");
+        } catch (AccessDeniedException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only shop OWNER can authorize a delivery override.");
         } catch (BusinessRuleException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }

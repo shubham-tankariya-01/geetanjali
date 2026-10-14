@@ -150,4 +150,16 @@ public class AppUser {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    // Helper method to check if this staff member is a shop owner.
+    // Output: boolean (true if role is OWNER).
+    public boolean isOwner() {
+        return this.role == Role.OWNER;
+    }
+
+    // Helper method to check if this staff member is a tailor.
+    // Output: boolean (true if role is TAILOR).
+    public boolean isTailor() {
+        return this.role == Role.TAILOR;
+    }
 }

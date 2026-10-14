@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,13 +52,16 @@ class OrderControllerTest {
     @Mock
     private com.geetanjali.backend.service.PaymentService paymentService;
 
+    @Mock
+    private com.geetanjali.backend.service.DeliveryService deliveryService;
+
     private Clock fixedClock;
     private OrderController controller;
 
     @BeforeEach
     void setUp() {
         fixedClock = Clock.fixed(Instant.parse("2026-10-13T10:00:00Z"), ZoneId.of("Asia/Kolkata"));
-        controller = new OrderController(orderService, orderWizardService, garmentService, paymentService, fixedClock);
+        controller = new OrderController(orderService, orderWizardService, garmentService, paymentService, deliveryService, fixedClock);
     }
 
     @Test
@@ -243,5 +247,65 @@ class OrderControllerTest {
 
         assertEquals("redirect:/orders/10", view);
         assertEquals("Cannot mark item as DONE", redirectAttributes.getFlashAttributes().get("errorMessage"));
+    }
+
+    @Test
+    @DisplayName("deliverItem calls deliveryService.deliverItem, sets success flash and redirects to order page")
+    void testDeliverItem_success_redirectsWithFlash() {
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+
+        String view = controller.deliverItem(10L, 5L, redirectAttributes);
+
+        assertEquals("redirect:/orders/10", view);
+        verify(deliveryService).deliverItem(10L, 5L);
+        assertEquals("Item delivered successfully.", redirectAttributes.getFlashAttributes().get("successMessage"));
+    }
+
+    @Test
+    @DisplayName("deliverItem catches BalancePendingException, flashes blockedItemId and blockedBalance")
+    void testDeliverItem_balancePendingException_flashesBlockedState() {
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        when(deliveryService.deliverItem(10L, 5L)).thenThrow(
+                new com.geetanjali.backend.exception.BalancePendingException(new BigDecimal("400.00"), 5L)
+        );
+
+        String view = controller.deliverItem(10L, 5L, redirectAttributes);
+
+        assertEquals("redirect:/orders/10", view);
+        assertEquals(5L, redirectAttributes.getFlashAttributes().get("blockedItemId"));
+        assertEquals(new BigDecimal("400.00"), redirectAttributes.getFlashAttributes().get("blockedBalance"));
+    }
+
+    @Test
+    @DisplayName("deliverWithOverride saves override and redirects with success flash")
+    void testDeliverWithOverride_asOwner_success() {
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        com.geetanjali.backend.dto.form.OverrideForm form = new com.geetanjali.backend.dto.form.OverrideForm("Regular customer, will pay tomorrow");
+        BindingResult bindingResult = new org.springframework.validation.BeanPropertyBindingResult(form, "overrideForm");
+
+        com.geetanjali.backend.entity.AppUser owner = new com.geetanjali.backend.entity.AppUser(null, "Owner", "9876543210", "hash", com.geetanjali.backend.enums.Role.OWNER);
+        com.geetanjali.backend.security.AppUserDetails userDetails = new com.geetanjali.backend.security.AppUserDetails(owner);
+
+        String view = controller.deliverWithOverride(10L, 5L, form, bindingResult, userDetails, redirectAttributes);
+
+        assertEquals("redirect:/orders/10", view);
+        verify(deliveryService).deliverWithOverride(10L, 5L, "Regular customer, will pay tomorrow", owner);
+        assertEquals("Item delivered with owner override.", redirectAttributes.getFlashAttributes().get("successMessage"));
+    }
+
+    @Test
+    @DisplayName("deliverWithOverride validation error flashes error message and blockedItemId")
+    void testDeliverWithOverride_validationErrors_flashesErrorMessage() {
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        com.geetanjali.backend.dto.form.OverrideForm form = new com.geetanjali.backend.dto.form.OverrideForm("");
+        BindingResult bindingResult = new org.springframework.validation.BeanPropertyBindingResult(form, "overrideForm");
+        bindingResult.rejectValue("reason", "NotBlank", "Reason is required for delivery override");
+
+        String view = controller.deliverWithOverride(10L, 5L, form, bindingResult, null, redirectAttributes);
+
+        assertEquals("redirect:/orders/10", view);
+        assertEquals("Reason is required for delivery override", redirectAttributes.getFlashAttributes().get("errorMessage"));
+        assertEquals(5L, redirectAttributes.getFlashAttributes().get("blockedItemId"));
+        verify(deliveryService, never()).deliverWithOverride(any(), any(), any(), any());
     }
 }

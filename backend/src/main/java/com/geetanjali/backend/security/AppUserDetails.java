@@ -100,4 +100,9 @@ public class AppUserDetails implements UserDetails {
     public AppUser getAppUser() {
         return appUser;
     }
+
+    // Alias for getAppUser().
+    public AppUser getUser() {
+        return appUser;
+    }
 }
