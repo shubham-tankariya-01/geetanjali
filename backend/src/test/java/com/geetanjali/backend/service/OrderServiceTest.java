@@ -237,4 +237,53 @@ class OrderServiceTest {
         assertThrows(BusinessRuleException.class, () -> orderService.markDone(orderId, itemId));
         verify(orderItemRepository, never()).save(any());
     }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("getActiveOrdersSortedByDeliveryDate excludes orders where both payment and delivery are completed, and sorts remaining active orders by earliest delivery date")
+    void testGetActiveOrdersSortedByDeliveryDate_filtersCompletedAndSortsAscending() {
+        Customer customer = new Customer("Test Cust", "9876500000");
+
+        // Order 1: Fully paid (1000 - 1000 = 0) and delivered -> COMPLETED -> MUST BE EXCLUDED
+        CustomerOrder order1 = new CustomerOrder(1001L, customer, null, fixedClock.instant());
+        order1.setId(1L);
+        OrderItem item1 = new OrderItem(order1, null, null, "Item 1", new BigDecimal("1000.00"), LocalDate.of(2026, 10, 15));
+        item1.markDelivered(fixedClock.instant());
+        order1.getItems().add(item1);
+        order1.getPayments().add(new com.geetanjali.backend.entity.Payment(order1, new BigDecimal("1000.00"), "CASH", LocalDate.of(2026, 10, 14)));
+
+        // Order 2: Fully paid (800 - 800 = 0) but delivery PENDING (delivery date Oct 22) -> ACTIVE -> MUST BE INCLUDED
+        CustomerOrder order2 = new CustomerOrder(1002L, customer, null, fixedClock.instant());
+        order2.setId(2L);
+        OrderItem item2 = new OrderItem(order2, null, null, "Item 2", new BigDecimal("800.00"), LocalDate.of(2026, 10, 22));
+        order2.getItems().add(item2);
+        order2.getPayments().add(new com.geetanjali.backend.entity.Payment(order2, new BigDecimal("800.00"), "UPI", LocalDate.of(2026, 10, 14)));
+
+        // Order 3: Delivered with override, but payment PENDING (1200 - 500 = 700 balance, delivery date Oct 12) -> ACTIVE -> MUST BE INCLUDED
+        CustomerOrder order3 = new CustomerOrder(1003L, customer, null, fixedClock.instant());
+        order3.setId(3L);
+        OrderItem item3 = new OrderItem(order3, null, null, "Item 3", new BigDecimal("1200.00"), LocalDate.of(2026, 10, 12));
+        item3.markDelivered(fixedClock.instant());
+        order3.getItems().add(item3);
+        order3.getPayments().add(new com.geetanjali.backend.entity.Payment(order3, new BigDecimal("500.00"), "CASH", LocalDate.of(2026, 10, 14)));
+
+        // Order 4: Neither paid nor delivered (earliest delivery date Oct 18) -> ACTIVE -> MUST BE INCLUDED
+        CustomerOrder order4 = new CustomerOrder(1004L, customer, null, fixedClock.instant());
+        order4.setId(4L);
+        OrderItem item4 = new OrderItem(order4, null, null, "Item 4", new BigDecimal("500.00"), LocalDate.of(2026, 10, 18));
+        order4.getItems().add(item4);
+
+        when(customerOrderRepository.findAll()).thenReturn(List.of(order1, order2, order3, order4));
+
+        List<CustomerOrder> result = orderService.getActiveOrdersSortedByDeliveryDate();
+
+        // Order 1 is excluded because both payment and delivery are completed
+        assertEquals(3, result.size());
+        org.junit.jupiter.api.Assertions.assertFalse(result.contains(order1));
+
+        // Sorting check: earliest delivery date ascending:
+        // Order 3 (Oct 12) -> Order 4 (Oct 18) -> Order 2 (Oct 22)
+        assertEquals(3L, result.get(0).getId());
+        assertEquals(4L, result.get(1).getId());
+        assertEquals(2L, result.get(2).getId());
+    }
 }

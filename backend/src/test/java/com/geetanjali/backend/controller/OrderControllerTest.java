@@ -65,6 +65,25 @@ class OrderControllerTest {
     }
 
     @Test
+    @DisplayName("listOrders returns 'orders/index' and attaches active orders sorted by earliest delivery date")
+    void testListOrders_returnsOrdersIndexWithActiveOrders() {
+        CustomerOrder order1 = new CustomerOrder(1001L, new Customer("Ramesh Patel", "9876501111"), null, Instant.now());
+        order1.setId(10L);
+        CustomerOrder order2 = new CustomerOrder(1002L, new Customer("Suresh Raina", "9876502222"), null, Instant.now());
+        order2.setId(20L);
+        List<CustomerOrder> activeOrders = List.of(order1, order2);
+
+        when(orderService.getActiveOrdersSortedByDeliveryDate()).thenReturn(activeOrders);
+
+        Model model = new ConcurrentModel();
+        String view = controller.listOrders(model);
+
+        assertEquals("orders/index", view);
+        assertEquals(activeOrders, model.getAttribute("orders"));
+        verify(orderService).getActiveOrdersSortedByDeliveryDate();
+    }
+
+    @Test
     @DisplayName("showOrderDetail returns 'orders/detail' and attaches customer order to model")
     void testShowOrderDetail_existingOrder_returnsDetailView() {
         CustomerOrder order = new CustomerOrder(1001L, new Customer("Suresh Raina", "9876512345"), null, Instant.now());

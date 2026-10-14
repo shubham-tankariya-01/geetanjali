@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,6 +213,33 @@ public class OrderService {
     // Output: List<CustomerOrder> - newest orders list.
     public List<CustomerOrder> getRecentOrders() {
         return customerOrderRepository.findTop20ByOrderByCreatedAtDesc();
+    }
+
+    // Retrieves all active orders across the entire tailor shop for the All Orders section.
+    // Business rules:
+    // 1. Excludes completed orders: if both payment AND delivery are done (order.isCompleted()), it is removed.
+    // 2. Sorts in ascending order by earliest promised delivery date (earliest deadline to deliver first).
+    //
+    // Input: None.
+    // Output: List<CustomerOrder> - active orders ordered by earliest delivery deadline.
+    public List<CustomerOrder> getActiveOrdersSortedByDeliveryDate() {
+        List<CustomerOrder> allOrders = customerOrderRepository.findAll();
+        List<CustomerOrder> activeOrders = new ArrayList<>();
+
+        for (CustomerOrder order : allOrders) {
+            // Remove from all orders if BOTH payment and delivery are completely finished
+            if (!order.isCompleted()) {
+                activeOrders.add(order);
+            }
+        }
+
+        // Sort ascending: earliest delivery date comes first. Null delivery dates go to the end.
+        activeOrders.sort(Comparator.comparing(
+                CustomerOrder::getNearestDeliveryDate,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ).thenComparing(CustomerOrder::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        return activeOrders;
     }
 
     // Retrieves an order by its primary key ID, or throws ResourceNotFoundException if missing.

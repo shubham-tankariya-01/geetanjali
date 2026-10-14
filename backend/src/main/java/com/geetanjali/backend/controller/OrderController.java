@@ -89,13 +89,14 @@ public class OrderController {
         this(orderService, orderWizardService, garmentService, null, null, clock);
     }
 
-    // Handles GET /orders: Displays the customer orders overview list.
+    // Handles GET /orders: Displays the customer orders overview list in the All Orders section.
+    // Fetches active orders sorted ascending by earliest delivery date, excluding orders where both payment and delivery are completed.
     // Inputs: model (Model).
     // Output: String - Thymeleaf template path "orders/index".
     // @GetMapping = Maps HTTP GET requests for "/orders" to this method.
     @GetMapping
     public String listOrders(Model model) {
-        List<CustomerOrder> orders = orderService.getRecentOrders();
+        List<CustomerOrder> orders = orderService.getActiveOrdersSortedByDeliveryDate();
         model.addAttribute("orders", orders);
         return "orders/index";
     }

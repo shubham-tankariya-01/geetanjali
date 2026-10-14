@@ -263,7 +263,7 @@ public class CustomerOrder {
     }
 
     // Determines the nearest (earliest) promised delivery date among all items in this order.
-    // Used by Home dashboard to highlight upcoming deadlines for the tailor.
+    // Used by Home dashboard and All Orders list to highlight upcoming deadlines for the tailor.
     // Input: None.
     // Output: LocalDate - earliest delivery date, or null if order has no items.
     public LocalDate getNearestDeliveryDate() {
@@ -280,5 +280,29 @@ public class CustomerOrder {
             }
         }
         return nearest;
+    }
+
+    // Checks whether all garment items in this order have been handed over to the customer.
+    // Pure domain logic: returns true if there is at least one item and EVERY item is DELIVERED.
+    // Input: None.
+    // Output: boolean true if all items delivered, false if any item is pending/done or order has no items.
+    public boolean isAllDelivered() {
+        if (items == null || items.isEmpty()) {
+            return false;
+        }
+        for (OrderItem item : items) {
+            if (!item.isDelivered()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Checks whether both payment and delivery are completely finished for this order.
+    // When true (balance <= 0 AND all items delivered), the order is fully fulfilled and archived from the active All Orders list.
+    // Input: None.
+    // Output: boolean true if order is paid in full AND all items delivered, false otherwise.
+    public boolean isCompleted() {
+        return isPaid() && isAllDelivered();
     }
 }

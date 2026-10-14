@@ -23,11 +23,11 @@
                     </div>
                     <div>
                         <h3 class="table-header-title">All Orders</h3>
-                        <p class="table-header-subtitle">Active Tailoring Bookings &amp; Schedules</p>
+                        <p class="table-header-subtitle">Active Orders Sorted by Earliest Delivery</p>
                     </div>
                 </div>
                 <span class="badge badge-secondary" th:if="${orders != null}" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
-                    <span th:text="${orders.size()}">0</span> Orders
+                    <span th:text="${orders.size()}">0</span> Active Orders
                 </span>
             </div>
 
@@ -36,13 +36,13 @@
                 <div class="empty-state-icon">
                     <span class="material-symbols-rounded icon-xl">inventory_2</span>
                 </div>
-                <h4 style="margin: 0 0 0.4rem 0; color: var(--md-on-surface);">No orders found</h4>
+                <h4 style="margin: 0 0 0.4rem 0; color: var(--md-on-surface);">No active orders found</h4>
                 <p style="margin: 0 0 1.25rem 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
-                    Start by booking your first customer order using the new order wizard.
+                    All orders are fully paid and delivered! New orders will appear here as they are booked.
                 </p>
                 <a th:href="@{/orders/new}" class="btn btn-secondary">
                     <span class="material-symbols-rounded icon-md">add</span>
-                    <span>Book First Order</span>
+                    <span>Book New Order</span>
                 </a>
             </div>
 
@@ -60,8 +60,12 @@
                             <th style="width: 120px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr th:each="ord : ${orders}">
+                    <tbody id="ordersTableBody">
+                        <!-- Progressive disclosure: first 10 rows visible by default; subsequent rows revealed via Load More -->
+                        <tr th:each="ord, iterStat : ${orders}"
+                            class="order-row"
+                            th:classappend="${iterStat.index >= 10 ? 'order-row-hidden' : ''}"
+                            th:style="${iterStat.index >= 10 ? 'display: none;' : ''}">
                             <!-- Order No: TS-<year>-<4-digit order_no> -->
                             <td>
                                 <a th:href="@{'/orders/' + ${ord.id}}" class="badge badge-primary" style="font-weight: 700; text-decoration: none;">
@@ -89,7 +93,7 @@
                                 </span>
                             </td>
 
-                            <!-- Delivery Date -->
+                            <!-- Delivery Date (sorted earliest first) -->
                             <td>
                                 <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.875rem;">
                                     <span class="material-symbols-rounded icon-sm">event</span>
@@ -128,8 +132,60 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Load More Pagination Section -->
+            <div th:if="${orders != null and !orders.isEmpty()}"
+                 id="loadMoreSection"
+                 style="text-align: center; padding: 1.5rem; background: var(--md-surface-container-lowest); border-top: 1.5px solid var(--md-outline);">
+                <button th:if="${#lists.size(orders) > 10}"
+                        type="button"
+                        id="loadMoreBtn"
+                        class="btn btn-outline"
+                        style="min-width: 220px; font-weight: 600; padding: 0.65rem 1.5rem;">
+                    <span class="material-symbols-rounded icon-sm">expand_more</span>
+                    <span>Load More Orders</span>
+                </button>
+                <div id="loadMoreCounter" style="margin-top: 0.6rem; font-size: 0.88rem; color: var(--md-on-surface-variant);">
+                    Showing <strong id="visibleCount" th:text="${#lists.size(orders) > 10 ? 10 : #lists.size(orders)}">10</strong> of <strong id="totalCount" th:text="${#lists.size(orders)}">25</strong> active orders
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Load More Progressive Disclosure Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('loadMoreBtn');
+            if (!btn) return;
+
+            const PAGE_SIZE = 10;
+            btn.addEventListener('click', function () {
+                const hiddenRows = document.querySelectorAll('.order-row.order-row-hidden');
+                const toShow = Array.from(hiddenRows).slice(0, PAGE_SIZE);
+
+                toShow.forEach(function (row) {
+                    row.classList.remove('order-row-hidden');
+                    row.style.display = '';
+                });
+
+                const totalRows = document.querySelectorAll('.order-row').length;
+                const remainingHidden = document.querySelectorAll('.order-row.order-row-hidden').length;
+                const visibleRows = totalRows - remainingHidden;
+
+                const visibleCountEl = document.getElementById('visibleCount');
+                if (visibleCountEl) {
+                    visibleCountEl.textContent = visibleRows;
+                }
+
+                if (remainingHidden === 0) {
+                    btn.style.display = 'none';
+                    const counter = document.getElementById('loadMoreCounter');
+                    if (counter) {
+                        counter.innerHTML = 'All <strong>' + totalRows + '</strong> active orders loaded';
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
