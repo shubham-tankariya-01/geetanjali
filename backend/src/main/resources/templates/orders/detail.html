@@ -1,175 +1,201 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  orders/detail.html: Customer Order Detail view.
-  In EJS, this corresponds to `views/orders/detail.ejs`.
-  Displays customer link, financial ledger, and cards for each stitched item with photo lightbox and measurement snapshot.
+  orders/detail.html: Customer Order Detail view (Material You MD3).
+  Displays customer header, financial ledger, and garment item cards with measurements and photo lightbox.
 -->
-<head>
-    <th:block th:replace="~{fragments/layout :: page-head('Order #' + ${order.orderNo})}"></th:block>
-</head>
+<head th:replace="~{fragments/layout :: page-head('Order ' + ${@orderNumberFormatter.format(order)})}"></head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 900px; margin: 0 auto; padding-bottom: 5rem;">
+    <div class="container" style="max-width: 960px;">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Back to Home navigation -->
-        <div style="margin-bottom: 1rem;">
-            <a th:href="@{/}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; font-size: 0.9rem;">
-                ← Back to Dashboard
+        <!-- Back to Orders navigation -->
+        <div>
+            <a th:href="@{/orders}" class="back-link">
+                <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                <span>Back to Orders</span>
             </a>
         </div>
 
         <!-- Order Header Card -->
-        <div class="card" style="margin-bottom: 1.5rem; border-left: 5px solid var(--primary-color, #7b2cbf);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--md-primary);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.25rem;">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <h2 style="margin: 0; font-size: 1.6rem; color: #1e293b;">
-                            Order #<span th:text="${order.orderNo}">1001</span>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <h2 style="margin: 0; font-size: 1.75rem; color: var(--md-on-surface); font-weight: 700;">
+                            Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span>
                         </h2>
-                        <span class="role-tag" style="background: #e0e7ff; color: #4338ca; font-weight: 700;">
-                            <span th:text="${order.itemCount}">1</span> Item(s)
+                        <!-- Step 1 Balance Chip: Green 'Paid' or Red 'Balance Rs. 400' -->
+                        <span th:if="${order.paid}" class="badge badge-success">
+                            <span class="material-symbols-rounded icon-sm">check_circle</span>
+                            <span>Paid</span>
+                        </span>
+                        <span th:unless="${order.paid}" class="badge badge-danger">
+                            <span class="material-symbols-rounded icon-sm">pending</span>
+                            <span th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Balance Rs. 400</span>
+                        </span>
+                        <span class="badge badge-primary">
+                            <span class="material-symbols-rounded icon-sm">checkroom</span>
+                            <span th:text="${order.itemCount}">1</span> Items
                         </span>
                     </div>
 
-                    <div style="margin-top: 0.5rem; font-size: 1.1rem;">
-                        👤 Customer:
+                    <!-- Customer Link -->
+                    <div style="margin-top: 0.65rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.45rem;">
+                        <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">person</span>
+                        <span>Customer:</span>
                         <a th:href="@{'/customers/' + ${order.customer.id}}"
-                           style="color: var(--primary-color, #7b2cbf); font-weight: 700; text-decoration: underline;"
+                           style="color: var(--md-primary); font-weight: 600; text-decoration: underline;"
                            th:text="${order.customer.name}">
                             Suresh Raina
                         </a>
-                        <span class="text-muted" style="margin-left: 0.5rem; font-size: 0.95rem;">
-                            (📱 <span th:text="${order.customer.mobile}">9876512345</span>)
+                        <span class="phone-display" style="margin-left: 0.35rem; display: inline-flex; align-items: center; gap: 0.2rem;">
+                            <span class="material-symbols-rounded icon-sm">call</span>
+                            <span th:text="${order.customer.mobile}">9876512345</span>
                         </span>
                     </div>
 
-                    <div class="text-muted" style="font-size: 0.85rem; margin-top: 0.35rem;">
-                        Booked on: <span th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, hh:mm a')}">13 Oct 2026, 10:30 PM</span>
-                        by <strong th:text="${order.createdBy != null ? order.createdBy.fullName : 'Shop Staff'}">Tailor</strong>
+                    <div style="color: var(--md-on-surface-variant); font-size: 0.85rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <span class="material-symbols-rounded icon-sm">schedule</span>
+                        <span>Booked:</span>
+                        <span th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, hh:mm a')}">13 Oct 2026, 10:30 PM</span>
+                        <span>by</span>
+                        <strong th:text="${order.createdBy != null ? order.createdBy.fullName : 'Shop Staff'}">Tailor</strong>
                     </div>
                 </div>
 
-                <!-- Financial Ledger Box -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; min-width: 240px; text-align: right;">
-                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">
-                        Total Amount: <strong style="color: #1e293b; font-size: 1rem;">₹<span th:text="${order.totalAmount}">500.00</span></strong>
+                <!-- Financial Ledger Box: Total / Paid / Balance formatted as Rs. 1,500 -->
+                <div style="background: var(--md-surface-container-high); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem 1.35rem; min-width: 250px; text-align: right;">
+                    <div style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 0.25rem;">
+                        Total: <strong style="color: var(--md-on-surface); font-size: 1.05rem;" th:text="${@orderNumberFormatter.formatMoney(order.total)}">Rs. 1,500</strong>
                     </div>
-                    <div style="font-size: 0.85rem; color: #059669; margin-bottom: 0.35rem;">
-                        Advance Paid: <strong>₹<span th:text="${order.totalPaid}">200.00</span></strong>
+                    <div style="font-size: 0.85rem; color: var(--md-success); margin-bottom: 0.35rem;">
+                        Paid: <strong th:text="${@orderNumberFormatter.formatMoney(order.paid)}">Rs. 1,100</strong>
                     </div>
-                    <div style="border-top: 2px dashed #cbd5e1; padding-top: 0.4rem; font-size: 1.15rem; font-weight: 800; color: #dc2626;">
-                        Balance Due: ₹<span th:text="${order.balanceDue}">300.00</span>
+                    <div style="border-top: 1.5px solid var(--md-outline); padding-top: 0.5rem; font-size: 1.15rem; font-weight: 700;"
+                         th:styleappend="${order.paid} ? 'color: var(--md-success);' : 'color: var(--md-error);'">
+                        Balance: <span th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Section: Garment Items List -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-            <h3 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-                🧵 Garment Items (<span th:text="${order.itemCount}">1</span>)
-            </h3>
-            <a th:href="@{'/orders/' + ${order.id} + '/add-items'}"
-               class="btn btn-outline"
-               style="border-color: var(--primary-color, #7b2cbf); color: var(--primary-color, #7b2cbf); font-weight: 700; font-size: 0.85rem; padding: 0.4rem 0.85rem;">
-                ➕ Add Items to Order
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">checkroom</span>
+                <h3 style="margin: 0; color: var(--md-on-surface); font-size: 1.3rem;">
+                    Garment Items (<span th:text="${order.itemCount}">1</span>)
+                </h3>
+            </div>
+            <a th:href="@{'/orders/' + ${order.id} + '/add-items'}" class="btn btn-outline">
+                <span class="material-symbols-rounded icon-md">add</span>
+                <span>Add Items to Order</span>
             </a>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <!-- Iterating over order items (lazy-loaded on demand via Open-in-View) -->
-            <div th:each="item, iterStat : ${order.items}" class="card" style="margin-bottom: 0; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <!-- Iterating over order items -->
+            <div th:each="item, iterStat : ${order.items}" class="card" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--md-outline); padding-bottom: 0.85rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
-                        <span style="font-size: 1.25rem; font-weight: 800; color: #1e293b;" th:text="${item.garment.name}">
+                        <span style="font-size: 1.3rem; font-weight: 700; color: var(--md-on-surface);" th:text="${item.garment.name}">
                             Shirt
                         </span>
                         <span class="badge"
-                              th:text="${item.status}"
-                              th:style="${item.status == 'DELIVERED' ? 'background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;' : (item.status == 'DONE' ? 'background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;' : 'background: #fef3c7; color: #92400e; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;')}">
+                              th:classappend="${item.status == 'DELIVERED' ? 'badge-success' : (item.status == 'DONE' ? 'badge-primary' : 'badge-warning')}"
+                              th:text="${item.status}">
                             PENDING
                         </span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary-color, #7b2cbf);">
-                            ₹<span th:text="${item.price}">500.00</span>
+                    <div style="display: flex; align-items: center; gap: 0.85rem;">
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--md-primary);"
+                             th:text="${@orderNumberFormatter.formatMoney(item.price)}">
+                            Rs. 500
                         </div>
                         <a th:href="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/edit'}"
-                           class="btn btn-outline"
-                           style="padding: 0.25rem 0.65rem; font-size: 0.8rem; font-weight: 600;">
-                            ✏️ Edit
+                           class="btn btn-sm btn-outline">
+                            <span class="material-symbols-rounded icon-sm">edit</span>
+                            <span>Edit Item</span>
                         </a>
                     </div>
                 </div>
 
                 <!-- Delivery date and specifications -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.95rem; margin-bottom: 0.75rem;">
-                    <div>
-                        <span class="text-muted">📅 Promised Delivery:</span>
-                        <strong style="color: #1e293b;" th:text="${item.deliveryDate}">2026-10-31</strong>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.95rem; margin-bottom: 0.85rem;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm">event</span>
+                        <span>Promised Delivery:</span>
+                        <strong style="color: var(--md-on-surface);" th:text="${item.deliveryDate}">2026-10-31</strong>
                     </div>
-                    <div th:if="${item.doneAt != null}">
-                        <span class="text-muted">✅ Stitched:</span>
+                    <div th:if="${item.doneAt != null}" style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm">check_circle</span>
+                        <span>Stitched:</span>
                         <span th:text="${#temporals.format(item.doneAt, 'dd MMM yyyy')}">28 Oct 2026</span>
                     </div>
-                    <div th:if="${item.deliveredAt != null}">
-                        <span class="text-muted">📦 Delivered:</span>
+                    <div th:if="${item.deliveredAt != null}" style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm">package_2</span>
+                        <span>Delivered:</span>
                         <span th:text="${#temporals.format(item.deliveredAt, 'dd MMM yyyy')}">30 Oct 2026</span>
                     </div>
                 </div>
 
                 <!-- Notes / Styling Instructions -->
-                <div th:if="${item.notes != null and !item.notes.isBlank()}" style="margin-bottom: 0.75rem;">
-                    <div style="background: #f8fafc; border-left: 3px solid var(--primary-color, #7b2cbf); padding: 0.6rem 0.85rem; border-radius: 4px; font-size: 0.9rem;">
-                        <strong>📝 Styling Notes:</strong>
-                        <span th:text="${item.notes}" style="color: #334155;">Mandarin collar, double buttons</span>
-                    </div>
-                </div>
-
-                <!-- Attached Photos with interactive Lightbox Pop-up -->
-                <div th:if="${item.photos != null and !item.photos.isEmpty()}" style="margin-top: 0.75rem; margin-bottom: 0.75rem;">
-                    <div style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem;">
-                        📷 Attached Cloth &amp; Pattern Photos (Tap to enlarge):
-                    </div>
-                    <div class="photo-thumbnails-grid">
-                        <div th:each="photo : ${item.photos}"
-                             class="photo-thumbnail-card"
-                             style="cursor: pointer;"
-                             onclick="openImageModal(this.querySelector('img').src)">
-                            <img th:src="${photo.url}" alt="Cloth swatch photo" class="photo-thumbnail-img" />
+                <div th:if="${item.notes != null and !item.notes.isBlank()}" style="margin-bottom: 0.85rem;">
+                    <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-left: 4px solid var(--md-primary); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; display: flex; align-items: flex-start; gap: 0.4rem;">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary); margin-top: 0.15rem;">stylus_note</span>
+                        <div>
+                            <strong>Styling Notes:</strong>
+                            <span th:text="${item.notes}" style="color: var(--md-on-surface);">Mandarin collar, double buttons</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Collapsed Measurements <details> Block -->
-                <details style="margin-top: 0.85rem; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.6rem 1rem; background: #fafafa;">
-                    <summary style="cursor: pointer; font-weight: 600; color: #334155; font-size: 0.95rem;">
-                        📏 Measurements Snapshot
-                        <span class="text-muted" style="font-weight: normal; font-size: 0.85rem;"
+                <!-- Attached Photos with interactive Lightbox Pop-up -->
+                <div th:if="${item.photos != null and !item.photos.isEmpty()}" style="margin-top: 0.85rem; margin-bottom: 0.85rem;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--md-on-surface-variant); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <span class="material-symbols-rounded icon-sm">photo_camera</span>
+                        <span>Attached Cloth &amp; Pattern Photos (Tap to enlarge):</span>
+                    </div>
+                    <div class="photo-gallery-grid">
+                        <div th:each="photo : ${item.photos}"
+                             class="photo-thumb-container"
+                             style="cursor: pointer;"
+                             onclick="openImageModal(this.querySelector('img').src)">
+                            <img th:src="${photo.url}" alt="Cloth swatch photo" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Measurements Snapshot Details Block -->
+                <details style="margin-top: 0.85rem; border: 1.5px solid var(--md-outline); border-radius: var(--radius-sm); padding: 0.75rem 1rem; background: var(--md-surface-container-low);">
+                    <summary style="cursor: pointer; font-weight: 600; color: var(--md-on-surface); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <span class="material-symbols-rounded icon-sm">straighten</span>
+                        <span>Measurements Snapshot</span>
+                        <span style="color: var(--md-on-surface-variant); font-weight: normal; font-size: 0.85rem;"
                               th:text="'(' + (${item.measurement != null and item.measurement.values != null} ? ${item.measurement.values.size()} : 0) + ' recorded)'">
                             (6 recorded)
                         </span>
                     </summary>
 
-                    <div style="margin-top: 0.75rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
+                    <div style="margin-top: 0.75rem; border-top: 1.5px solid var(--md-outline); padding-top: 0.75rem;">
                         <div th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}"
                              style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
                             <div th:each="val : ${item.measurement.values}"
-                                 style="background: #ffffff; border: 1px solid #e2e8f0; padding: 0.5rem 0.65rem; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                                <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase;" th:text="${val.field.label}">Chest</div>
-                                <div style="font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-top: 0.15rem;">
+                                 style="background: var(--md-surface); border: 1.5px solid var(--md-outline); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm);">
+                                <div style="font-size: 0.75rem; color: var(--md-on-surface-variant); text-transform: uppercase;" th:text="${val.field.label}">Chest</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--md-on-surface); margin-top: 0.15rem;">
                                     <span th:text="${val.value}">40.0</span>
-                                    <span style="font-size: 0.75rem; font-weight: normal; color: #94a3b8;" th:text="${val.field.unit}">inch</span>
+                                    <span style="font-size: 0.75rem; font-weight: normal; color: var(--md-on-surface-variant);" th:text="${val.field.unit}">inch</span>
                                 </div>
                             </div>
                         </div>
-                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}" class="text-muted" style="font-size: 0.85rem;">
+                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}" style="color: var(--md-on-surface-variant); font-size: 0.85rem;">
                             No measurements recorded for this garment item.
                         </div>
                     </div>
@@ -185,19 +211,19 @@
         <div style="position: relative; max-width: 90%; max-height: 90%;">
             <button type="button"
                     onclick="closeImageModal()"
-                    style="position: absolute; top: -35px; right: 0; background: transparent; border: none; color: #ffffff; font-size: 2.2rem; cursor: pointer; line-height: 1;"
+                    style="position: absolute; top: -40px; right: 0; background: transparent; border: none; color: #ffffff; cursor: pointer;"
                     title="Close">
-                &times;
+                <span class="material-symbols-rounded" style="font-size: 32px;">close</span>
             </button>
             <img id="lightboxImg"
                  src=""
                  alt="Full size view"
-                 style="max-width: 100%; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); object-fit: contain;"
+                 style="max-width: 100%; max-height: 85vh; border-radius: 18px; border: 2px solid #221D2E; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); object-fit: contain;"
                  onclick="event.stopPropagation();" />
         </div>
     </div>
 
-    <!-- Interactive script for image pop-up -->
+    <!-- Lightbox Interactive Script -->
     <script>
         function openImageModal(imgSrc) {
             var modal = document.getElementById('imageLightboxModal');
@@ -215,16 +241,12 @@
             }
         }
 
-        // Close lightbox on Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeImageModal();
             }
         });
     </script>
-
-    <!-- Bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

@@ -21,10 +21,14 @@ class CustomerOrderCalculatedGettersTest {
         CustomerOrder order = new CustomerOrder();
 
         assertEquals(BigDecimal.ZERO, order.getTotalAmount());
+        assertEquals(BigDecimal.ZERO, order.getTotal());
         assertEquals(0, order.getItemCount());
         assertNull(order.getNearestDeliveryDate());
         assertEquals(BigDecimal.ZERO, order.getTotalPaid());
+        assertEquals(BigDecimal.ZERO, order.getPaid());
         assertEquals(BigDecimal.ZERO, order.getBalanceDue());
+        assertEquals(BigDecimal.ZERO, order.getBalance());
+        org.junit.jupiter.api.Assertions.assertTrue(order.isPaid());
     }
 
     @Test
@@ -45,6 +49,9 @@ class CustomerOrderCalculatedGettersTest {
 
         // 450 + 550 + 400 = 1400.00
         assertEquals(new BigDecimal("1400.00"), order.getTotalAmount());
+        assertEquals(new BigDecimal("1400.00"), order.getTotal());
+        assertEquals(new BigDecimal("1400.00"), order.getBalance());
+        org.junit.jupiter.api.Assertions.assertFalse(order.isPaid());
         assertEquals(3, order.getItemCount());
         // Nearest date is 2026-10-20
         assertEquals(LocalDate.of(2026, 10, 20), order.getNearestDeliveryDate());
@@ -63,9 +70,13 @@ class CustomerOrderCalculatedGettersTest {
         order.setPayments(List.of(advancePayment));
 
         assertEquals(new BigDecimal("800.00"), order.getTotalAmount());
+        assertEquals(new BigDecimal("800.00"), order.getTotal());
         assertEquals(new BigDecimal("300.00"), order.getTotalPaid());
+        assertEquals(new BigDecimal("300.00"), order.getPaid());
         // 800 - 300 = 500
         assertEquals(new BigDecimal("500.00"), order.getBalanceDue());
+        assertEquals(new BigDecimal("500.00"), order.getBalance());
+        org.junit.jupiter.api.Assertions.assertFalse(order.isPaid());
     }
 
     @Test
@@ -82,8 +93,13 @@ class CustomerOrderCalculatedGettersTest {
         order.setPayments(List.of(payment1, payment2)); // Total paid 600
 
         assertEquals(new BigDecimal("500.00"), order.getTotalAmount());
+        assertEquals(new BigDecimal("500.00"), order.getTotal());
         assertEquals(new BigDecimal("600.00"), order.getTotalPaid());
+        assertEquals(new BigDecimal("600.00"), order.getPaid());
         // Balance due should not be negative; clamped to zero
         assertEquals(BigDecimal.ZERO, order.getBalanceDue());
+        // Pure arithmetic balance is 500 - 600 = -100
+        assertEquals(new BigDecimal("-100.00"), order.getBalance());
+        org.junit.jupiter.api.Assertions.assertTrue(order.isPaid());
     }
 }

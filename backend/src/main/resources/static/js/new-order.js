@@ -57,9 +57,9 @@ function initPhoneLookup() {
         lastLookedUpMobile = normalized;
 
         if (statusBadge) {
-            statusBadge.style.display = 'inline-block';
+            statusBadge.style.display = 'inline-flex';
             statusBadge.className = 'badge badge-searching';
-            statusBadge.textContent = '🔍 Checking...';
+            statusBadge.innerHTML = '<span class="material-symbols-rounded icon-sm">sync</span> Checking...';
         }
 
         try {
@@ -78,8 +78,9 @@ function initPhoneLookup() {
             if (data.found) {
                 // Existing customer found!
                 if (statusBadge) {
+                    statusBadge.style.display = 'inline-flex';
                     statusBadge.className = 'badge badge-success';
-                    statusBadge.textContent = `✓ Existing Customer (${data.orderCount} past orders)`;
+                    statusBadge.innerHTML = `<span class="material-symbols-rounded icon-sm">check_circle</span> Existing Customer (${data.orderCount} past orders)`;
                 }
 
                 // Auto-fill customer name if not already typed
@@ -101,8 +102,9 @@ function initPhoneLookup() {
             } else {
                 // New customer
                 if (statusBadge) {
+                    statusBadge.style.display = 'inline-flex';
                     statusBadge.className = 'badge badge-info';
-                    statusBadge.textContent = '➕ New Customer';
+                    statusBadge.innerHTML = '<span class="material-symbols-rounded icon-sm">person_add</span> New Customer';
                 }
 
                 if (historyInfo) {

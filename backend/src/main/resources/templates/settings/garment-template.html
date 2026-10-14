@@ -2,56 +2,61 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   settings/garment-template.html: Owner-only management page for a Garment category's measurement template.
-  Allows viewing active measurement fields, adding new fields, renaming fields, moving fields up/down
-  to reorder, and soft-deleting fields (active = false).
+  Material You MD3 redesign with reordering controls, inline rename dropdown, zero emojis, and no bottom bar.
 -->
 <head th:replace="~{fragments/layout :: page-head(${garment.name} + ' Template - Settings')}"></head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem;">
-        <!-- Flash messages (success / error alerts) -->
+    <div class="container" style="max-width: 900px;">
+        <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
         <!-- Breadcrumb & Back Link -->
-        <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
-            <a th:href="@{/settings/garments}" class="back-link">← Back to Garment Categories</a>
-            <span style="color: var(--text-muted);">/</span>
-            <span style="color: var(--text-muted); font-size: 0.9rem;" th:text="${garment.name}">Shirt</span>
-            <span style="color: var(--text-muted); font-size: 0.9rem;">Template</span>
+        <div style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem;">
+            <a th:href="@{/settings/garments}" class="back-link" style="margin-bottom: 0;">
+                <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                <span>Garments</span>
+            </a>
+            <span style="color: var(--md-outline-variant);">/</span>
+            <span style="color: var(--md-on-surface); font-weight: 600;" th:text="${garment.name}">Shirt</span>
+            <span style="color: var(--md-on-surface-variant);">Template</span>
         </div>
 
         <!-- Page Header -->
-        <div class="page-header" style="margin-bottom: 1.5rem;">
-            <div>
-                <h2 style="margin: 0; font-size: 1.6rem; color: #1a1a2e;">
-                    📐 <span th:text="${garment.name}">Shirt</span> — Measurement Template
+        <div class="page-header">
+            <div class="page-title-group">
+                <h2>
+                    <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">straighten</span>
+                    <span><span th:text="${garment.name}">Shirt</span> — Measurement Template</span>
                 </h2>
-                <p style="margin: 0.35rem 0 0 0; color: var(--text-muted); font-size: 0.95rem;">
-                    Configure the measurement fields recorded by tailors when taking orders for this garment.
-                </p>
+                <p>Configure the measurement fields recorded by tailors when taking orders for this garment.</p>
             </div>
             <div>
-                <span class="badge" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 4px;">
-                    👑 Owner Only
+                <span class="chip badge-primary" style="font-size: 0.8rem;">
+                    <span class="material-symbols-rounded icon-sm">shield_person</span>
+                    <span>Owner Access</span>
                 </span>
             </div>
         </div>
 
         <!-- Section 1: Add New Measurement Field Form -->
-        <div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--primary-color);">
-            <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: #1a1a2e;">➕ Add Measurement Field</h3>
-            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+        <div class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border-top: 4px solid var(--md-primary);">
+            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
+                <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_circle</span>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Add Measurement Field</h3>
+            </div>
+            <p style="color: var(--md-on-surface-variant); font-size: 0.875rem; margin: 0 0 1.25rem 0;">
                 New fields are placed at the end of the template. Tailors will enter values for these fields during the order wizard.
             </p>
 
             <form th:action="@{/settings/garments/{id}/fields(id=${garment.id})}" th:object="${fieldForm}" method="post">
                 <div style="display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap;">
                     <!-- Field Label input -->
-                    <div style="flex: 2; min-width: 200px;">
-                        <label for="fieldLabel" style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                    <div style="flex: 2; min-width: 220px;">
+                        <label for="fieldLabel" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
                             Field Label
                         </label>
                         <input type="text"
@@ -68,8 +73,8 @@
                     </div>
 
                     <!-- Unit input -->
-                    <div style="flex: 1; min-width: 120px;">
-                        <label for="fieldUnit" style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                    <div style="flex: 1; min-width: 130px;">
+                        <label for="fieldUnit" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
                             Unit
                         </label>
                         <input type="text"
@@ -86,8 +91,9 @@
 
                     <!-- Submit button -->
                     <div style="padding-top: 1.55rem;">
-                        <button type="submit" class="btn btn-primary" style="white-space: nowrap; padding: 0.65rem 1.25rem;">
-                            Add Field
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-rounded icon-sm">add</span>
+                            <span>Add Field</span>
                         </button>
                     </div>
                 </div>
@@ -95,24 +101,29 @@
         </div>
 
         <!-- Section 2: Active Measurement Fields Table -->
-        <div class="card">
-            <div class="table-header" style="margin-bottom: 1rem;">
-                <div>
-                    <h3 style="margin: 0; font-size: 1.2rem; color: #1a1a2e;">Template Fields</h3>
-                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
-                        Use ⬆️ and ⬇️ to reorder fields as they should appear on the tailor's measurement form.
-                    </p>
+        <div class="card table-card" style="box-shadow: var(--shadow-2); padding: 0; overflow: hidden;">
+            <div class="table-header">
+                <div class="table-header-left">
+                    <div class="table-header-icon measurements-icon">
+                        <span class="material-symbols-rounded">straighten</span>
+                    </div>
+                    <div>
+                        <h3 class="table-header-title">Template Fields</h3>
+                        <p class="table-header-subtitle">Use order buttons to resequence fields as they appear on the tailor's input form.</p>
+                    </div>
                 </div>
-                <span class="badge" th:text="${fields != null ? fields.size() : 0} + ' Fields'">
+                <span class="badge badge-secondary" th:text="${fields != null ? fields.size() : 0} + ' Fields'" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
                     4 Fields
                 </span>
             </div>
 
             <!-- Empty state when no fields exist -->
-            <div th:if="${fields == null or fields.isEmpty()}" class="empty-state" style="padding: 2.5rem 1rem;">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📏</div>
-                <h4 style="margin: 0; color: #475569;">No Measurement Fields Configured</h4>
-                <p style="margin: 0.35rem 0 0 0; color: #94a3b8; font-size: 0.9rem;">
+            <div th:if="${fields == null or fields.isEmpty()}" class="empty-state">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded icon-hero">straighten</span>
+                </div>
+                <h4 style="margin: 0; color: var(--md-on-surface);">No Measurement Fields Configured</h4>
+                <p style="margin: 0.35rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
                     Add fields above (e.g. Chest, Waist, Length) so tailors can record measurements for this garment.
                 </p>
             </div>
@@ -122,28 +133,28 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width: 50px; text-align: center;">#</th>
-                            <th>Field Label</th>
-                            <th style="width: 100px;">Unit</th>
-                            <th style="width: 110px; text-align: center;">Order</th>
-                            <th style="text-align: right; width: 200px;">Actions</th>
+                            <th style="width: 60px; text-align: center;"><span class="material-symbols-rounded">tag</span><span>#</span></th>
+                            <th><span class="material-symbols-rounded">label</span><span>Field Label</span></th>
+                            <th style="width: 120px;"><span class="material-symbols-rounded">square_foot</span><span>Unit</span></th>
+                            <th style="width: 140px; text-align: center;"><span class="material-symbols-rounded">swap_vert</span><span>Sequence</span></th>
+                            <th style="text-align: right; width: 220px; padding-right: 1.5rem;"><span class="material-symbols-rounded">tune</span><span>Actions</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="f, stat : ${fields}">
                             <!-- Order / Row number -->
-                            <td style="text-align: center; color: var(--text-muted); font-weight: 600;" th:text="${stat.count}">
+                            <td style="text-align: center; color: var(--md-on-surface-variant); font-weight: 600;" th:text="${stat.count}">
                                 1
                             </td>
 
                             <!-- Label -->
                             <td>
-                                <strong style="font-size: 1rem; color: #1e293b;" th:text="${f.label}">Chest</strong>
+                                <strong style="font-size: 1.05rem; color: var(--md-on-surface);" th:text="${f.label}">Chest</strong>
                             </td>
 
                             <!-- Unit -->
                             <td>
-                                <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 600;" th:text="${f.unit}">inch</span>
+                                <span class="chip badge-neutral" style="font-size: 0.75rem;" th:text="${f.unit}">inch</span>
                             </td>
 
                             <!-- Move Up / Down Buttons -->
@@ -155,10 +166,10 @@
                                           style="display: inline;">
                                         <button type="submit"
                                                 class="btn btn-sm btn-outline"
-                                                style="padding: 0.2rem 0.5rem;"
+                                                style="padding: 0.3rem 0.5rem;"
                                                 th:disabled="${stat.first}"
                                                 title="Move field up">
-                                            ⬆️
+                                            <span class="material-symbols-rounded icon-sm">arrow_upward</span>
                                         </button>
                                     </form>
 
@@ -168,53 +179,54 @@
                                           style="display: inline;">
                                         <button type="submit"
                                                 class="btn btn-sm btn-outline"
-                                                style="padding: 0.2rem 0.5rem;"
+                                                style="padding: 0.3rem 0.5rem;"
                                                 th:disabled="${stat.last}"
                                                 title="Move field down">
-                                            ⬇️
+                                            <span class="material-symbols-rounded icon-sm">arrow_downward</span>
                                         </button>
                                     </form>
                                 </div>
                             </td>
 
                             <!-- Actions: Rename & Remove -->
-                            <td style="text-align: right; position: relative;">
+                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap; position: relative;">
                                 <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
                                     <!-- Rename inline details dropdown -->
                                     <details style="display: inline-block; position: relative;">
                                         <summary class="btn btn-sm btn-outline" style="cursor: pointer;" title="Rename label or change unit">
-                                            ✏️ Rename
+                                            <span class="material-symbols-rounded icon-sm">edit</span>
+                                            <span>Rename</span>
                                         </summary>
-                                        <div style="position: absolute; right: 0; top: 100%; margin-top: 0.4rem; padding: 0.85rem; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 50; width: 260px; text-align: left;">
+                                        <div style="position: absolute; right: 0; top: 100%; margin-top: 0.4rem; padding: 1.15rem; background: var(--md-surface); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); box-shadow: var(--shadow-3); z-index: 50; width: 280px; text-align: left;">
                                             <form th:action="@{/settings/garments/{id}/fields/{fieldId}/rename(id=${garment.id}, fieldId=${f.id})}"
                                                   method="post">
-                                                <div style="margin-bottom: 0.6rem;">
-                                                    <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">
+                                                <div style="margin-bottom: 0.75rem;">
+                                                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--md-on-surface-variant); display: block; margin-bottom: 0.25rem;">
                                                         Field Label:
                                                     </label>
                                                     <input type="text"
                                                            name="label"
                                                            th:value="${f.label}"
                                                            class="form-control"
-                                                           style="font-size: 0.85rem; padding: 0.4rem 0.6rem;"
+                                                           style="height: 42px; font-size: 0.9rem;"
                                                            required
                                                            maxlength="50" />
                                                 </div>
-                                                <div style="margin-bottom: 0.75rem;">
-                                                    <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: block; margin-bottom: 0.25rem;">
+                                                <div style="margin-bottom: 1rem;">
+                                                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--md-on-surface-variant); display: block; margin-bottom: 0.25rem;">
                                                         Unit:
                                                     </label>
                                                     <input type="text"
                                                            name="unit"
                                                            th:value="${f.unit}"
                                                            class="form-control"
-                                                           style="font-size: 0.85rem; padding: 0.4rem 0.6rem;"
+                                                           style="height: 42px; font-size: 0.9rem;"
                                                            required
                                                            maxlength="20" />
                                                 </div>
-                                                <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                                                     <button type="submit" class="btn btn-sm btn-primary">
-                                                        Save
+                                                        <span>Save</span>
                                                     </button>
                                                 </div>
                                             </form>
@@ -229,7 +241,8 @@
                                         <button type="submit"
                                                 class="btn btn-sm btn-danger"
                                                 title="Remove this measurement field">
-                                            🗑️ Remove
+                                            <span class="material-symbols-rounded icon-sm">delete</span>
+                                            <span>Remove</span>
                                         </button>
                                     </form>
                                 </div>
@@ -240,9 +253,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

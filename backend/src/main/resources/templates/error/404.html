@@ -2,31 +2,42 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   error/404.html: Displayed when a URL, customer, garment, or order is not found (HTTP 404 Not Found).
-  Spring Boot automatically serves this template whenever a 404 error occurs.
+  Material You MD3 redesign, zero emojis, no bottom bar.
 -->
 <head th:replace="~{fragments/layout :: page-head('Page Not Found (404)')}"></head>
 <body>
 
-    <!-- Top bar displaying shop brand and staff info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container">
+    <div class="container" style="max-width: 680px;">
         <!-- Flash messages area -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card" style="border-left: 4px solid #e63946;">
-            <h2>Page Not Found (404)</h2>
-            <p th:text="${errorMessage != null ? errorMessage : 'The page, order, or customer record you requested does not exist.'}">
+        <div class="card" style="box-shadow: var(--shadow-2); border-left: 4px solid var(--md-error);">
+            <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--md-error-container); color: var(--md-on-error-container); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-rounded icon-lg">search_off</span>
+                </div>
+                <div>
+                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Page Not Found (404)</h2>
+                    <span style="font-size: 0.8rem; color: var(--md-on-surface-variant); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em;">Record Not Found</span>
+                </div>
+            </div>
+
+            <p style="color: var(--md-on-surface-variant); font-size: 0.95rem; line-height: 1.6;"
+               th:text="${errorMessage != null ? errorMessage : 'The page, order, or customer record you requested does not exist.'}">
                 The page, order, or customer record you requested does not exist.
             </p>
-            <div style="margin-top: 1.5rem;">
-                <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                <a th:href="@{/}" class="btn btn-primary">
+                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                    <span>Return to Dashboard</span>
+                </a>
             </div>
         </div>
     </div>
-
-    <!-- Bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

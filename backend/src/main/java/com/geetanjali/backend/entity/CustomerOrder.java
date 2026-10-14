@@ -177,14 +177,15 @@ public class CustomerOrder {
     }
 
     // =========================================================================
-    // CALCULATED GETTERS (Used across templates and dashboards)
+    // CALCULATED GETTERS (Stage 2: Pure arithmetic, no database queries inside)
     // =========================================================================
 
-    // Calculates the total price across all garment items in this order.
-    // Because spring.jpa.open-in-view is active, accessing items triggers lazy loading seamlessly.
+    // Calculates the total cost of the order by summing all item prices.
+    // Pure arithmetic: Operates strictly in-memory over the items collection.
+    // Why calculated instead of stored in DB? Storing total introduces duplicate state that can get out of sync if items change.
     // Input: None.
-    // Output: BigDecimal - cumulative order total.
-    public BigDecimal getTotalAmount() {
+    // Output: BigDecimal sum of item prices, or BigDecimal.ZERO if order has no items.
+    public BigDecimal getTotal() {
         if (items == null || items.isEmpty()) {
             return BigDecimal.ZERO;
         }
@@ -195,6 +196,61 @@ public class CustomerOrder {
             }
         }
         return sum;
+    }
+
+    // Calculates total money collected so far by summing all payment receipts.
+    // Pure arithmetic: Sums payment amounts in memory.
+    // Input: None.
+    // Output: BigDecimal sum of payments, or BigDecimal.ZERO if no payments exist.
+    public BigDecimal getPaid() {
+        if (payments == null || payments.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Payment payment : payments) {
+            if (payment.getAmount() != null) {
+                sum = sum.add(payment.getAmount());
+            }
+        }
+        return sum;
+    }
+
+    // Calculates outstanding balance due for this order (total - paid).
+    // Pure arithmetic: Subtracts total paid from total item price.
+    // Why calculated? Balance is a derived financial ledger concept; deriving it guarantees zero ledger drift.
+    // Input: None.
+    // Output: BigDecimal balance (may be negative if customer overpaid).
+    public BigDecimal getBalance() {
+        return getTotal().subtract(getPaid());
+    }
+
+    // Checks whether this order is fully settled.
+    // Pure arithmetic: True if remaining balance is zero or negative (balance <= 0).
+    // Input: None.
+    // Output: boolean true if balance <= 0, false otherwise.
+    public boolean isPaid() {
+        return getBalance().compareTo(BigDecimal.ZERO) <= 0;
+    }
+
+    // Backwards-compatible alias for getTotal() used by Stage 1 templates and tests.
+    // Input: None.
+    // Output: BigDecimal total amount.
+    public BigDecimal getTotalAmount() {
+        return getTotal();
+    }
+
+    // Backwards-compatible alias for getPaid() used by Stage 1 templates and tests.
+    // Input: None.
+    // Output: BigDecimal total paid.
+    public BigDecimal getTotalPaid() {
+        return getPaid();
+    }
+
+    // Backwards-compatible alias for getBalance() clamped to zero for display.
+    // Input: None.
+    // Output: BigDecimal balance due (minimum 0).
+    public BigDecimal getBalanceDue() {
+        return getBalance().max(BigDecimal.ZERO);
     }
 
     // Returns total count of garment items in this order.
@@ -222,28 +278,5 @@ public class CustomerOrder {
             }
         }
         return nearest;
-    }
-
-    // Calculates total money collected so far across all payments for this order.
-    // Input: None.
-    // Output: BigDecimal - total paid amount.
-    public BigDecimal getTotalPaid() {
-        if (payments == null || payments.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-        BigDecimal sum = BigDecimal.ZERO;
-        for (Payment payment : payments) {
-            if (payment.getAmount() != null) {
-                sum = sum.add(payment.getAmount());
-            }
-        }
-        return sum;
-    }
-
-    // Calculates remaining balance due to be collected from customer upon delivery.
-    // Input: None.
-    // Output: BigDecimal - balance amount (TotalAmount - TotalPaid), clamped to zero.
-    public BigDecimal getBalanceDue() {
-        return getTotalAmount().subtract(getTotalPaid()).max(BigDecimal.ZERO);
     }
 }

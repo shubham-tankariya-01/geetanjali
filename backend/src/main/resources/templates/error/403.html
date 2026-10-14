@@ -2,31 +2,42 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   error/403.html: Displayed when a logged-in user lacks permission (HTTP 403 Forbidden).
-  For example, when a Tailor attempts to access Owner-only administration features.
+  Material You MD3 redesign, zero emojis, no bottom bar.
 -->
 <head th:replace="~{fragments/layout :: page-head('Access Denied (403)')}"></head>
 <body>
 
-    <!-- Top bar displaying shop brand and staff info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container">
+    <div class="container" style="max-width: 680px;">
         <!-- Flash messages area -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card" style="border-left: 4px solid var(--secondary-color);">
-            <h2>Access Denied (403)</h2>
-            <p th:text="${errorMessage != null ? errorMessage : 'You do not have permission to view or perform this action. Only the shop owner has administrative access.'}">
+        <div class="card" style="box-shadow: var(--shadow-2); border-left: 4px solid var(--md-warning);">
+            <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--md-warning-container); color: var(--md-on-warning-container); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-rounded icon-lg">lock</span>
+                </div>
+                <div>
+                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Access Denied (403)</h2>
+                    <span style="font-size: 0.8rem; color: var(--md-on-surface-variant); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em;">Permission Required</span>
+                </div>
+            </div>
+
+            <p style="color: var(--md-on-surface-variant); font-size: 0.95rem; line-height: 1.6;"
+               th:text="${errorMessage != null ? errorMessage : 'You do not have permission to view or perform this action. Only the shop owner has administrative access.'}">
                 You do not have permission to view or perform this action. Only the shop owner has administrative access.
             </p>
-            <div style="margin-top: 1.5rem;">
-                <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                <a th:href="@{/}" class="btn btn-primary">
+                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                    <span>Return to Dashboard</span>
+                </a>
             </div>
         </div>
     </div>
-
-    <!-- Bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

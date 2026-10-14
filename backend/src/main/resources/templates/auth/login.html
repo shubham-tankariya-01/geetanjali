@@ -2,25 +2,31 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   auth/login.html: Staff and Owner login page using mobile number.
+  Material You MD3 redesign with centered elevation card, soft atmospheric aura, and zero emojis.
 -->
 <head th:replace="~{fragments/layout :: page-head('Login')}"></head>
 <body>
 
     <div class="auth-wrapper">
         <div class="auth-header">
-            <h2 th:text="${shopName}">Geetanjali Tailors</h2>
-            <p>Staff &amp; Owner Login</p>
+            <div style="width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: var(--shadow-2);">
+                <span class="material-symbols-rounded icon-lg" style="font-size: 32px;">styler</span>
+            </div>
+            <h2 th:text="${shopName}" style="margin: 0; font-size: 1.85rem; font-weight: 700; color: var(--md-on-surface);">Geetanjali Tailors</h2>
+            <p style="margin: 0.25rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">Staff &amp; Owner Secure Access</p>
         </div>
 
         <!-- Flash messages for error / logout / registration notices -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card">
+        <div class="card auth-card">
             <!-- Form submits to POST /login which is intercepted by Spring Security -->
-            <!-- th:action automatically includes the CSRF token input field -->
             <form th:action="@{/login}" method="post">
                 <div class="form-group">
-                    <label for="mobile">Mobile Number</label>
+                    <label for="mobile" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">call</span>
+                        <span>Mobile Number</span>
+                    </label>
                     <input type="text"
                            id="mobile"
                            name="mobile"
@@ -30,22 +36,50 @@
                            autofocus>
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password"
-                           id="password"
-                           name="password"
-                           class="form-control"
-                           placeholder="Enter your password"
-                           required>
+                <div class="form-group" style="margin-bottom: 1.75rem;">
+                    <label for="password" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">key</span>
+                        <span>Password</span>
+                    </label>
+                    <div style="position: relative;">
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               class="form-control"
+                               placeholder="Enter your password"
+                               style="padding-right: 48px;"
+                               required>
+                        <button type="button"
+                                id="togglePasswordBtn"
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--md-on-surface-variant); padding: 4px; display: flex; align-items: center; justify-content: center;"
+                                title="Show / hide password">
+                            <span class="material-symbols-rounded icon-md" id="togglePasswordIcon">visibility</span>
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-                    Log In
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <span>Log In</span>
+                    <span class="material-symbols-rounded icon-sm">login</span>
                 </button>
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('togglePasswordBtn');
+            const pwdInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('togglePasswordIcon');
+            if (toggleBtn && pwdInput && toggleIcon) {
+                toggleBtn.addEventListener('click', () => {
+                    const isPwd = pwdInput.type === 'password';
+                    pwdInput.type = isPwd ? 'text' : 'password';
+                    toggleIcon.textContent = isPwd ? 'visibility_off' : 'visibility';
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>

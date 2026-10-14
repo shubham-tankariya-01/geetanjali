@@ -2,12 +2,12 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   customers/detail.html: Customer detail profile page with order statistics and garment measurement snapshots.
-  In EJS, this is like `views/customers/detail.ejs`.
+  Material You MD3 redesign with tactile cards, responsive tables, measurement pills, and zero emojis.
 -->
 <head th:replace="~{fragments/layout :: page-head(${customer.name} + ' - Customer Profile')}"></head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
     <div class="container">
@@ -15,111 +15,135 @@
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
         <!-- Navigation breadcrumb -->
-        <div style="margin-bottom: 1rem;">
-            <a th:href="@{/customers}" class="back-link">← Back to Customer Directory</a>
+        <div style="margin-bottom: 1.25rem;">
+            <a th:href="@{/customers}" class="back-link">
+                <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                <span>Back to Customer Directory</span>
+            </a>
         </div>
 
         <!-- Customer Profile Card -->
-        <div class="card customer-profile-card">
-            <div class="profile-header">
-                <div class="profile-avatar">👤</div>
-                <div>
-                    <h2 th:text="${customer.name}">Ramesh Patel</h2>
-                    <p class="text-muted">Customer ID: #<span th:text="${customer.id}">1</span></p>
+        <div class="card card-elevated" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-1);">
+                        <span class="material-symbols-rounded icon-hero" style="font-size: 36px;">person</span>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--md-on-surface); margin: 0;" th:text="${customer.name}">Ramesh Patel</h2>
+                        <span style="font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                            Customer ID: #<span th:text="${customer.id}">1</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a th:href="@{/orders/new(customerId=${customer.id})}" class="btn btn-secondary">
+                        <span class="material-symbols-rounded icon-sm">add</span>
+                        <span>New Order</span>
+                    </a>
                 </div>
             </div>
 
-            <hr class="divider" />
+            <hr style="border: none; border-top: 1.5px solid var(--md-outline); margin: 1.5rem 0;" />
 
-            <div class="profile-details-grid">
-                <div class="detail-item">
-                    <span class="detail-label">Mobile Number</span>
-                    <span class="detail-value">
-                        📱 <a th:href="'tel:' + ${customer.mobile}" th:text="${customer.mobile}" class="phone-link">9876543210</a>
-                    </span>
+            <!-- Profile Details Grid -->
+            <div class="grid grid-3">
+                <div style="background: var(--md-surface-container-low); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 1.5px solid var(--md-outline);">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem;">Mobile Number</span>
+                    <a th:href="'tel:' + ${customer.mobile}" class="phone-display" style="font-size: 1.1rem; font-weight: 600; color: var(--md-primary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <span class="material-symbols-rounded icon-sm">call</span>
+                        <span th:text="${customer.mobile}">9876543210</span>
+                    </a>
                 </div>
 
-                <div class="detail-item">
-                    <span class="detail-label">Total Orders Placed</span>
-                    <span class="detail-value">
-                        <strong th:text="${orderCount}">0</strong> order(s)
-                    </span>
+                <div style="background: var(--md-surface-container-low); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 1.5px solid var(--md-outline);">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem;">Total Orders Placed</span>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: var(--md-on-surface); display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-secondary);">shopping_bag</span>
+                        <span><span th:text="${orderCount}">0</span> order(s)</span>
+                    </div>
                 </div>
 
-                <div class="detail-item">
-                    <span class="detail-label">Last Order Date</span>
-                    <span class="detail-value">
+                <div style="background: var(--md-surface-container-low); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 1.5px solid var(--md-outline);">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem;">Last Order Date</span>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: var(--md-on-surface); display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">calendar_month</span>
                         <span th:if="${lastOrderDate != null}" th:text="${lastOrderDate}">2026-10-12</span>
-                        <span th:if="${lastOrderDate == null}" class="text-muted">No orders yet</span>
-                    </span>
+                        <span th:if="${lastOrderDate == null}" style="color: var(--md-on-surface-variant); font-weight: 400; font-size: 0.95rem;">No orders yet</span>
+                    </div>
                 </div>
-            </div>
-
-            <div class="profile-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a th:href="@{/customers}" class="btn btn-outline">← Back to Customers</a>
-                <a th:href="@{/orders/new(customerId=${customer.id})}" class="btn btn-primary">➕ New Order for this Customer</a>
             </div>
         </div>
 
         <!-- Order History Section -->
-        <div class="card" style="margin-top: 1.5rem; padding: 0; overflow: hidden;">
-            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-                <div>
-                    <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-                        📋 Order History
-                    </h3>
-                    <span class="text-muted" style="font-size: 0.85rem;">Chronological list of all orders placed by this customer (newest first)</span>
+        <div class="card table-card" style="margin-bottom: 1.5rem; padding: 0; overflow: hidden; box-shadow: var(--shadow-2);">
+            <div class="table-header">
+                <div class="table-header-left">
+                    <div class="table-header-icon orders-icon">
+                        <span class="material-symbols-rounded">receipt_long</span>
+                    </div>
+                    <div>
+                        <h3 class="table-header-title">Order History</h3>
+                        <p class="table-header-subtitle">Chronological list of all orders placed by this customer</p>
+                    </div>
                 </div>
-                <span class="badge badge-info" style="font-size: 0.85rem; padding: 0.35rem 0.65rem;" th:text="${orderCount} + ' order(s)'">0 order(s)</span>
+                <span class="badge badge-secondary" th:text="${orderCount} + ' order(s)'" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">0 order(s)</span>
             </div>
 
             <!-- Orders Table if history exists -->
             <div th:if="${orders != null and not orders.isEmpty()}" class="table-responsive">
-                <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="padding: 0.85rem 1.25rem;">Order #</th>
-                            <th style="padding: 0.85rem 1rem;">Items</th>
-                            <th style="padding: 0.85rem 1rem;">Promised Delivery</th>
-                            <th style="padding: 0.85rem 1rem;">Total</th>
-                            <th style="padding: 0.85rem 1rem;">Status / Balance</th>
-                            <th style="padding: 0.85rem 1.25rem; text-align: right;">Action</th>
+                            <th style="width: 110px;"><span class="material-symbols-rounded">tag</span><span>Order #</span></th>
+                            <th style="width: 100px;"><span class="material-symbols-rounded">checkroom</span><span>Items</span></th>
+                            <th><span class="material-symbols-rounded">event</span><span>Delivery</span></th>
+                            <th style="min-width: 100px;"><span class="material-symbols-rounded">currency_rupee</span><span>Total</span></th>
+                            <th style="min-width: 140px;"><span class="material-symbols-rounded">account_balance_wallet</span><span>Status / Balance</span></th>
+                            <th style="width: 120px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="order : ${orders}" style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 1rem 1.25rem;">
-                                <a th:href="@{'/orders/' + ${order.id}}" style="font-weight: 700; font-size: 1.05rem; color: #7b2cbf; text-decoration: none;">
-                                    Order #<span th:text="${order.orderNo}">1001</span>
+                        <tr th:each="order : ${orders}">
+                            <td>
+                                <a th:href="@{'/orders/' + ${order.id}}" class="customer-name-link">
+                                    <strong th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</strong>
                                 </a>
                             </td>
-                            <td style="padding: 1rem 1rem;">
-                                <span style="display: inline-block; background: #e0e7ff; color: #4338ca; font-weight: 700; font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px;">
-                                    <span th:text="${order.itemCount}">1</span> garment(s)
+                            <td>
+                                <span class="chip badge-secondary">
+                                    <span class="material-symbols-rounded icon-sm">checkroom</span>
+                                    <span><span th:text="${order.itemCount}">1</span> item(s)</span>
                                 </span>
                             </td>
-                            <td style="padding: 1rem 1rem; font-size: 0.9rem;">
-                                <span th:if="${order.nearestDeliveryDate != null}" style="color: #0284c7; font-weight: 600;">
-                                    📅 <span th:text="${order.nearestDeliveryDate}">2026-10-25</span>
+                            <td>
+                                <span th:if="${order.nearestDeliveryDate != null}" style="display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 500;">
+                                    <span class="material-symbols-rounded icon-sm" style="color: var(--md-info);">event</span>
+                                    <span th:text="${order.nearestDeliveryDate}">2026-10-25</span>
                                 </span>
-                                <span th:unless="${order.nearestDeliveryDate != null}" class="text-muted">
+                                <span th:unless="${order.nearestDeliveryDate != null}" style="color: var(--md-on-surface-variant);">
                                     Not specified
                                 </span>
                             </td>
-                            <td style="padding: 1rem 1rem; font-weight: 700; font-size: 1rem; color: #1e293b;">
-                                ₹<span th:text="${order.totalAmount}">750.00</span>
+                            <td>
+                                <strong style="font-size: 1.05rem; color: var(--md-on-surface);"
+                                        th:text="${@orderNumberFormatter.formatMoney(order.total)}">Rs. 750</strong>
                             </td>
-                            <td style="padding: 1rem 1rem;">
-                                <span th:if="${order.balanceDue.compareTo(T(java.math.BigDecimal).ZERO) == 0}" class="badge badge-success" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 0.25rem 0.6rem; border-radius: 4px;">
-                                    ✓ Paid in Full
+                            <td>
+                                <span th:if="${order.paid}" class="chip badge-success">
+                                    <span class="material-symbols-rounded icon-sm">check_circle</span>
+                                    <span>Paid</span>
                                 </span>
-                                <span th:unless="${order.balanceDue.compareTo(T(java.math.BigDecimal).ZERO) == 0}" class="badge badge-warning" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 0.25rem 0.6rem; border-radius: 4px;">
-                                    ₹<span th:text="${order.balanceDue}">250.00</span> Due
+                                <span th:unless="${order.paid}" class="chip badge-due">
+                                    <span class="material-symbols-rounded icon-sm">pending</span>
+                                    <span th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Balance Rs. 250</span>
                                 </span>
                             </td>
-                            <td style="padding: 1rem 1.25rem; text-align: right;">
-                                <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
-                                    View Details →
+                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
+                                <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-sm btn-outline btn-table-action">
+                                    <span>Details</span>
+                                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
                                 </a>
                             </td>
                         </tr>
@@ -128,32 +152,41 @@
             </div>
 
             <!-- Empty State when no orders placed -->
-            <div th:if="${orders == null or orders.isEmpty()}" style="padding: 3rem 1.5rem; text-align: center; color: #64748b;">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🧾</div>
-                <h4 style="margin: 0 0 0.5rem 0; color: #1e293b; font-size: 1.15rem;">No Order History Yet</h4>
-                <p style="margin: 0 0 1.25rem 0; font-size: 0.95rem;">This customer has not placed any orders with the shop yet.</p>
-                <a th:href="@{/orders/new(customerId=${customer.id})}" class="btn btn-primary">
-                    ➕ Book First Order for <span th:text="${customer.name}">Customer</span>
+            <div th:if="${orders == null or orders.isEmpty()}" class="empty-state">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded icon-hero">receipt</span>
+                </div>
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: var(--md-on-surface);">No Order History Yet</h4>
+                <p style="margin: 0 0 1.25rem 0; font-size: 0.95rem;">This customer has not placed any tailoring orders with the shop yet.</p>
+                <a th:href="@{/orders/new(customerId=${customer.id})}" class="btn btn-secondary">
+                    <span class="material-symbols-rounded icon-sm">add</span>
+                    <span>Book First Order</span>
                 </a>
             </div>
         </div>
 
-        <!-- Latest Measurements Section (Step 3: Measurement engine) -->
-        <div class="card" style="margin-top: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0; font-size: 1.25rem;">📏 Saved Measurements</h3>
-                <span class="text-muted" style="font-size: 0.875rem;">Latest snapshot per garment</span>
+        <!-- Latest Measurements Section -->
+        <div class="card" style="margin-bottom: 2rem; box-shadow: var(--shadow-2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">straighten</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--md-on-surface);">Saved Measurements</h3>
+                        <p style="margin: 0.1rem 0 0 0; font-size: 0.8rem; color: var(--md-on-surface-variant);">Latest snapshot recorded per garment</p>
+                    </div>
+                </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+            <div class="grid grid-3">
                 <!-- Card for each active garment -->
-                <div th:each="gm : ${garmentMeasurements}" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <strong th:text="${gm.garment.name}" style="font-size: 1.1rem; color: #1e293b;">Shirt</strong>
-                        <span th:if="${gm.hasMeasurement()}" class="badge badge-success" style="font-size: 0.75rem; background: #ecfdf5; color: #047857; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid #a7f3d0;">
+                <div th:each="gm : ${garmentMeasurements}"
+                     style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                        <strong th:text="${gm.garment.name}" style="font-size: 1.1rem; color: var(--md-on-surface);">Shirt</strong>
+                        <span th:if="${gm.hasMeasurement()}" class="chip badge-success" style="font-size: 0.75rem;">
                             Snapshot #<span th:text="${gm.measurement.id}">1</span>
                         </span>
-                        <span th:unless="${gm.hasMeasurement()}" style="font-size: 0.75rem; background: #f1f5f9; color: #64748b; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                        <span th:unless="${gm.hasMeasurement()}" class="chip badge-neutral" style="font-size: 0.75rem;">
                             Not recorded
                         </span>
                     </div>
@@ -162,11 +195,11 @@
                     <div th:if="${gm.hasMeasurement()}">
                         <table style="width: 100%; font-size: 0.875rem; border-collapse: collapse;">
                             <tbody>
-                                <tr th:each="val : ${gm.values}" style="border-bottom: 1px dashed #e2e8f0;">
-                                    <td th:text="${val.field.label}" style="padding: 0.35rem 0; color: #475569;">Chest</td>
-                                    <td style="padding: 0.35rem 0; text-align: right; font-weight: 600; color: #0f172a;">
+                                <tr th:each="val : ${gm.values}" style="border-bottom: 1.5px dashed var(--md-outline);">
+                                    <td th:text="${val.field.label}" style="padding: 0.4rem 0; color: var(--md-on-surface-variant);">Chest</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; font-weight: 700; color: var(--md-on-surface);">
                                         <span th:text="${val.value}">38.0</span>
-                                        <span th:text="${val.field.unit}" style="font-size: 0.75rem; font-weight: normal; color: #64748b;">inch</span>
+                                        <span th:text="${val.field.unit}" style="font-size: 0.75rem; font-weight: normal; color: var(--md-on-surface-variant);">inch</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -174,16 +207,13 @@
                     </div>
 
                     <!-- Empty state for this garment -->
-                    <div th:unless="${gm.hasMeasurement()}" style="color: #94a3b8; font-size: 0.875rem; padding: 0.5rem 0; font-style: italic;">
+                    <div th:unless="${gm.hasMeasurement()}" style="color: var(--md-on-surface-variant); font-size: 0.875rem; padding: 0.75rem 0; font-style: italic;">
                         No measurements recorded yet.
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Sticky bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

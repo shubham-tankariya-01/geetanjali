@@ -50,7 +50,7 @@ public class AuthController {
         }
 
         // If user is already logged in, redirect them to home page
-        if (authentication != null && authentication.isAuthenticated() &&
+        if ( authentication!= null && authentication.isAuthenticated() &&
                 !(authentication.getPrincipal() instanceof String && "anonymousUser".equals(authentication.getPrincipal()))) {
             return "redirect:/";
         }

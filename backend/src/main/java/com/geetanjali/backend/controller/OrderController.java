@@ -53,6 +53,17 @@ public class OrderController {
         this.clock = clock;
     }
 
+    // Handles GET /orders: Displays the customer orders overview list.
+    // Inputs: model (Model).
+    // Output: String - Thymeleaf template path "orders/index".
+    // @GetMapping = Maps HTTP GET requests for "/orders" to this method.
+    @GetMapping
+    public String listOrders(Model model) {
+        List<CustomerOrder> orders = orderService.getRecentOrders();
+        model.addAttribute("orders", orders);
+        return "orders/index";
+    }
+
     // Handles GET /orders/{id}: Displays the complete order details page.
     // Shows the customer info header, financial summary, and item cards with photos and measurements.
     // If the order does not exist, orderService throws ResourceNotFoundException which GlobalExceptionHandler maps to HTTP 404.

@@ -28,8 +28,11 @@ public class AppUserDetailsService implements UserDetailsService {
     // Throws: UsernameNotFoundException if no user with this mobile number exists.
     @Override
     public UserDetails loadUserByUsername(String mobile) throws UsernameNotFoundException {
+        // Normalize mobile number (strips spaces, dashes, +91 prefix)
+        String normalizedMobile = com.geetanjali.backend.util.PhoneNumbers.normalize(mobile);
+
         // Query database for user with matching mobile number
-        AppUser user = appUserRepository.findByMobile(mobile)
+        AppUser user = appUserRepository.findByMobile(normalizedMobile)
                 .orElseThrow(() -> new UsernameNotFoundException("No user found with mobile: " + mobile));
 
         // Wrap entity in our custom UserDetails adapter

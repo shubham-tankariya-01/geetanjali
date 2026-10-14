@@ -1,84 +1,148 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  layout.html: Master page layout fragment for Geetanjali.
-  In EJS, this is like your main `boilerplate.ejs` or partial headers/footers.
+  layout.html: Master page layout fragment for Geetanjali Tailors.
+  Material You (Material Design 3) typography, icons, top app bar, alerts, and wizard stepper.
 -->
 <head th:fragment="page-head(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
     <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
-    <title th:text="${pageTitle != null ? pageTitle + ' - ' + shopName : shopName}">Geetanjali</title>
+    <title th:text="${pageTitle != null ? pageTitle + ' - ' + shopName : shopName}">Geetanjali Tailors</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans (Modern Geometric Neo-Grotesque) & Material Symbols Rounded -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+    <!-- Material You Stylesheet -->
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <script th:src="@{/js/app.js}" defer></script>
 </head>
 <body>
 
-    <!-- Top Bar: Shop Name + Logged-in Staff Info + Logout Form -->
+    <!-- Unified Material You Top App Bar (Replaces bottom bar) -->
     <header th:fragment="top-bar" class="top-bar">
-        <div class="brand">
-            <h1 th:text="${shopName}">Geetanjali Tailors</h1>
-            <span class="tagline">Tailor Shop System</span>
-        </div>
-        <div class="user-actions" th:if="${currentUser != null}">
-            <div class="user-badge">
-                <span>Tailor: <strong th:text="${currentUser.fullName}">Shubham</strong></span>
-                <span class="role-tag" th:text="${currentUser.role}">OWNER</span>
+        <div class="top-bar-inner">
+            <!-- Brand -->
+            <a th:href="@{/}" class="brand">
+                <div class="brand-icon">
+                    <span class="material-symbols-rounded icon-lg">content_cut</span>
+                </div>
+                <div class="brand-info">
+                    <span class="brand-title" th:text="${shopName}">Geetanjali Tailors</span>
+                    <span class="tagline">Tailor Shop</span>
+                </div>
+            </a>
+
+            <!-- Primary Navigation Links (Segmented Center Pill) -->
+            <nav class="nav-links" th:if="${currentUser != null}">
+                <a th:href="@{/}" class="nav-link" th:classappend="${currentUri == '/' ? 'active' : ''}">
+                    <span class="material-symbols-rounded icon-sm">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a th:href="@{/orders}" class="nav-link" th:classappend="${currentUri != null and (currentUri == '/orders' or currentUri.startsWith('/orders/')) and !currentUri.startsWith('/orders/new') ? 'active' : ''}">
+                    <span class="material-symbols-rounded icon-sm">shopping_bag</span>
+                    <span>Orders</span>
+                </a>
+                <a th:href="@{/customers}" class="nav-link" th:classappend="${currentUri != null and currentUri.startsWith('/customers') ? 'active' : ''}">
+                    <span class="material-symbols-rounded icon-sm">group</span>
+                    <span>Customers</span>
+                </a>
+                <a th:href="@{/more}" class="nav-link" th:classappend="${currentUri != null and (currentUri.startsWith('/more') or currentUri.startsWith('/settings')) ? 'active' : ''}">
+                    <span class="material-symbols-rounded icon-sm">tune</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- User Actions & Profile (Right Section) -->
+            <div class="user-actions" th:if="${currentUser != null}">
+                <!-- Primary Action CTA -->
+                <a th:href="@{/orders/new}" class="nav-cta-btn" title="Create New Order">
+                    <span class="material-symbols-rounded icon-sm">add</span>
+                    <span>New Order</span>
+                </a>
+
+                <!-- User Session Pill -->
+                <div class="user-badge">
+                    <div class="user-avatar-circle">
+                        <span class="material-symbols-rounded icon-sm">person</span>
+                    </div>
+                    <span class="user-name" th:text="${currentUser.fullName}">Shubham</span>
+                    <span class="role-tag"
+                          th:classappend="${currentUser.role.name() == 'OWNER' ? 'owner' : 'tailor'}"
+                          th:text="${currentUser.role}">OWNER</span>
+                </div>
+
+                <!-- Logout via POST with CSRF -->
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <button type="submit" title="Logout" class="btn-nav-logout">
+                        <span class="material-symbols-rounded icon-sm">logout</span>
+                        <span>Logout</span>
+                    </button>
+                </form>
             </div>
-            <!-- Logout via POST to adhere to Spring Security CSRF requirements -->
-            <form th:action="@{/logout}" method="post" class="logout-form">
-                <button type="submit">Logout</button>
-            </form>
         </div>
     </header>
 
-    <!-- Flash Message Area: Displays success or error alert banners -->
+    <!-- Material 3 Flash Alert Banners -->
     <div th:fragment="flash-messages" class="flash-area" th:if="${successMessage != null or errorMessage != null or loginError != null or logoutMessage != null}">
-        <div th:if="${successMessage != null}" class="alert alert-success" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage != null}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        <div th:if="${loginError != null}" class="alert alert-danger" th:text="${loginError}"></div>
-        <div th:if="${logoutMessage != null}" class="alert alert-success" th:text="${logoutMessage}"></div>
+        <div th:if="${successMessage != null}" class="alert alert-success">
+            <span class="material-symbols-rounded icon-lg">check_circle</span>
+            <div th:text="${successMessage}">Success message</div>
+        </div>
+        <div th:if="${errorMessage != null}" class="alert alert-danger">
+            <span class="material-symbols-rounded icon-lg">error</span>
+            <div th:text="${errorMessage}">Error message</div>
+        </div>
+        <div th:if="${loginError != null}" class="alert alert-danger">
+            <span class="material-symbols-rounded icon-lg">error</span>
+            <div th:text="${loginError}">Invalid credentials</div>
+        </div>
+        <div th:if="${logoutMessage != null}" class="alert alert-success">
+            <span class="material-symbols-rounded icon-lg">check_circle</span>
+            <div th:text="${logoutMessage}">You have been logged out</div>
+        </div>
     </div>
 
-    <!-- Order Wizard Progress Bar: Displays current step in the order creation wizard -->
+    <!-- Order Wizard Progress Stepper -->
     <div th:fragment="wizard-progress(currentStep)" class="wizard-progress-bar">
         <div class="progress-step" th:classappend="${currentStep == 1 ? 'active' : (currentStep > 1 ? 'completed' : '')}">
-            <div class="step-circle">1</div>
+            <div class="step-circle">
+                <span th:if="${currentStep > 1}" class="material-symbols-rounded icon-sm">check</span>
+                <span th:unless="${currentStep > 1}">1</span>
+            </div>
             <span class="step-title">Customer</span>
         </div>
         <div class="progress-connector" th:classappend="${currentStep > 1 ? 'completed' : ''}"></div>
+
         <div class="progress-step" th:classappend="${currentStep == 2 ? 'active' : (currentStep > 2 ? 'completed' : '')}">
-            <div class="step-circle">2</div>
+            <div class="step-circle">
+                <span th:if="${currentStep > 2}" class="material-symbols-rounded icon-sm">check</span>
+                <span th:unless="${currentStep > 2}">2</span>
+            </div>
             <span class="step-title">Garment</span>
         </div>
         <div class="progress-connector" th:classappend="${currentStep > 2 ? 'completed' : ''}"></div>
+
         <div class="progress-step" th:classappend="${currentStep == 3 ? 'active' : (currentStep > 3 ? 'completed' : '')}">
-            <div class="step-circle">3</div>
+            <div class="step-circle">
+                <span th:if="${currentStep > 3}" class="material-symbols-rounded icon-sm">check</span>
+                <span th:unless="${currentStep > 3}">3</span>
+            </div>
             <span class="step-title">Measurements</span>
         </div>
         <div class="progress-connector" th:classappend="${currentStep > 3 ? 'completed' : ''}"></div>
-        <div class="progress-step" th:classappend="${currentStep == 4 ? 'active' : ''}">
-            <div class="step-circle">4</div>
+
+        <div class="progress-step" th:classappend="${currentStep == 4 ? 'active' : (currentStep > 4 ? 'completed' : '')}">
+            <div class="step-circle">
+                <span th:if="${currentStep > 4}" class="material-symbols-rounded icon-sm">check</span>
+                <span th:unless="${currentStep > 4}">4</span>
+            </div>
             <span class="step-title">Review &amp; Bill</span>
         </div>
     </div>
-
-    <!-- Bottom Navigation Bar: Quick action tabs -->
-    <nav th:fragment="bottom-bar" class="bottom-bar">
-        <a th:href="@{/}" class="nav-link" th:classappend="${currentUri == '/' ? 'active' : ''}">
-            <span>🏠 Home</span>
-        </a>
-        <a th:href="@{/orders/new}" class="nav-link nav-link-cta">
-            <span>➕ New Order</span>
-        </a>
-        <a th:href="@{/customers}" class="nav-link" th:classappend="${currentUri != null and currentUri.startsWith('/customers') ? 'active' : ''}">
-            <span>👥 Customers</span>
-        </a>
-        <a th:href="@{/more}" class="nav-link" th:classappend="${currentUri != null and currentUri.startsWith('/more') ? 'active' : ''}">
-            <span>⚙️ More</span>
-        </a>
-    </nav>
 
 </body>
 </html>

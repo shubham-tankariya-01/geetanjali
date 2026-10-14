@@ -2,50 +2,57 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   settings/garments.html: Owner-only management page for Garment categories.
-  Allows adding new categories, viewing active categories, configuring measurement templates,
-  and soft-deleting categories (active = false).
+  Material You MD3 redesign with tactile cards, zero emojis, and no bottom bar.
 -->
 <head th:replace="~{fragments/layout :: page-head('Garments &amp; Templates - Settings')}"></head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem;">
-        <!-- Flash messages (success / error alerts) -->
+    <div class="container" style="max-width: 900px;">
+        <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
         <!-- Breadcrumb & Back Link -->
-        <div style="margin-bottom: 1rem;">
-            <a th:href="@{/more}" class="back-link">← Back to More &amp; Settings</a>
+        <div style="margin-bottom: 1.25rem;">
+            <a th:href="@{/more}" class="back-link">
+                <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                <span>Back to More &amp; Settings</span>
+            </a>
         </div>
 
         <!-- Page Header -->
-        <div class="page-header" style="margin-bottom: 1.5rem;">
-            <div>
-                <h2 style="margin: 0; font-size: 1.6rem; color: #1a1a2e;">👗 Garment Categories &amp; Templates</h2>
-                <p style="margin: 0.35rem 0 0 0; color: var(--text-muted); font-size: 0.95rem;">
-                    Configure stitched garment categories and customize their measurement fields.
-                </p>
+        <div class="page-header">
+            <div class="page-title-group">
+                <h2>
+                    <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">checkroom</span>
+                    <span>Garment Categories &amp; Templates</span>
+                </h2>
+                <p>Configure garment types, order catalogs, and customizable measurement templates.</p>
             </div>
             <div>
-                <span class="badge" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 4px;">
-                    👑 Owner Only
+                <span class="chip badge-primary" style="font-size: 0.8rem;">
+                    <span class="material-symbols-rounded icon-sm">shield_person</span>
+                    <span>Owner Access</span>
                 </span>
             </div>
         </div>
 
         <!-- Section 1: Add New Garment Category Form -->
-        <div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--primary-color);">
-            <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: #1a1a2e;">➕ Add New Garment Category</h3>
-            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
-                New categories will be appended to the end of the order catalog and can be configured with measurement fields immediately.
+        <div class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border-top: 4px solid var(--md-primary);">
+            <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
+                <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_circle</span>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Add New Garment Category</h3>
+            </div>
+            <p style="color: var(--md-on-surface-variant); font-size: 0.875rem; margin: 0 0 1.25rem 0;">
+                New categories will appear in the order catalog and can be configured with measurement template fields immediately.
             </p>
 
             <form th:action="@{/settings/garments}" th:object="${garmentForm}" method="post">
-                <div style="display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 250px;">
-                        <label for="garmentName" style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 260px;">
+                        <label for="garmentName" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
                             Category Name
                         </label>
                         <input type="text"
@@ -61,8 +68,9 @@
                         </div>
                     </div>
                     <div style="padding-top: 1.55rem;">
-                        <button type="submit" class="btn btn-primary" style="white-space: nowrap; padding: 0.65rem 1.25rem;">
-                            Add Category
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-rounded icon-sm">add</span>
+                            <span>Add Category</span>
                         </button>
                     </div>
                 </div>
@@ -70,24 +78,29 @@
         </div>
 
         <!-- Section 2: Active Garment Categories List -->
-        <div class="card">
-            <div class="table-header" style="margin-bottom: 1rem;">
-                <div>
-                    <h3 style="margin: 0; font-size: 1.2rem; color: #1a1a2e;">Active Garments</h3>
-                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
-                        Click on a category to view and edit its measurement template fields.
-                    </p>
+        <div class="card table-card" style="box-shadow: var(--shadow-2); padding: 0; overflow: hidden;">
+            <div class="table-header">
+                <div class="table-header-left">
+                    <div class="table-header-icon garments-icon">
+                        <span class="material-symbols-rounded">checkroom</span>
+                    </div>
+                    <div>
+                        <h3 class="table-header-title">Active Garments</h3>
+                        <p class="table-header-subtitle">Click on a category to view and customize its measurement template fields.</p>
+                    </div>
                 </div>
-                <span class="badge" th:text="${garments != null ? garments.size() : 0} + ' Categories'">
+                <span class="badge badge-primary" th:text="${garments != null ? garments.size() : 0} + ' Categories'" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
                     4 Categories
                 </span>
             </div>
 
             <!-- Empty state if no active categories exist -->
-            <div th:if="${garments == null or garments.isEmpty()}" class="empty-state" style="padding: 2.5rem 1rem;">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🧵</div>
-                <h4 style="margin: 0; color: #475569;">No Garment Categories</h4>
-                <p style="margin: 0.35rem 0 0 0; color: #94a3b8; font-size: 0.9rem;">
+            <div th:if="${garments == null or garments.isEmpty()}" class="empty-state">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded icon-hero">checkroom</span>
+                </div>
+                <h4 style="margin: 0; color: var(--md-on-surface);">No Garment Categories</h4>
+                <p style="margin: 0.35rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
                     Add your first category using the form above to start accepting tailoring orders.
                 </p>
             </div>
@@ -97,14 +110,14 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width: 60px; text-align: center;">#</th>
-                            <th>Category Name</th>
-                            <th style="text-align: right; width: 260px;">Actions</th>
+                            <th style="width: 70px; text-align: center;"><span class="material-symbols-rounded">tag</span><span>#</span></th>
+                            <th><span class="material-symbols-rounded">checkroom</span><span>Category Name</span></th>
+                            <th style="text-align: right; width: 280px; padding-right: 1.5rem;"><span class="material-symbols-rounded">tune</span><span>Actions</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="g, stat : ${garments}">
-                            <td style="text-align: center; color: var(--text-muted); font-weight: 600;" th:text="${stat.count}">
+                            <td style="text-align: center; color: var(--md-on-surface-variant); font-weight: 600;" th:text="${stat.count}">
                                 1
                             </td>
                             <td>
@@ -115,12 +128,13 @@
                                     Shirt
                                 </a>
                             </td>
-                            <td style="text-align: right;">
+                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
                                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
                                     <a th:href="@{/settings/garments/{id}(id=${g.id})}"
                                        class="btn btn-outline btn-sm"
                                        title="View and configure measurement fields">
-                                        📐 Configure Template →
+                                        <span class="material-symbols-rounded icon-sm">straighten</span>
+                                        <span>Template</span>
                                     </a>
                                     <!-- Remove category form (soft delete active=false) -->
                                     <form th:action="@{/settings/garments/{id}/remove(id=${g.id})}"
@@ -130,7 +144,8 @@
                                         <button type="submit"
                                                 class="btn btn-sm btn-danger"
                                                 title="Remove this category">
-                                            🗑️ Remove
+                                            <span class="material-symbols-rounded icon-sm">delete</span>
+                                            <span>Remove</span>
                                         </button>
                                     </form>
                                 </div>
@@ -141,9 +156,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

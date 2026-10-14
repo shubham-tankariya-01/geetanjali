@@ -1,16 +1,135 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!-- orders/index.html: Orders management view (feature coming in next task) -->
+<!--
+  orders/index.html: Customer Orders Management List (Material You MD3).
+  Displays all booked orders, status indicators, balances, and quick navigation.
+-->
 <head th:replace="~{fragments/layout :: page-head('Orders')}"></head>
 <body>
+
+    <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
-    <div class="container">
+
+    <div class="container" style="max-width: 1040px;">
+        <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
-        <div class="card">
-            <h2>Customer Orders</h2>
-            <p>Orders view module will be activated in the next development stage.</p>
+
+        <!-- Orders Table Card (Single Unified Header matching reference design) -->
+        <div class="card table-card" style="padding: 0; overflow: hidden; margin-top: 1rem;">
+            <div class="table-header">
+                <div class="table-header-left">
+                    <div class="table-header-icon orders-icon">
+                        <span class="material-symbols-rounded">receipt_long</span>
+                    </div>
+                    <div>
+                        <h3 class="table-header-title">All Orders</h3>
+                        <p class="table-header-subtitle">Active Tailoring Bookings &amp; Schedules</p>
+                    </div>
+                </div>
+                <span class="badge badge-secondary" th:if="${orders != null}" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
+                    <span th:text="${orders.size()}">0</span> Orders
+                </span>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${orders == null or orders.isEmpty()}" class="empty-state">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded icon-xl">inventory_2</span>
+                </div>
+                <h4 style="margin: 0 0 0.4rem 0; color: var(--md-on-surface);">No orders found</h4>
+                <p style="margin: 0 0 1.25rem 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
+                    Start by booking your first customer order using the new order wizard.
+                </p>
+                <a th:href="@{/orders/new}" class="btn btn-secondary">
+                    <span class="material-symbols-rounded icon-md">add</span>
+                    <span>Book First Order</span>
+                </a>
+            </div>
+
+            <!-- Orders Data Table -->
+            <div th:if="${orders != null and !orders.isEmpty()}" class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 110px;"><span class="material-symbols-rounded">tag</span><span>Order No</span></th>
+                            <th><span class="material-symbols-rounded">person</span><span>Customer</span></th>
+                            <th style="width: 85px; text-align: center;"><span class="material-symbols-rounded">checkroom</span><span>Items</span></th>
+                            <th style="min-width: 140px;"><span class="material-symbols-rounded">event</span><span>Delivery</span></th>
+                            <th style="min-width: 100px;"><span class="material-symbols-rounded">currency_rupee</span><span>Total</span></th>
+                            <th style="min-width: 130px;"><span class="material-symbols-rounded">account_balance_wallet</span><span>Status</span></th>
+                            <th style="width: 120px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ord : ${orders}">
+                            <!-- Order No: TS-<year>-<4-digit order_no> -->
+                            <td>
+                                <a th:href="@{'/orders/' + ${ord.id}}" class="badge badge-primary" style="font-weight: 700; text-decoration: none;">
+                                    <span th:text="${@orderNumberFormatter.format(ord)}">TS-2026-0001</span>
+                                </a>
+                            </td>
+
+                            <!-- Customer Info -->
+                            <td>
+                                <div style="display: flex; flex-direction: column;">
+                                    <a th:href="@{'/customers/' + ${ord.customer.id}}" class="customer-name-link" style="font-weight: 600;">
+                                        <span th:text="${ord.customer.name}">Ramesh Patel</span>
+                                    </a>
+                                    <span class="phone-display" style="font-size: 0.8rem;" th:text="${ord.customer.mobile}">
+                                        9876543210
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Items count -->
+                            <td>
+                                <span class="badge badge-neutral">
+                                    <span class="material-symbols-rounded icon-sm">checkroom</span>
+                                    <span th:text="${ord.itemCount}">1</span>
+                                </span>
+                            </td>
+
+                            <!-- Delivery Date -->
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.875rem;">
+                                    <span class="material-symbols-rounded icon-sm">event</span>
+                                    <span th:if="${ord.nearestDeliveryDate != null}" th:text="${ord.nearestDeliveryDate}">2026-10-31</span>
+                                    <span th:if="${ord.nearestDeliveryDate == null}">N/A</span>
+                                </div>
+                            </td>
+
+                            <!-- Total Amount: Rs. 1,500 -->
+                            <td>
+                                <strong style="color: var(--md-on-surface); font-size: 0.95rem;"
+                                        th:text="${@orderNumberFormatter.formatMoney(ord.total)}">
+                                    Rs. 500
+                                </strong>
+                            </td>
+
+                            <!-- Balance Chip: green 'Paid' or red 'Balance Rs. 400' -->
+                            <td>
+                                <span th:if="${ord.paid}" class="badge badge-success" style="white-space: nowrap;">
+                                    Paid
+                                </span>
+                                <span th:unless="${ord.paid}" class="badge badge-danger" style="white-space: nowrap;"
+                                      th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">
+                                    Balance Rs. 400
+                                </span>
+                            </td>
+
+                            <!-- Action -->
+                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
+                                <a th:href="@{'/orders/' + ${ord.id}}" class="btn btn-sm btn-outline btn-table-action">
+                                    <span>Details</span>
+                                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
+
 </body>
 </html>

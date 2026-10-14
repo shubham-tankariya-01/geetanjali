@@ -2,26 +2,33 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   auth/signup.html: First-run owner setup or staff creation.
+  Material You MD3 redesign with clean filled text fields, pill submit button, and zero emojis.
 -->
 <head th:replace="~{fragments/layout :: page-head('Sign Up')}"></head>
 <body>
 
-    <div class="auth-wrapper">
+    <div class="auth-wrapper" style="max-width: 480px;">
         <div class="auth-header">
-            <h2 th:if="${isFirstRun}">Setup Tailor Shop</h2>
-            <h2 th:unless="${isFirstRun}">Add Staff Member</h2>
-            <p th:if="${isFirstRun}">Create your shop and primary owner account</p>
-            <p th:unless="${isFirstRun}">Register a new staff member for <span th:text="${shopName}">Geetanjali</span></p>
+            <div style="width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: var(--shadow-2);">
+                <span class="material-symbols-rounded icon-lg" style="font-size: 32px;" th:text="${isFirstRun ? 'store' : 'person_add'}">person_add</span>
+            </div>
+            <h2 th:if="${isFirstRun}" style="margin: 0; font-size: 1.85rem; font-weight: 700; color: var(--md-on-surface);">Setup Tailor Shop</h2>
+            <h2 th:unless="${isFirstRun}" style="margin: 0; font-size: 1.85rem; font-weight: 700; color: var(--md-on-surface);">Add Staff Member</h2>
+            <p th:if="${isFirstRun}" style="margin: 0.25rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">Create your shop profile and primary owner account</p>
+            <p th:unless="${isFirstRun}" style="margin: 0.25rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">Register a new staff member for <strong th:text="${shopName}">Geetanjali</strong></p>
         </div>
 
         <!-- Flash messages for notices -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card">
+        <div class="card auth-card">
             <form th:action="@{/signup}" th:object="${signupForm}" method="post">
                 <!-- Shop Name (Only visible during first-run setup) -->
                 <div class="form-group" th:if="${isFirstRun}">
-                    <label for="shopName">Shop Name</label>
+                    <label for="shopName" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">storefront</span>
+                        <span>Shop Name</span>
+                    </label>
                     <input type="text"
                            id="shopName"
                            th:field="*{shopName}"
@@ -32,7 +39,10 @@
 
                 <!-- Full Name -->
                 <div class="form-group">
-                    <label for="fullName">Full Name</label>
+                    <label for="fullName" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">person</span>
+                        <span>Full Name</span>
+                    </label>
                     <input type="text"
                            id="fullName"
                            th:field="*{fullName}"
@@ -44,7 +54,10 @@
 
                 <!-- Mobile Number -->
                 <div class="form-group">
-                    <label for="mobile">Mobile Number (10 digits)</label>
+                    <label for="mobile" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">call</span>
+                        <span>Mobile Number (10 digits)</span>
+                    </label>
                     <input type="text"
                            id="mobile"
                            th:field="*{mobile}"
@@ -56,7 +69,10 @@
 
                 <!-- Password -->
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">key</span>
+                        <span>Password</span>
+                    </label>
                     <input type="password"
                            id="password"
                            th:field="*{password}"
@@ -68,21 +84,28 @@
 
                 <!-- Role Selection (Only shown when an Owner is adding staff) -->
                 <div class="form-group" th:unless="${isFirstRun}">
-                    <label for="role">Staff Role</label>
-                    <select id="role" th:field="*{role}" class="form-control">
+                    <label for="role" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">badge</span>
+                        <span>Staff Role</span>
+                    </label>
+                    <select id="role" th:field="*{role}" class="form-control" style="cursor: pointer;">
                         <option value="TAILOR">Tailor (Orders &amp; Measurements)</option>
                         <option value="OWNER">Owner (Full Administration)</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 0.5rem;">
                     <span th:if="${isFirstRun}">Complete Setup &amp; Create Owner</span>
                     <span th:unless="${isFirstRun}">Create Staff Member</span>
+                    <span class="material-symbols-rounded icon-sm">check</span>
                 </button>
             </form>
 
-            <div style="margin-top: 1rem; text-align: center;" th:if="${!isFirstRun}">
-                <a th:href="@{/}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">&larr; Back to Dashboard</a>
+            <div style="margin-top: 1.25rem; text-align: center;" th:if="${!isFirstRun}">
+                <a th:href="@{/}" class="btn btn-text btn-sm">
+                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                    <span>Back to Dashboard</span>
+                </a>
             </div>
         </div>
     </div>

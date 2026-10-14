@@ -1,19 +1,44 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!-- settings/index.html: Shop settings view (feature coming in next task) -->
+<!--
+  settings/index.html: Shop settings view.
+  Material You MD3 redesign, zero emojis, no bottom bar.
+-->
 <head th:replace="~{fragments/layout :: page-head('Settings')}"></head>
 <body>
     <header th:replace="~{fragments/layout :: top-bar}"></header>
-    <div class="container">
+
+    <div class="container" style="max-width: 800px;">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
-        <div class="card">
-            <h2>Shop Settings</h2>
-            <p>Garment types, measurement field configurations, and staff management will be placed here.</p>
-            <div style="margin-top: 1.5rem;" th:if="${isOwner}">
-                <a th:href="@{/signup}" class="btn btn-primary">➕ Add Staff Member</a>
+
+        <div class="card" style="box-shadow: var(--shadow-2);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-rounded icon-lg">settings</span>
+                </div>
+                <div>
+                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Shop Settings</h2>
+                    <p style="margin: 0.15rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
+                        Garment types, measurement field configurations, and staff management hub.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                <a th:href="@{/settings/garments}" class="btn btn-primary" th:if="${isOwner}">
+                    <span class="material-symbols-rounded icon-sm">checkroom</span>
+                    <span>Manage Garments &amp; Templates</span>
+                </a>
+                <a th:href="@{/signup}" class="btn btn-secondary" th:if="${isOwner}">
+                    <span class="material-symbols-rounded icon-sm">group_add</span>
+                    <span>Add Staff Member</span>
+                </a>
+                <a th:href="@{/}" class="btn btn-outline">
+                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                    <span>Dashboard</span>
+                </a>
             </div>
         </div>
     </div>
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 </body>
 </html>

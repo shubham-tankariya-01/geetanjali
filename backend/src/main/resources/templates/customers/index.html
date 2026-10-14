@@ -2,64 +2,80 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   customers/index.html: Customer directory list and search page.
-  In EJS, this is like `views/customers/index.ejs`.
+  Material You MD3 redesign with filled search bar, responsive table, and zero emojis.
 -->
 <head th:replace="~{fragments/layout :: page-head('Customer Directory')}"></head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
     <div class="container">
-        <!-- Flash messages for success or errors -->
+        <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Page Header -->
-        <div class="page-header">
-            <div>
-                <h2>Customer Directory</h2>
-                <p>Search and look up customer profiles, phone numbers, and past order records.</p>
-            </div>
-        </div>
-
-        <!-- Search Form -->
-        <div class="card" style="margin-bottom: 1.5rem;">
-            <form th:action="@{/customers}" method="get" class="search-box">
-                <div class="search-input-group">
-                    <input type="text"
-                           name="q"
-                           th:value="${q}"
-                           placeholder="Search customer by name or 10-digit mobile number..."
-                           class="form-control"
-                           autocomplete="off"
-                           autofocus />
-                    <button type="submit" class="btn btn-primary">🔍 Search</button>
-                    <a th:if="${q != null and not #strings.isEmpty(q)}"
-                       th:href="@{/customers}"
-                       class="btn btn-outline">Clear</a>
+        <!-- Search Form Card -->
+        <div class="card card-flat" style="margin-top: 1rem; margin-bottom: 1.5rem; padding: 1.15rem 1.5rem;">
+            <form th:action="@{/customers}" method="get">
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 260px; position: relative;">
+                        <span class="material-symbols-rounded" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--md-on-surface-variant); font-size: 20px;">search</span>
+                        <input type="text"
+                               name="q"
+                               th:value="${q}"
+                               placeholder="Search customer by name or 10-digit mobile number..."
+                               class="form-control"
+                               style="border-radius: var(--radius-full); padding-left: 48px; height: 50px;"
+                               autocomplete="off"
+                               autofocus />
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn btn-dark" style="height: 50px; padding: 0 1.5rem;">
+                            <span>Search</span>
+                            <span class="material-symbols-rounded icon-sm">arrow_forward</span>
+                        </button>
+                        <a th:if="${q != null and not #strings.isEmpty(q)}"
+                           th:href="@{/customers}"
+                           class="btn btn-outline"
+                           style="height: 50px;">
+                            <span class="material-symbols-rounded icon-sm">clear</span>
+                            <span>Clear</span>
+                        </a>
+                    </div>
                 </div>
-                <div th:if="${q != null and not #strings.isEmpty(q)}" class="search-indicator">
-                    Showing search results for: <strong th:text="${q}"></strong>
+                <div th:if="${q != null and not #strings.isEmpty(q)}" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--md-on-surface-variant);">
+                    Showing search results for: <strong><span th:text="${q}"></span></strong>
                 </div>
             </form>
         </div>
 
-        <!-- Customers Table Card -->
-        <div class="card">
+        <!-- Customers Table Card (Single Unified Header matching reference design) -->
+        <div class="card table-card" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-2);">
             <div class="table-header">
-                <h3>Customer Records</h3>
-                <span class="badge" th:text="${#lists.size(customers) + ' customer(s)'}">0 customer(s)</span>
+                <div class="table-header-left">
+                    <div class="table-header-icon customers-icon">
+                        <span class="material-symbols-rounded">group</span>
+                    </div>
+                    <div>
+                        <h3 class="table-header-title">Customer Directory</h3>
+                        <p class="table-header-subtitle">Profiles &amp; Measurement Archives</p>
+                    </div>
+                </div>
+                <span class="badge badge-secondary" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;" th:text="${#lists.size(customers) + ' customer(s)'}">0 customer(s)</span>
             </div>
 
             <!-- Empty State -->
             <div th:if="${#lists.isEmpty(customers)}" class="empty-state">
-                <p th:if="${q != null and not #strings.isEmpty(q)}">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded icon-hero">person_off</span>
+                </div>
+                <p th:if="${q != null and not #strings.isEmpty(q)}" style="font-size: 1rem; margin-bottom: 1rem;">
                     No customers match your search "<strong><span th:text="${q}"></span></strong>".
                 </p>
-                <p th:if="${q == null or #strings.isEmpty(q)}">
-                    No customers registered in the system yet.
+                <p th:if="${q == null or #strings.isEmpty(q)}" style="font-size: 1rem; margin-bottom: 1rem;">
+                    No customers registered in the database yet.
                 </p>
-                <a th:if="${q != null and not #strings.isEmpty(q)}" th:href="@{/customers}" class="btn btn-outline" style="margin-top: 0.5rem;">
+                <a th:if="${q != null and not #strings.isEmpty(q)}" th:href="@{/customers}" class="btn btn-outline">
                     Show All Customers
                 </a>
             </div>
@@ -69,10 +85,10 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th style="width: 60px;">#</th>
-                            <th>Customer Name</th>
-                            <th>Mobile Number</th>
-                            <th style="width: 140px; text-align: right;">Action</th>
+                            <th style="width: 70px;"><span class="material-symbols-rounded">tag</span><span>#</span></th>
+                            <th><span class="material-symbols-rounded">person</span><span>Customer Name</span></th>
+                            <th><span class="material-symbols-rounded">call</span><span>Mobile Number</span></th>
+                            <th style="width: 140px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,11 +100,15 @@
                                 </a>
                             </td>
                             <td>
-                                <span class="phone-display">📱 <span th:text="${customer.mobile}">9876543210</span></span>
+                                <span class="phone-display" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                                    <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">call</span>
+                                    <span th:text="${customer.mobile}">9876543210</span>
+                                </span>
                             </td>
-                            <td style="text-align: right;">
-                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="btn btn-sm btn-outline">
-                                    View Profile →
+                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
+                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="btn btn-sm btn-outline btn-table-action">
+                                    <span>Profile</span>
+                                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
                                 </a>
                             </td>
                         </tr>
@@ -97,9 +117,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Sticky bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

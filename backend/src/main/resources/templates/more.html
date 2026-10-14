@@ -3,34 +3,39 @@
 <!--
   more.html: Application hub providing links to Garment catalog (Owner only),
   staff onboarding, shop account settings, and upcoming Stage 2 & Stage 3+ modules.
-  In EJS, this corresponds to `views/more.ejs`.
+  Material You MD3 redesign with organic hero card, tactile tiles, and zero emojis.
 -->
 <head th:replace="~{fragments/layout :: page-head('More & Settings')}"></head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem;">
+    <div class="container" style="max-width: 920px;">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
         <!-- Header Card: Current User & Shop Status -->
-        <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; border: none; padding: 1.5rem 2rem;">
+        <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.5rem; color: #e0a96d;">⚙️ More &amp; Settings</h2>
-                    <p style="margin: 0.35rem 0 0 0; color: #cbd5e1; font-size: 0.95rem;">
-                        Shop: <strong th:text="${shopName}" style="color: #fff;">Geetanjali Tailors</strong>
-                    </p>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.85rem; color: #94a3b8;">Logged in as:</div>
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-top: 0.15rem;">
-                        👤 <span th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Shubham</span>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2);">
+                        <span class="material-symbols-rounded icon-lg">tune</span>
                     </div>
-                    <div style="margin-top: 0.35rem;">
-                        <span class="role-tag" style="background: #7b2cbf; color: #fff; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;"
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.65rem; font-weight: 700; color: var(--md-on-surface);">More &amp; Settings</h2>
+                        <p style="margin: 0.15rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">
+                            Shop: <strong style="color: var(--md-on-surface);" th:text="${shopName}">Geetanjali Tailors</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div style="text-align: right;">
+                    <span style="font-size: 0.8rem; color: var(--md-on-surface-variant); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; display: block;">Active Session</span>
+                    <div style="font-size: 1.15rem; font-weight: 700; color: var(--md-on-surface); margin-top: 0.15rem; display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                        <span th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Shubham</span>
+                        <span class="role-tag"
+                              th:classappend="${currentUser != null && currentUser.role.name() == 'OWNER' ? 'owner' : 'tailor'}"
                               th:text="${currentUser != null ? currentUser.role : 'TAILOR'}">OWNER</span>
                     </div>
                 </div>
@@ -38,135 +43,158 @@
         </div>
 
         <!-- SECTION 1: OWNER ONLY ADMINISTRATION -->
-        <div th:if="${isOwner}" class="card" style="margin-bottom: 1.5rem; border-left: 4px solid #7b2cbf;">
+        <div th:if="${isOwner}" class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2); border-left: 4px solid var(--md-primary);">
             <div style="margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.3rem;">👑</span>
-                    <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b;">Shop Administration</h3>
-                    <span class="badge" style="background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px;">Owner Only</span>
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">admin_panel_settings</span>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Shop Administration</h3>
+                    <span class="chip badge-primary" style="font-size: 0.75rem;">Owner Access</span>
                 </div>
-                <p class="text-muted" style="margin: 0.35rem 0 0 0; font-size: 0.875rem;">
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
                     Configuration tools and staff management available exclusively to the shop owner.
                 </p>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+            <div class="grid grid-2">
                 <!-- Card 1: Garment Catalog & Measurement Templates -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                            <strong style="font-size: 1.1rem; color: #1e293b;">👗 Garments &amp; Templates</strong>
-                            <span class="badge badge-success" style="font-size: 0.75rem;" th:text="${garments != null ? garments.size() : 4} + ' Active'">4 Active</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">checkroom</span>
+                                <strong style="font-size: 1.1rem; color: var(--md-on-surface);">Garments &amp; Templates</strong>
+                            </div>
+                            <span class="chip badge-success" style="font-size: 0.75rem;" th:text="${garments != null ? garments.size() : 4} + ' Active'">4 Active</span>
                         </div>
-                        <p style="font-size: 0.875rem; color: #475569; margin: 0 0 0.75rem 0;">
-                            Active garment categories, measurement field specifications, and base prices.
+                        <p style="font-size: 0.875rem; color: var(--md-on-surface-variant); margin: 0 0 0.85rem 0;">
+                            Configure stitched garment categories, measurement field specifications, and base prices.
                         </p>
                         <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem;" th:if="${garments != null}">
-                            <span th:each="g : ${garments}"
-                                  style="background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                            <span th:each="g : ${garments}" class="chip badge-neutral" style="font-size: 0.75rem;">
                                 <span th:text="${g.name}">Shirt</span>
                             </span>
                         </div>
                     </div>
-                    <a th:href="@{/settings/garments}" class="btn btn-outline" style="text-align: center; font-size: 0.85rem; padding: 0.4rem 0.75rem;">
-                        Manage Garments &amp; Templates →
+                    <a th:href="@{/settings/garments}" class="btn btn-outline" style="width: 100%;">
+                        <span>Manage Garments &amp; Templates</span>
+                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
                     </a>
                 </div>
 
                 <!-- Card 2: Staff Tailor Onboarding -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                            <strong style="font-size: 1.1rem; color: #1e293b;">👥 Staff Management</strong>
-                            <span class="badge badge-info" style="font-size: 0.75rem;">Staff Access</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">group_add</span>
+                                <strong style="font-size: 1.1rem; color: var(--md-on-surface);">Staff Management</strong>
+                            </div>
+                            <span class="chip badge-secondary" style="font-size: 0.75rem;">Staff Access</span>
                         </div>
-                        <p style="font-size: 0.875rem; color: #475569; margin: 0 0 1rem 0;">
+                        <p style="font-size: 0.875rem; color: var(--md-on-surface-variant); margin: 0 0 1rem 0;">
                             Register new staff tailors to allow assistants to record measurements, take orders, and update stitching.
                         </p>
                     </div>
-                    <a th:href="@{/signup}" class="btn btn-primary" style="text-align: center; font-size: 0.85rem; padding: 0.4rem 0.75rem;">
-                        ➕ Add Staff Member
+                    <a th:href="@{/signup}" class="btn btn-primary" style="width: 100%;">
+                        <span class="material-symbols-rounded icon-sm">add</span>
+                        <span>Add Staff Member</span>
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Non-Owner Informational Banner -->
-        <div th:unless="${isOwner}" class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border-left: 4px solid #94a3b8;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.3rem;">ℹ️</span>
+        <div th:unless="${isOwner}" class="card card-flat" style="margin-bottom: 1.75rem; border-left: 4px solid var(--md-outline);">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">info</span>
                 <div>
-                    <strong style="color: #1e293b;">Staff Tailor View</strong>
-                    <p style="margin: 0.2rem 0 0 0; color: #64748b; font-size: 0.875rem;">
-                        Garment pricing configuration and staff account onboarding are restricted to Shop Owners.
+                    <strong style="color: var(--md-on-surface);">Staff Tailor View</strong>
+                    <p style="margin: 0.15rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.875rem;">
+                        Garment template configuration and staff account onboarding are restricted to Shop Owners.
                     </p>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 2: ROADMAP & FUTURE EXTENSIONS (Stage 2 & Stage 3+) -->
-        <div class="card" style="margin-bottom: 1.5rem;">
+        <!-- SECTION 2: ROADMAP & FUTURE EXTENSIONS -->
+        <div class="card" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-2);">
             <div style="margin-bottom: 1.25rem;">
-                <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-                    <span>🚀</span> Roadmap &amp; Extensions (Stage 2 &amp; Stage 3+)
-                </h3>
-                <p class="text-muted" style="margin: 0.35rem 0 0 0; font-size: 0.875rem;">
-                    Upcoming tailor-shop productivity modules planned for upcoming development phases.
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <span class="material-symbols-rounded icon-md" style="color: var(--md-tertiary);">rocket_launch</span>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--md-on-surface);">Upcoming Modules (Stage 2 &amp; Stage 3+)</h3>
+                </div>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
+                    Tailor-shop productivity features engineered for subsequent stages.
                 </p>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+            <div class="grid grid-3">
                 <!-- Stitching Workbench -->
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <strong style="color: #1e293b; font-size: 0.95rem;">🧵 Stitching Workbench</strong>
-                        <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Stage 2</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">handyman</span>
+                            <span>Workbench</span>
+                        </span>
+                        <span class="chip badge-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 2</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
                         Track garments through PENDING &rarr; DONE &rarr; DELIVERED states with delivery due date alerts.
                     </p>
                 </div>
 
                 <!-- Delivery Override Audit Ledger -->
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <strong style="color: #1e293b; font-size: 0.95rem;">📋 Delivery Overrides</strong>
-                        <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Stage 2</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">rule</span>
+                            <span>Overrides</span>
+                        </span>
+                        <span class="chip badge-secondary" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 2</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
                         Audited emergency delivery authorization when trusted customers collect garments before settling balance.
                     </p>
                 </div>
 
                 <!-- Daily Collections & Revenue Reports -->
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <strong style="color: #1e293b; font-size: 0.95rem;">📊 Financial Analytics</strong>
-                        <span class="badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Stage 3+</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">monitoring</span>
+                            <span>Analytics</span>
+                        </span>
+                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 3+</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
                         Daily cash drawer balance, UPI collection ledgers, and revenue breakdowns by garment type.
                     </p>
                 </div>
 
                 <!-- WhatsApp Notifications -->
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <strong style="color: #1e293b; font-size: 0.95rem;">💬 WhatsApp &amp; SMS</strong>
-                        <span class="badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Stage 3+</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">chat</span>
+                            <span>SMS Alerts</span>
+                        </span>
+                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 3+</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
                         Automated customer pickup reminders when stitching completes, with digital balance receipts.
                     </p>
                 </div>
 
                 <!-- Backup & CSV Export -->
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <strong style="color: #1e293b; font-size: 0.95rem;">💾 Data Backup &amp; Export</strong>
-                        <span class="badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 4px;">Stage 3+</span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; font-size: 0.95rem; color: var(--md-on-surface);">
+                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">cloud_download</span>
+                            <span>Data Export</span>
+                        </span>
+                        <span class="chip badge-warning" style="font-size: 0.7rem; padding: 0.1rem 0.45rem;">Stage 3+</span>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+                    <p style="font-size: 0.8rem; color: var(--md-on-surface-variant); margin: 0;">
                         Export full customer directories, order history, and measurement archives to Excel/CSV.
                     </p>
                 </div>
@@ -174,18 +202,27 @@
         </div>
 
         <!-- SECTION 3: QUICK NAVIGATION SHORTCUTS -->
-        <div class="card" style="margin-bottom: 2rem;">
-            <h4 style="margin: 0 0 1rem 0; font-size: 1.05rem; color: #1e293b;">⚡ Quick Navigation</h4>
+        <div class="card card-flat" style="margin-bottom: 2rem;">
+            <h4 style="margin: 0 0 1rem 0; font-size: 1.05rem; font-weight: 600; color: var(--md-on-surface); display: flex; align-items: center; gap: 0.45rem;">
+                <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">bolt</span>
+                <span>Quick Navigation</span>
+            </h4>
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <a th:href="@{/}" class="btn btn-outline" style="font-size: 0.85rem;">🏠 Home Dashboard</a>
-                <a th:href="@{/customers}" class="btn btn-outline" style="font-size: 0.85rem;">👥 Customers Directory</a>
-                <a th:href="@{/orders/new}" class="btn btn-primary" style="font-size: 0.85rem;">➕ Start New Order</a>
+                <a th:href="@{/}" class="btn btn-outline btn-sm">
+                    <span class="material-symbols-rounded icon-sm">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a th:href="@{/customers}" class="btn btn-outline btn-sm">
+                    <span class="material-symbols-rounded icon-sm">group</span>
+                    <span>Customers</span>
+                </a>
+                <a th:href="@{/orders/new}" class="btn btn-secondary btn-sm">
+                    <span class="material-symbols-rounded icon-sm">add</span>
+                    <span>New Order</span>
+                </a>
             </div>
         </div>
     </div>
-
-    <!-- Sticky bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>

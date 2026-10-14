@@ -1,16 +1,36 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!-- payments/index.html: Payments and accounts view (feature coming in next task) -->
+<!--
+  payments/index.html: Payments and accounts view.
+  Material You MD3 redesign, zero emojis, no bottom bar.
+-->
 <head th:replace="~{fragments/layout :: page-head('Payments')}"></head>
 <body>
     <header th:replace="~{fragments/layout :: top-bar}"></header>
-    <div class="container">
+
+    <div class="container" style="max-width: 800px;">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
-        <div class="card">
-            <h2>Payments &amp; Ledger</h2>
-            <p>Payments recording and reconciliation will be activated in the next development stage.</p>
+
+        <div class="card" style="box-shadow: var(--shadow-2);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-rounded icon-lg">payments</span>
+                </div>
+                <div>
+                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Payments &amp; Ledger</h2>
+                    <p style="margin: 0.15rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
+                        Financial ledger, cash drawer tracking, and UPI reconciliation module.
+                    </p>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                <a th:href="@{/}" class="btn btn-outline">
+                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
         </div>
     </div>
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 </body>
 </html>

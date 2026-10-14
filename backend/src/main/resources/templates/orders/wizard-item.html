@@ -2,46 +2,52 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   orders/wizard-item.html: Order Creation Wizard - Step 3: Item Details & Measurements.
-  In EJS, this corresponds to `views/orders/wizard-item.ejs`.
-  Embeds the shared `fragments/item-form.html` fragment.
+  Material You MD3 redesign embedding the shared item-form fragment. Zero emojis, no bottom bar.
 -->
 <head>
     <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 3: Item Details')}"></th:block>
-    <!-- Wizard interactive client script (includes chip tap handler) -->
+    <!-- Wizard interactive client script -->
     <script th:src="@{/js/new-order.js}" defer></script>
 </head>
 <body>
 
-    <!-- Header bar with shop branding and logged-in tailor info -->
+    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container">
+    <div class="container" style="max-width: 840px;">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Progress bar for Step 3 -->
+        <!-- Material 3 Stepper -->
         <div th:replace="~{fragments/layout :: wizard-progress(3)}"></div>
 
-        <div style="max-width: 800px; margin: 0 auto;">
+        <div style="margin: 0 auto;">
             <!-- Order Context Summary Banner -->
-            <div class="card" style="margin-bottom: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Current Order Draft</span>
-                    <div style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin-top: 0.2rem;">
-                        👤 <span th:text="${draft.customerName}">Ramesh Patel</span>
-                        <span style="font-weight: normal; color: #64748b; font-size: 0.95rem; margin-left: 0.5rem;">
-                            (📱 <span th:text="${draft.customerMobile}">9876543210</span>)
-                        </span>
+            <div class="card card-flat" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.15rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="width: 42px; height: 42px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center;">
+                        <span class="material-symbols-rounded icon-md">person</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em;">Current Order Draft</span>
+                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--md-on-surface); line-height: 1.2;">
+                            <span th:text="${draft.customerName}">Ramesh Patel</span>
+                            <span style="font-weight: 400; color: var(--md-on-surface-variant); font-size: 0.9rem; margin-left: 0.35rem;">
+                                • <span class="phone-display" th:text="${draft.customerMobile}">9876543210</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div style="text-align: right;">
-                    <div style="font-size: 0.85rem; color: #64748b;">
-                        Configuring: <strong style="color: var(--primary-color, #7b2cbf);" th:text="${garment.name}">Shirt</strong>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.15rem;" th:if="${draft.itemCount > 0}">
-                        Cart: <strong th:text="${draft.itemCount}">1</strong> item(s) already added
-                    </div>
+                <div style="text-align: right; display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="chip" style="background: var(--md-primary-container); color: var(--md-on-primary-container);">
+                        <span class="material-symbols-rounded icon-sm">checkroom</span>
+                        <span th:text="${garment.name}">Shirt</span>
+                    </span>
+                    <span class="chip badge-neutral" th:if="${draft.itemCount > 0}">
+                        <span class="material-symbols-rounded icon-sm">shopping_bag</span>
+                        <span><strong th:text="${draft.itemCount}">1</strong> in cart</span>
+                    </span>
                 </div>
             </div>
 
@@ -49,9 +55,6 @@
             <div th:replace="~{fragments/item-form :: item-form(${isEdit != null and isEdit ? '/orders/new/item/' + editIndex : '/orders/new/item'}, ${isEdit != null and isEdit})}"></div>
         </div>
     </div>
-
-    <!-- Sticky bottom navigation bar -->
-    <nav th:replace="~{fragments/layout :: bottom-bar}"></nav>
 
 </body>
 </html>
