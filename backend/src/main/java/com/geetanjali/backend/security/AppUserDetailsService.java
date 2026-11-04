@@ -27,15 +27,28 @@ public class AppUserDetailsService implements UserDetailsService {
     // Output: UserDetails - populated AppUserDetails principal object.
     // Throws: UsernameNotFoundException if no user with this mobile number exists.
     @Override
-    public UserDetails loadUserByUsername(String mobile) throws UsernameNotFoundException {
-        // Normalize mobile number (strips spaces, dashes, +91 prefix)
-        String normalizedMobile = com.geetanjali.backend.util.PhoneNumbers.normalize(mobile);
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        if (identifier == null || identifier.isBlank()) {
+            throw new UsernameNotFoundException("Empty login credentials provided");
+        }
 
-        // Query database for user with matching mobile number
-        AppUser user = appUserRepository.findByMobile(normalizedMobile)
-                .orElseThrow(() -> new UsernameNotFoundException("No user found with mobile: " + mobile));
+        String trimmed = identifier.trim();
+        String normalizedMobile = com.geetanjali.backend.util.PhoneNumbers.normalize(trimmed);
 
-        // Wrap entity in our custom UserDetails adapter
-        return new AppUserDetails(user);
+        // 1. First attempt: match by normalized 10-digit mobile number
+        if (!normalizedMobile.isBlank()) {
+            var userOpt = appUserRepository.findByMobile(normalizedMobile);
+            if (userOpt.isPresent()) {
+                return new AppUserDetails(userOpt.get());
+            }
+        }
+
+        // 2. Second attempt: match by exact mobile, full name, or first name
+        var users = appUserRepository.findByMobileOrName(trimmed);
+        if (!users.isEmpty()) {
+            return new AppUserDetails(users.get(0));
+        }
+
+        throw new UsernameNotFoundException("No user found with mobile or username: " + identifier);
     }
 }

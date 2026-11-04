@@ -47,4 +47,14 @@ public interface CustomerOrderRepository extends JpaRepository<CustomerOrder, Lo
     // Input: None.
     // Output: List<CustomerOrder> - top 20 recent orders.
     List<CustomerOrder> findTop20ByOrderByCreatedAtDesc();
+
+    // Finds all orders booked by a specific staff member or dealer, newest first.
+    // Input: createdById (Long).
+    // Output: List<CustomerOrder>.
+    List<CustomerOrder> findByCreatedByIdOrderByCreatedAtDesc(Long createdById);
+
+    // Counts total orders booked by a specific staff member or dealer.
+    // Input: createdById (Long).
+    // Output: long.
+    long countByCreatedById(Long createdById);
 }

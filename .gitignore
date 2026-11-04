@@ -1,0 +1,18 @@
+# Environment files
+.env
+*.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Build artifacts
+target/
+build/
+*.log
+
+# Uploads
+uploads/

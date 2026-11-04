@@ -2,7 +2,10 @@ package com.geetanjali.backend.repository;
 
 import com.geetanjali.backend.entity.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 import java.util.Optional;
 
 // AppUserRepository: Database access interface for AppUser accounts (staff, owner).
@@ -21,4 +24,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     // Input: mobile (String).
     // Output: boolean (true if mobile exists, false otherwise).
     boolean existsByMobile(String mobile);
+
+    // Finds a user by mobile, exact name, or first name
+    @Query("SELECT u FROM AppUser u WHERE u.mobile = :input OR LOWER(u.fullName) = LOWER(:input) OR LOWER(u.fullName) LIKE LOWER(CONCAT(:input, ' %'))")
+    List<AppUser> findByMobileOrName(@Param("input") String input);
 }
