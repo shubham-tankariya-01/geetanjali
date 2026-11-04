@@ -218,7 +218,7 @@ public class ToolRegistryService {
         calProps.put("month", Map.of("type", "integer", "description", "Target month (1 to 12)."));
         tools.add(new ToolDefinition(
                 "getCalendarSchedule",
-                "Retrieves monthly Google Calendar delivery schedule, total monthly orders, and peak delivery days.",
+                "Retrieves monthly studio delivery schedule, total monthly orders, and peak delivery days.",
                 Map.of("type", "object", "properties", calProps)
         ));
 

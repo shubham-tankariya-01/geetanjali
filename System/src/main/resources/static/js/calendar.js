@@ -1,4 +1,4 @@
-// calendar.js: Interactive controller for Google Calendar-style delivery scheduler
+// calendar.js: Interactive controller for production delivery scheduler
 document.addEventListener('DOMContentLoaded', function() {
     const dayBoxes = document.querySelectorAll('.calendar-day-box');
     const selectedDayTitle = document.getElementById('selectedDayTitle');

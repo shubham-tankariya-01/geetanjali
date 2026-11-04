@@ -74,7 +74,7 @@ The assistant does not make up or hallucinate fake numbers. When asked a questio
 - **Example Question**: *"What is the balance pending on order ORD-202611-0004?"*
 
 ### 3. `checkDeliveryCapacity`
-- **What it does**: Checks how many clothes are already scheduled for any date, and whether the date is Green, Yellow (overbooking), or Red (full).
+- **What it does**: Checks how many garments are already scheduled for any date, and whether the workshop has standard capacity, requires overbooking confirmation, or has reached its maximum daily cap.
 - **Example Question**: *"Can we take 2 more shirts for delivery on Friday?"*
 
 ### 4. `getCalendarSchedule`

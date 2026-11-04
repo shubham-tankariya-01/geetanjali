@@ -92,7 +92,7 @@ By spending time at the shop, Shubham and Sumit wrote down the 6 main everyday p
 | Torn paper books & lost measurements | All customer measurements are saved permanently in a secure database. Finding them takes less than a second using just their phone number. |
 | Customer measurement differences | Saved measurements automatically fill in when making a new order. Tailors can see old values instantly. |
 | Tailors getting too many orders on one day | A smart **Workload Limit** protects the tailor: standard limit is 5 orders/day. At 5–9 orders, an alert asks if you really want to overbook. At 10 orders, it blocks adding more so tailors do not burn out. |
-| Weekend delivery rush | A **Google Calendar-style screen** shows the whole month at a glance with color dots (Green = easy day, Yellow = busy day, Red = full). |
+| Weekend delivery rush | An interactive **Production & Delivery Calendar** shows the entire month at a glance, highlighting daily order counts and upcoming delivery deadlines. |
 | Pinned paper slips falling off cloth | Tailors can take a quick photo of the customer's cloth and save it directly with the order. |
 | Advance payment arguments | Every payment (Cash or UPI) is recorded with date and time. Balance is calculated automatically. |
 | Forgotten customer balances | A **Pending Payments** page lists every customer who owes money, sorted by delivery date. |

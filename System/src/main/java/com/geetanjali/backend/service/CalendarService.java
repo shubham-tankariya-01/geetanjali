@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// CalendarService: Manages Google Calendar-style delivery scheduling, daily capacity rules,
+// CalendarService: Manages studio delivery scheduling, daily capacity rules,
 // overbooking detection (5 soft limit, 10 hard limit), and monthly delivery metrics.
 @Service
 @Transactional(readOnly = true)
@@ -57,14 +57,14 @@ public class CalendarService {
         return DayCapacityDto.of(date, orderCount, itemCount);
     }
 
-    // Builds the full Google Calendar style boxed month view with 7-column Sun..Sat grid,
+    // Builds the full studio boxed month view with 7-column Sun..Sat grid,
     // order tags, color-coded capacity indicators, and monthly top delivery days sidebar.
     public MonthCalendarDto getMonthCalendar(int year, int monthValue) {
         LocalDate today = LocalDate.now(clock);
         LocalDate firstDayOfMonth = LocalDate.of(year, monthValue, 1);
         LocalDate lastDayOfMonth = firstDayOfMonth.plusMonths(1).minusDays(1);
 
-        // Google Calendar Sun-first layout: Sunday = 0, Monday = 1, ..., Saturday = 6
+        // Standard 7-day Sunday-first layout: Sunday = 0, Monday = 1, ..., Saturday = 6
         int startDayOfWeek = firstDayOfMonth.getDayOfWeek().getValue() % 7;
         LocalDate gridStartDate = firstDayOfMonth.minusDays(startDayOfWeek);
 

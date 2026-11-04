@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.time.Clock;
 import java.time.LocalDate;
 
-// CalendarController: Serves the Google Calendar-style boxed delivery schedule page,
+// CalendarController: Serves the studio delivery and production schedule page,
 // month view navigation, capacity tags, and monthly metrics sidebar.
 @Controller
 @RequestMapping("/calendar")

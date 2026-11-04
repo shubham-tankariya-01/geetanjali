@@ -51,30 +51,30 @@ graph TD
     
     Check --> TierEval{How many orders already?}
     
-    TierEval -- "0 to 4 Orders" --> Green["GREEN TIER (Standard)<br/>• Comfortable workload<br/>• Approved immediately"]
+    TierEval -- "0 to 4 Orders" --> Standard["Standard Tier (Optimal Load)<br/>• Standard daily workload<br/>• Accepted immediately"]
     
-    TierEval -- "5 to 9 Orders" --> Yellow["YELLOW TIER (Overbooking)<br/>• Over normal capacity<br/>• Warning pop-up appears<br/>• Tailor must consciously confirm"]
+    TierEval -- "5 to 9 Orders" --> Overbook["Overbooking Tier (High Load)<br/>• Over standard capacity<br/>• Warning pop-up appears<br/>• Tailor must consciously confirm"]
     
-    TierEval -- "10 or More Orders" --> Red["RED TIER (Maximum Cap)<br/>• Absolute hard limit<br/>• Form is strictly blocked<br/>• Tailor must choose another day"]
+    TierEval -- "10 or More Orders" --> HardCap["Hard Capacity Cap<br/>• Maximum daily workload limit<br/>• Form is strictly blocked<br/>• Tailor must choose another day"]
 ```
 
 ### The 3 Workload Tiers:
-1. **Standard Capacity (0 to 4 orders / day) &rarr; GREEN**:
-   - A tailor can easily cut and stitch up to 5 orders a day with top quality.
-   - Form accepts the date smoothly with a green indicator.
-2. **Overbooking Zone (5 to 9 orders / day) &rarr; YELLOW**:
-   - The shop is already busy on this day.
+1. **Standard Capacity (0 to 4 orders / day)**:
+   - A tailor can easily cut and stitch up to 5 orders a day with top craftsmanship.
+   - The booking form accepts the date immediately without interruption.
+2. **Overbooking Zone (5 to 9 orders / day)**:
+   - The shop is already handling substantial production volume on this day.
    - If the tailor chooses this date, a clear pop-up modal appears on screen:
      > *"This day already has 6 orders scheduled. Do you want to add an overday order?"*
    - The tailor must explicitly click **"Yes, Confirm Overbooking"** to proceed.
-3. **Hard Maximum Cap (10 orders / day) &rarr; RED**:
-   - 10 orders is the absolute physical limit of what the shop can complete in a 24-hour cycle.
-   - The system **strictly blocks the form** and shows an error:
+3. **Hard Maximum Cap (10 orders / day)**:
+   - 10 orders is the absolute physical ceiling of what the workshop can complete in a 24-hour cycle.
+   - The system **strictly blocks the form** and displays a hard limit error:
      > *"Maximum daily capacity reached (10 orders already scheduled for this day). Please select another delivery date."*
 
 ---
 
-## 3. Google Calendar-Style Delivery Screen (`/calendar`)
+## 3. Production & Delivery Workload Scheduler (`/calendar`)
 
 To see the whole month at a glance, the shop has a dedicated **Delivery Calendar**:
 
@@ -85,8 +85,8 @@ To see the whole month at a glance, the shop has a dedicated **Delivery Calendar
 │  SUN       MON       TUE       WED       THU       FRI       SAT       │  MONTHLY SUMMARY        │
 │ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐  ├─────────────────────────┤
 │ │ 1     │ │ 2     │ │ 3     │ │ 4     │ │ 5     │ │ 6     │ │ 7     │  │ Total Clothes: 84 Items │
-│ │ 2 ord │ │ 4 ord │ │ 1 ord │ │ 6 ord │ │ 8 ord │ │ 3 ord │ │ 2 ord │  │ Normal Days: 22        │
-│ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  │ Overbooked: 6           │
+│ │ 2 ord │ │ 4 ord │ │ 1 ord │ │ 6 ord │ │ 8 ord │ │ 3 ord │ │ 2 ord │  │ Standard Days: 22     │
+│ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  │ High Load Days: 6       │
 │ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘  ├─────────────────────────┤
 │ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐  │  BUSIEST DELIVERY DAYS  │
 │ │ 8     │ │ 9     │ │ 10    │ │ 11    │ │ 12    │ │ 13    │ │ 14    │  │  1. Nov 5 - 8 Clothes   │
@@ -94,7 +94,7 @@ To see the whole month at a glance, the shop has a dedicated **Delivery Calendar
 │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  │  3. Nov 8 - 5 Clothes   │
 │ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘  ├─────────────────────────┤
 │                                                                        │  SELECTED DAY SCHEDULE  │
-│  (Clean 7-column grid showing dates and color dots)                    │  Nov 4 (Wednesday):     │
+│  (7-column workshop month grid with daily order counters)             │  Nov 4 (Wednesday):     │
 │                                                                        │  • ORD-1004 [RM] - Pant │
 │                                                                        │  • ORD-1004 [RM] - Shirt│
 │                                                                        │  • ORD-1012 [KT] - Kurta│
@@ -103,9 +103,9 @@ To see the whole month at a glance, the shop has a dedicated **Delivery Calendar
 
 ### What You See on the Calendar:
 1. **7-Column Month Grid (Sunday to Saturday)**:
-   - Every day is shown in a clean rounded box like Google Calendar.
-   - Shows how many clothes are due that day.
-   - Has clean colored chips with dot accents (Green for light days, Yellow for busy days, Red for full days).
+   - Every day is presented in a clean rounded calendar box.
+   - Shows how many clothes are scheduled for delivery on each date.
+   - Displays workload tags with subtle dot accents.
 2. **Monthly Summary (Right Sidebar)**:
    - Total number of clothes due to be delivered this month.
    - Busiest delivery peak days ranked at the top, so tailors can cut cloth in advance.

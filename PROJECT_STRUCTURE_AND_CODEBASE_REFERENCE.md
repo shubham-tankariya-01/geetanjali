@@ -82,7 +82,7 @@ Geetanjali/
             │   ├── static/                       # Static Web Assets (CSS, JS)
             │   │   ├── css/
             │   │   │   ├── app.css               # Sarvam AI design tokens, theme scrollbars, modals, assistant drawer
-            │   │   │   └── calendar.css          # Google Calendar boxed month grid, capacity chips, executive sidebar
+            │   │   │   └── calendar.css          # Production calendar month grid, capacity chips, executive sidebar
             │   │   └── js/
             │   │       ├── app.js                # Global helpers: toasts, modals, password reveal
             │   │       ├── calendar.js           # Interactive calendar navigation, schedule inspector, initial avatars
@@ -94,7 +94,7 @@ Geetanjali/
             │       │   ├── login.html            # Staff & Owner login screen
             │       │   └── signup.html           # Initial owner registration screen
             │       ├── calendar/
-            │       │   └── index.html            # Google Calendar-style delivery grid, monthly stats, top days
+            │       │   └── index.html            # Production delivery calendar, monthly stats, top days
             │       ├── customers/
             │       │   ├── index.html            # Customer directory with live search & order history count
             │       │   └── detail.html           # 2-column widescreen profile: details, measurements & scrollable orders
@@ -135,7 +135,7 @@ Geetanjali/
                     │   └── GlobalModelAdvice.java      # Binds currentUser, shopName, currentUri to every template
                     ├── controller/               # Spring MVC Web Controllers (Thin HTTP Layer)
                     │   ├── AuthController.java   # Login, registration, and logout handling
-                    │   ├── CalendarController.java # Google Calendar-style month delivery view (/calendar)
+                    │   ├── CalendarController.java # Production and delivery month calendar view (/calendar)
                     │   ├── CustomerController.java # Customer directory and detailed profile view
                     │   ├── GarmentController.java# Garment catalog and template settings
                     │   ├── HomeController.java   # Main dashboard (/), metrics, customer search, top 20 orders
@@ -386,7 +386,7 @@ erDiagram
 | **Customer Lookup** | `GET /api/customers/lookup` | `CustomerApiController.lookupCustomer` | `customerService.findByMobile(normalized)` | Fast async AJAX endpoint returning JSON for live customer phone autofill in Step 1. |
 | **New Order Wizard** | `GET/POST /orders/new/*` | `OrderWizardController.*` | `orderWizardService.*`, `orderService.placeOrder(...)` | 4-step booking: 1. Customer -> 2. Garment -> 3. Measurements -> 4. Summary & Advance Deposit -> Atomic Commit. |
 | **Pending Payments**| `GET /payments/pending` | `PaymentController.showPendingPayments` | `paymentService.getPendingPaymentsSummary()` | Shop-wide unpaid balance banner, rows sorted by earliest delivery, smart due text (`"due in N days"`, `"overdue by N days"`). |
-| **Delivery Calendar**| `GET /calendar` | `CalendarController.showCalendar` | `calendarService.getMonthCalendar()`, `calendarService.getDayCapacity()` | Google Calendar-style boxed month view with capacity indicators, ranked top delivery days, and day schedule inspector. |
+| **Delivery Calendar**| `GET /calendar` | `CalendarController.showCalendar` | `calendarService.getMonthCalendar()`, `calendarService.getDayCapacity()` | Interactive month delivery grid with capacity indicators, ranked top delivery days, and day schedule inspector. |
 | **Studio AI Assistant**| `POST /api/assistant/chat` | `AssistantApiController.chat` | `assistantService.chat()`, `toolRegistryService.executeTool()` | Floating conversational drawer with streaming responses, nested measurement tables, wide mode, and live tool calling. |
 
 ---

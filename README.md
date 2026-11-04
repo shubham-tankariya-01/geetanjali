@@ -56,9 +56,9 @@ Two-column customer profile displaying complete historical orders, running outst
 
 ---
 
-### 5. Google Calendar-Style Delivery & Production Scheduler
-7-column boxed month grid with capacity dot chips (Green <4, Yellow 4-5, Red 5+), monthly delivery metrics, and top peak delivery days ranking.
-![Delivery & Production Calendar](docs/images/05-delivery-calendar.png)
+### 5. Production & Delivery Workload Scheduler
+Interactive monthly workshop schedule with real-time tailor capacity monitoring, peak delivery milestones, and an embedded deliverables inspector.
+![Production & Delivery Workload Scheduler](docs/images/05-delivery-calendar.png)
 
 ---
 
@@ -87,11 +87,11 @@ Secured with Spring Security 6, providing strict role-based authorization separa
 - Reusable anatomical snapshots: repeat customer measurements are pre-filled automatically on new orders.
 - Nested tabular visualization across the web UI and conversational assistant drawer.
 
-### 2. Tailor Workload Capacity & Google Calendar Scheduler (`/calendar`)
-- **Standard Capacity (0–4 Orders)**: Optimal production load indicated with **Green** chips.
+### 2. Tailor Workload Capacity & Monthly Production Scheduler (`/calendar`)
+- **Standard Capacity (0–4 Orders)**: Optimal daily production volume processed seamlessly without interruption.
 - **Overbooking Zone (5–9 Orders)**: Requires conscious tailor confirmation via an interactive warning modal dialog.
 - **Hard Maximum Cap (10 Orders)**: Strict server-side and client-side block to prevent artisan exhaustion.
-- **Google Calendar Grid**: 7-column boxed monthly calendar with ranked top delivery days and day schedule inspector.
+- **Monthly Production Grid**: 7-day studio calendar with ranked top delivery days and day schedule inspector.
 
 ### 3. Financial Integrity & Zero-Balance Delivery Invariant
 - Dynamic runtime balance computation: $\text{Balance} = \sum(\text{item price}) - \sum(\text{payments})$.
@@ -237,7 +237,7 @@ For in-depth architectural specifications and operational flows, refer to the do
 1. **[01. Problem Identification & Origin Story](docs/01-PROBLEM_IDENTIFICATION_AND_ORIGIN_STORY.md)**: Academic context, real-world tailoring challenges, and project origin.
 2. **[02. System Architecture, Workflows & ERD](docs/02-SYSTEM_ARCHITECTURE_FLOWS_AND_ERD.md)**: Layered architecture, sequence diagrams, and 11-table database schema.
 3. **[03. Dynamic Measurement Engine](docs/03-DYNAMIC_MEASUREMENT_ENGINE_AND_SPECIFICATIONS.md)**: Dynamic parameter architecture, JSON modeling, and garment specifications.
-4. **[04. Order Lifecycle & Capacity Scheduler](docs/04-ORDER_LIFECYCLE_FINANCIALS_AND_CAPACITY_SCHEDULER.md)**: Multi-step booking, 5-order capacity rule, and Google Calendar view.
+4. **[04. Order Lifecycle & Capacity Scheduler](docs/04-ORDER_LIFECYCLE_FINANCIALS_AND_CAPACITY_SCHEDULER.md)**: Multi-step booking, 5-order capacity rule, and monthly production calendar.
 5. **[05. Studio AI Assistant & Tool Integration](docs/05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md)**: Dual LLM fallback, floating drawer, and structured tool calling.
 
 ---
