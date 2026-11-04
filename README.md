@@ -1,4 +1,4 @@
-# Geetanjali - Tailoring Studio Management System ❤️ (Dedicated to my Dad)
+# Geetanjali - Tailoring Studio Management System 
 
 [![Java 21](https://img.shields.io/badge/Java-21%20LTS-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -247,4 +247,4 @@ For in-depth architectural specifications and operational flows, refer to the do
 - **Shubham Tankariya**: Conceptualization, Domain Engineering, Backend Architecture & AI Integration.
 - **Sumit Tailor**: Operational Workflows, UI/UX Implementation, Test Engineering & Validation.
 
-*Dedicated with profound gratitude to Shubham's Dad, whose artisanal dedication and lifelong tailoring craft inspired every line of this code.* ❤️
+*Dedicated with profound gratitude to Shubham's Dad ❤️, whose artisanal dedication and lifelong tailoring craft inspired every line of this code.* 
