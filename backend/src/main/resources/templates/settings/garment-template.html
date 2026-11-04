@@ -1,271 +1,138 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  settings/garment-template.html: Owner-only management page for a Garment category's measurement template.
-  Material You MD3 redesign with reordering controls, inline rename dropdown, zero emojis, and no bottom bar.
--->
 <head th:replace="~{fragments/layout :: page-head(${garment.name} + ' Template - Settings')}"></head>
 <body>
 
-    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container settings-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Breadcrumb & Back Link -->
-        <div style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem;">
-            <a th:href="@{/settings/garments}" class="back-link" style="margin-bottom: 0;">
-                <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                <span>Garments</span>
-            </a>
-            <span style="color: var(--md-outline-variant);">/</span>
-            <span style="color: var(--md-on-surface); font-weight: 600;" th:text="${garment.name}">Shirt</span>
-            <span style="color: var(--md-on-surface-variant);">Template</span>
+        <!-- Back to Garments Navigation -->
+        <div style="margin-bottom: var(--space-4);">
+            <a th:href="@{/settings/garments}" class="btn-back">&larr; Back to Garments</a>
         </div>
 
-        <!-- Page Header Card -->
-        <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline);">
-                        <span class="material-symbols-rounded icon-lg">straighten</span>
-                    </div>
-                    <div>
-                        <h2 style="margin: 0; font-size: 1.65rem; font-weight: 700; color: var(--md-on-surface);">
-                            <span th:text="${garment.name}">Shirt</span> &mdash; Measurement Template
-                        </h2>
-                        <p style="margin: 0.15rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">
-                            Configure the measurement specifications recorded by tailors when taking orders for this garment.
-                        </p>
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span class="chip badge-primary" style="font-size: 0.85rem; font-weight: 700;">
-                        <span class="material-symbols-rounded icon-sm">shield_person</span>
-                        <span>Owner Access</span>
-                    </span>
+        <section class="dashboard-hero-section">
+            <div class="hero-header-row">
+                <div>
+                    <h1 class="page-title"><span th:text="${garment.name}">Shirt</span> &mdash; Measurement Template</h1>
+                    <p class="section-subtext">Configure measurement specifications recorded by tailors when taking customer orders.</p>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Widescreen 2-Column Split Layout -->
-        <div class="settings-split-layout">
-            <!-- Left Column: Add Field Form & Field Sequencing Guide -->
-            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <!-- Add New Measurement Field Form Card -->
-                <div class="card card-elevated" style="box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
-                    <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
-                        <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_circle</span>
-                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--md-on-surface);">Add Measurement Field</h3>
-                    </div>
-                    <p style="color: var(--md-on-surface-variant); font-size: 0.875rem; margin: 0 0 1.25rem 0;">
-                        New fields are appended to the template. Tailors will enter values for these fields during the order creation wizard.
-                    </p>
+        <!-- Add Measurement Field Form -->
+        <section class="dashboard-table-section">
+            <div class="card" style="max-width: 600px;">
+                <h2 class="card-title" style="margin-bottom: 6px;">Add Measurement Field</h2>
+                <p class="card-subtitle">Add a dimension to record (e.g. Chest, Sleeve Length, Waist).</p>
 
-                    <form th:action="@{/settings/garments/{id}/fields(id=${garment.id})}" th:object="${fieldForm}" method="post">
-                        <!-- Field Label input -->
-                        <div style="margin-bottom: 1rem;">
-                            <label for="fieldLabel" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
-                                Field Label
-                            </label>
+                <form th:action="@{/settings/garments/{id}/fields(id=${garment.id})}" th:object="${fieldForm}" method="post">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="fieldLabel" class="form-label">Field Label:</label>
                             <input type="text"
                                    id="fieldLabel"
                                    th:field="*{label}"
-                                   class="form-control"
                                    placeholder="e.g. Chest, Waist, Length, Sleeve"
                                    required
                                    maxlength="50"
-                                   autofocus />
-                            <div class="field-error" th:if="${#fields.hasErrors('label')}" th:errors="*{label}">
-                                Field label is invalid.
-                            </div>
+                                   autofocus>
+                            <span th:if="${#fields.hasErrors('label')}" th:errors="*{label}" class="form-error">Field label is invalid.</span>
                         </div>
 
-                        <!-- Unit input -->
-                        <div style="margin-bottom: 1.25rem;">
-                            <label for="fieldUnit" style="font-size: 0.825rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--md-on-surface-variant);">
-                                Measurement Unit
-                            </label>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="fieldUnit" class="form-label">Measurement Unit:</label>
                             <input type="text"
                                    id="fieldUnit"
                                    th:field="*{unit}"
-                                   class="form-control"
                                    placeholder="inch"
                                    required
-                                   maxlength="20" />
-                            <div class="field-error" th:if="${#fields.hasErrors('unit')}" th:errors="*{unit}">
-                                Unit is invalid.
-                            </div>
+                                   maxlength="20">
+                            <span th:if="${#fields.hasErrors('unit')}" th:errors="*{unit}" class="form-error">Unit is invalid.</span>
                         </div>
-
-                        <!-- Submit button -->
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            <span class="material-symbols-rounded icon-sm">add</span>
-                            <span>Add Field</span>
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Guidance & Sequence Card -->
-                <div class="card card-flat" style="border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg); padding: 1.35rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.65rem;">
-                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">tune</span>
-                        <strong style="color: var(--md-on-surface); font-size: 0.95rem;">Template Management</strong>
                     </div>
-                    <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem; color: var(--md-on-surface-variant); line-height: 1.6;">
-                        <li>Fields appear on the tailor's measurement form in the exact order shown.</li>
-                        <li>Use the sequence up/down arrows to organize fields intuitively for your tailors.</li>
-                        <li>Historical measurements captured in past orders remain unchanged even if a field is modified or removed.</li>
-                    </ul>
+
+                    <div style="margin-top: 16px;">
+                        <button type="submit" class="btn-primary">Add Field &rarr;</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Configured Fields List -->
+        <section class="dashboard-table-section">
+            <div class="section-title-row">
+                <div>
+                    <h2 class="section-heading">Configured Measurement Fields</h2>
+                    <p class="section-subtext">Drag or reorder fields to control form sequence for tailors.</p>
                 </div>
+                <span class="badge badge-neutral" th:if="${fields != null and !fields.isEmpty()}" th:text="${fields.size()} + ' Fields'">6 Fields</span>
             </div>
 
-            <!-- Right Column: Active Measurement Fields Table -->
-            <div class="card table-card" style="box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg); padding: 0; overflow: hidden;">
-            <div class="table-header">
-                <div class="table-header-left">
-                    <div class="table-header-icon measurements-icon">
-                        <span class="material-symbols-rounded">straighten</span>
-                    </div>
-                    <div>
-                        <h3 class="table-header-title">Template Fields</h3>
-                        <p class="table-header-subtitle">Use order buttons to resequence fields as they appear on the tailor's input form.</p>
-                    </div>
-                </div>
-                <span class="badge badge-secondary" th:text="${fields != null ? fields.size() : 0} + ' Fields'" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
-                    4 Fields
-                </span>
+            <div th:if="${fields == null or fields.isEmpty()}" class="empty-state-box">
+                <p class="empty-state-text">No measurement fields configured for this garment template yet.</p>
             </div>
 
-            <!-- Empty state when no fields exist -->
-            <div th:if="${fields == null or fields.isEmpty()}" class="empty-state">
-                <div class="empty-state-icon">
-                    <span class="material-symbols-rounded icon-hero">straighten</span>
-                </div>
-                <h4 style="margin: 0; color: var(--md-on-surface);">No Measurement Fields Configured</h4>
-                <p style="margin: 0.35rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
-                    Add fields above (e.g. Chest, Waist, Length) so tailors can record measurements for this garment.
-                </p>
-            </div>
-
-            <!-- Table of Measurement Fields -->
-            <div th:if="${fields != null and !fields.isEmpty()}" class="table-responsive">
-                <table class="data-table">
+            <div th:if="${fields != null and !fields.isEmpty()}" class="table-container">
+                <table>
                     <thead>
                         <tr>
-                            <th style="width: 60px; text-align: center;"><span class="material-symbols-rounded">tag</span><span>#</span></th>
-                            <th><span class="material-symbols-rounded">label</span><span>Field Label</span></th>
-                            <th style="width: 120px;"><span class="material-symbols-rounded">square_foot</span><span>Unit</span></th>
-                            <th style="width: 140px; text-align: center;"><span class="material-symbols-rounded">swap_vert</span><span>Sequence</span></th>
-                            <th style="text-align: right; width: 220px; padding-right: 1.5rem;"><span class="material-symbols-rounded">tune</span><span>Actions</span></th>
+                            <th>Seq #</th>
+                            <th>Field Label &amp; Unit</th>
+                            <th>Unit</th>
+                            <th class="th-action">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="f, stat : ${fields}">
-                            <!-- Order / Row number -->
-                            <td style="text-align: center; color: var(--md-on-surface-variant); font-weight: 600;" th:text="${stat.count}">
-                                1
-                            </td>
-
-                            <!-- Label -->
+                            <td th:text="${stat.count}">1</td>
                             <td>
-                                <strong style="font-size: 1.05rem; color: var(--md-on-surface);" th:text="${f.label}">Chest</strong>
+                                <!-- Inline Rename Form -->
+                                <form th:action="@{/settings/garments/{id}/fields/{fieldId}/rename(id=${garment.id}, fieldId=${f.id})}"
+                                      method="post"
+                                      style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                    <input type="text"
+                                           name="label"
+                                           th:value="${f.label}"
+                                           required
+                                           maxlength="50"
+                                           style="width: 180px; height: 34px;">
+                                    <input type="text"
+                                           name="unit"
+                                           th:value="${f.unit}"
+                                           required
+                                           maxlength="20"
+                                           style="width: 70px; height: 34px;">
+                                    <button type="submit" class="btn-secondary btn-sm table-action-btn">Update</button>
+                                </form>
                             </td>
-
-                            <!-- Unit -->
-                            <td>
-                                <span class="chip badge-neutral" style="font-size: 0.75rem;" th:text="${f.unit}">inch</span>
-                            </td>
-
-                            <!-- Move Up / Down Buttons -->
-                            <td style="text-align: center;">
-                                <div style="display: inline-flex; gap: 0.25rem;">
+                            <td class="text-muted" th:text="${f.unit}">inch</td>
+                            <td class="td-action">
+                                <div style="display: inline-flex; gap: 4px; align-items: center;">
                                     <!-- Move Up -->
-                                    <form th:action="@{/settings/garments/{id}/fields/{fieldId}/move-up(id=${garment.id}, fieldId=${f.id})}"
+                                    <form th:unless="${stat.first}"
+                                          th:action="@{/settings/garments/{id}/fields/{fieldId}/move-up(id=${garment.id}, fieldId=${f.id})}"
                                           method="post"
                                           style="display: inline;">
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline"
-                                                style="padding: 0.3rem 0.5rem;"
-                                                th:disabled="${stat.first}"
-                                                title="Move field up">
-                                            <span class="material-symbols-rounded icon-sm">arrow_upward</span>
-                                        </button>
+                                        <button type="submit" class="btn-secondary btn-sm table-action-btn">&uarr; Up</button>
                                     </form>
 
                                     <!-- Move Down -->
-                                    <form th:action="@{/settings/garments/{id}/fields/{fieldId}/move-down(id=${garment.id}, fieldId=${f.id})}"
+                                    <form th:unless="${stat.last}"
+                                          th:action="@{/settings/garments/{id}/fields/{fieldId}/move-down(id=${garment.id}, fieldId=${f.id})}"
                                           method="post"
                                           style="display: inline;">
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline"
-                                                style="padding: 0.3rem 0.5rem;"
-                                                th:disabled="${stat.last}"
-                                                title="Move field down">
-                                            <span class="material-symbols-rounded icon-sm">arrow_downward</span>
-                                        </button>
+                                        <button type="submit" class="btn-secondary btn-sm table-action-btn">&darr; Down</button>
                                     </form>
-                                </div>
-                            </td>
 
-                            <!-- Actions: Rename & Remove -->
-                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap; position: relative;">
-                                <div style="display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center;">
-                                    <!-- Rename inline details dropdown -->
-                                    <details style="display: inline-block; position: relative;">
-                                        <summary class="btn btn-sm btn-outline" style="cursor: pointer;" title="Rename label or change unit">
-                                            <span class="material-symbols-rounded icon-sm">edit</span>
-                                            <span>Rename</span>
-                                        </summary>
-                                        <div style="position: absolute; right: 0; top: 100%; margin-top: 0.4rem; padding: 1.15rem; background: var(--md-surface); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); box-shadow: var(--shadow-3); z-index: 50; width: 280px; text-align: left;">
-                                            <form th:action="@{/settings/garments/{id}/fields/{fieldId}/rename(id=${garment.id}, fieldId=${f.id})}"
-                                                  method="post">
-                                                <div style="margin-bottom: 0.75rem;">
-                                                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--md-on-surface-variant); display: block; margin-bottom: 0.25rem;">
-                                                        Field Label:
-                                                    </label>
-                                                    <input type="text"
-                                                           name="label"
-                                                           th:value="${f.label}"
-                                                           class="form-control"
-                                                           style="height: 42px; font-size: 0.9rem;"
-                                                           required
-                                                           maxlength="50" />
-                                                </div>
-                                                <div style="margin-bottom: 1rem;">
-                                                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--md-on-surface-variant); display: block; margin-bottom: 0.25rem;">
-                                                        Unit:
-                                                    </label>
-                                                    <input type="text"
-                                                           name="unit"
-                                                           th:value="${f.unit}"
-                                                           class="form-control"
-                                                           style="height: 42px; font-size: 0.9rem;"
-                                                           required
-                                                           maxlength="20" />
-                                                </div>
-                                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                                    <button type="submit" class="btn btn-sm btn-primary">
-                                                        <span>Save</span>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </details>
-
-                                    <!-- Remove field (soft delete active=false) -->
+                                    <!-- Remove Field -->
                                     <form th:action="@{/settings/garments/{id}/fields/{fieldId}/remove(id=${garment.id}, fieldId=${f.id})}"
                                           method="post"
                                           style="display: inline;"
-                                          onsubmit="return confirm('Are you sure you want to remove this measurement field? Historical measurements will still be preserved, but future orders will not show this field.');">
-                                        <button type="submit"
-                                                class="btn btn-sm btn-danger"
-                                                title="Remove this measurement field">
-                                            <span class="material-symbols-rounded icon-sm">delete</span>
-                                            <span>Remove</span>
-                                        </button>
+                                          onsubmit="return confirm('Remove this measurement field? Historical measurements remain intact.');">
+                                        <button type="submit" class="btn-upgrade btn-sm table-action-btn">Delete</button>
                                     </form>
                                 </div>
                             </td>
@@ -273,9 +140,8 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-    </div>
+        </section>
+    </main>
 
 </body>
 </html>

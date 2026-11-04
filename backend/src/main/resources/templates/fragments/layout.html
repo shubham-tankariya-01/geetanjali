@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  layout.html: Master page layout fragment for Geetanjali Tailors.
-  Material You (Material Design 3) typography, icons, top app bar, alerts, and wizard stepper.
+  layout.html: Master layout fragment.
+  Strict implementation of Sarvam AI / Indus-Inspired SaaS Interface.
 -->
 <head th:fragment="page-head(pageTitle)">
     <meta charset="UTF-8">
@@ -10,139 +10,263 @@
     <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
     <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
     <title th:text="${pageTitle != null ? pageTitle + ' - ' + shopName : shopName}">Geetanjali Tailors</title>
-
-    <!-- Google Fonts: Plus Jakarta Sans (Modern Geometric Neo-Grotesque) & Material Symbols Rounded -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,-50..200&display=swap" rel="stylesheet">
-
-    <!-- Material You Stylesheet -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/app.css}">
-    <script th:src="@{/js/app.js}" defer></script>
+    <script th:src="@{/js/sidebar.js}" defer></script>
 </head>
 <body>
 
-    <!-- Unified Material You Top App Bar (Replaces bottom bar) -->
-    <header th:fragment="top-bar" class="top-bar">
-        <div class="top-bar-inner">
-            <!-- Brand -->
-            <a th:href="@{/}" class="brand">
-                <div class="brand-icon">
-                    <span class="material-symbols-rounded icon-lg">content_cut</span>
-                </div>
-                <div class="brand-info">
-                    <span class="brand-title" th:text="${shopName}">Geetanjali Tailors</span>
-                    <span class="tagline">Tailor Shop</span>
-                </div>
-            </a>
+    <!-- Master Top Bar & Collapsible Sidebar fragment -->
+    <th:block th:fragment="top-bar">
+        <!-- Collapsible Application Sidebar (Sarvam AI / Indus SaaS shell) -->
+        <aside class="app-sidebar" id="appSidebar" th:if="${currentUser != null}">
+            <!-- Sidebar Header with Brand -->
+            <div class="sidebar-header">
+                <a th:href="@{/}" class="sidebar-brand-link" title="Geetanjali Tailors Studio">
+                    <span class="brand-logo-wrap">
+                        <svg class="brand-logo-svg" width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="sbLogoBg" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#222630"/>
+                                    <stop offset="100%" stop-color="#13151A"/>
+                                </linearGradient>
+                                <linearGradient id="sbLogoGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#D8BE8A"/>
+                                    <stop offset="100%" stop-color="#B89656"/>
+                                </linearGradient>
+                                <linearGradient id="sbLogoSteel" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#F8FAFC"/>
+                                    <stop offset="100%" stop-color="#CBD5E1"/>
+                                </linearGradient>
+                            </defs>
+                            <rect width="36" height="36" rx="9" fill="url(#sbLogoBg)"/>
+                            <rect x="1" y="1" width="34" height="34" rx="8" stroke="#2D3442" stroke-width="1"/>
+                            <circle cx="11.5" cy="12.5" r="3.3" stroke="url(#sbLogoGold)" stroke-width="2" fill="none"/>
+                            <circle cx="11.5" cy="23.5" r="3.3" stroke="url(#sbLogoGold)" stroke-width="2" fill="none"/>
+                            <path d="M14.5 14L25.5 24M14.5 22L25.5 12" stroke="url(#sbLogoSteel)" stroke-width="2.2" stroke-linecap="round"/>
+                            <circle cx="18" cy="18" r="1.8" fill="url(#sbLogoGold)" stroke="#13151A" stroke-width="0.8"/>
+                        </svg>
+                    </span>
+                    <div class="sidebar-brand-text">
+                        <strong th:text="${shopName}">Geetanjali Tailors</strong>
+                        <span class="sidebar-studio-tag">Bespoke Tailoring Studio</span>
+                    </div>
+                </a>
+            </div>
 
-            <!-- Primary Navigation Links (Segmented Center Pill) -->
-            <nav class="nav-links" th:if="${currentUser != null}">
-                <a th:href="@{/}" class="nav-link" th:classappend="${currentUri == '/' ? 'active' : ''}">
-                    <span class="material-symbols-rounded icon-sm">dashboard</span>
-                    <span>Dashboard</span>
+            <!-- Primary CTA: New Order Pill -->
+            <div class="sidebar-cta-wrap">
+                <a th:href="@{/orders/new}" class="sidebar-cta-btn" title="Create New Order">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span class="sidebar-label">New Order</span>
                 </a>
-                <a th:href="@{/orders}" class="nav-link" th:classappend="${currentUri != null and (currentUri == '/orders' or currentUri.startsWith('/orders/')) and !currentUri.startsWith('/orders/new') ? 'active' : ''}">
-                    <span class="material-symbols-rounded icon-sm">shopping_bag</span>
-                    <span>Orders</span>
-                </a>
-                <a th:href="@{/customers}" class="nav-link" th:classappend="${currentUri != null and currentUri.startsWith('/customers') ? 'active' : ''}">
-                    <span class="material-symbols-rounded icon-sm">group</span>
-                    <span>Customers</span>
-                </a>
-                <a th:href="@{/more}" class="nav-link" th:classappend="${currentUri != null and (currentUri.startsWith('/more') or currentUri.startsWith('/settings')) ? 'active' : ''}">
-                    <span class="material-symbols-rounded icon-sm">tune</span>
-                    <span>Settings</span>
-                </a>
+            </div>
+
+            <!-- Navigation Scroll Area with Section Lines & Strong Contrast -->
+            <nav class="sidebar-nav">
+                <!-- Core Section -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-section-heading">Core</div>
+                    <ul class="sidebar-links">
+                        <li>
+                            <a th:href="@{/}" class="sidebar-nav-link" title="Dashboard">
+                                <svg class="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                <span class="sidebar-label">Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a th:href="@{/orders}" class="sidebar-nav-link" title="All Orders">
+                                <svg class="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                                <span class="sidebar-label">Orders</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a th:href="@{/customers}" class="sidebar-nav-link" title="Customers Directory">
+                                <svg class="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span class="sidebar-label">Customers</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a th:href="@{/payments/pending}" class="sidebar-nav-link" title="Pending Dues &amp; Balances">
+                                <svg class="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                                <span class="sidebar-label">Pending Dues</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Management Section (with clear divider line) -->
+                <div class="sidebar-nav-group">
+                    <div class="sidebar-section-heading">Manage</div>
+                    <ul class="sidebar-links">
+                        <li>
+                            <a th:href="@{/settings/garments}" class="sidebar-nav-link" title="Garment Types Catalog">
+                                <svg class="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                </svg>
+                                <span class="sidebar-label">Garment Catalog</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a th:href="@{/more}" class="sidebar-nav-link" title="Studio Settings &amp; Profile">
+                                <svg class="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                                <span class="sidebar-label">Studio Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </nav>
 
-            <!-- User Actions & Profile (Right Section) -->
-            <div class="user-actions" th:if="${currentUser != null}">
-                <!-- Primary Action CTA -->
-                <a th:href="@{/orders/new}" class="nav-cta-btn" title="Create New Order">
-                    <span class="material-symbols-rounded icon-sm">add</span>
-                    <span>New Order</span>
-                </a>
-
-                <!-- User Session Pill -->
-                <div class="user-badge">
-                    <div class="user-avatar-circle">
-                        <span class="material-symbols-rounded icon-sm">person</span>
+            <!-- Sidebar Footer / Current User -->
+            <div class="sidebar-footer">
+                <div class="sidebar-user-card">
+                    <div class="sidebar-user-info">
+                        <span class="sidebar-user-name" th:text="${currentUser.fullName}">Shubham</span>
+                        <span class="badge badge-neutral" th:text="${currentUser.role}">OWNER</span>
                     </div>
-                    <span class="user-name" th:text="${currentUser.fullName}">Shubham</span>
-                    <span class="role-tag"
-                          th:classappend="${currentUser.role.name() == 'OWNER' ? 'owner' : 'tailor'}"
-                          th:text="${currentUser.role}">OWNER</span>
+                    <form th:action="@{/logout}" method="post" style="margin: 0;">
+                        <button type="submit" class="sidebar-logout-btn" title="Sign out" aria-label="Sign out">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Backdrop overlay for mobile drawer -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- Sticky Application Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <!-- Toggle button only visible when sidebar is collapsed or on mobile -->
+                <button type="button" class="header-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle navigation menu" title="Expand navigation menu" th:if="${currentUser != null}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
+                <!-- Brand link: shown only on mobile or when desktop sidebar is collapsed to eliminate double brand repetition -->
+                <div class="header-brand">
+                    <a th:href="@{/}" class="brand-link">
+                        <svg class="brand-logo-svg header-logo" width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="hdrLogoBg" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#222630"/>
+                                    <stop offset="100%" stop-color="#13151A"/>
+                                </linearGradient>
+                                <linearGradient id="hdrLogoGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#D8BE8A"/>
+                                    <stop offset="100%" stop-color="#B89656"/>
+                                </linearGradient>
+                                <linearGradient id="hdrLogoSteel" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#F8FAFC"/>
+                                    <stop offset="100%" stop-color="#CBD5E1"/>
+                                </linearGradient>
+                            </defs>
+                            <rect width="36" height="36" rx="9" fill="url(#hdrLogoBg)"/>
+                            <rect x="1" y="1" width="34" height="34" rx="8" stroke="#2D3442" stroke-width="1"/>
+                            <circle cx="11.5" cy="12.5" r="3.3" stroke="url(#hdrLogoGold)" stroke-width="2" fill="none"/>
+                            <circle cx="11.5" cy="23.5" r="3.3" stroke="url(#hdrLogoGold)" stroke-width="2" fill="none"/>
+                            <path d="M14.5 14L25.5 24M14.5 22L25.5 12" stroke="url(#hdrLogoSteel)" stroke-width="2.2" stroke-linecap="round"/>
+                            <circle cx="18" cy="18" r="1.8" fill="url(#hdrLogoGold)" stroke="#13151A" stroke-width="0.8"/>
+                        </svg>
+                        <strong th:text="${shopName}">Geetanjali Tailors</strong>
+                    </a>
                 </div>
 
-                <!-- Logout via POST with CSRF -->
-                <form th:action="@{/logout}" method="post" class="logout-form">
-                    <button type="submit" title="Logout" class="btn-nav-logout">
-                        <span class="material-symbols-rounded icon-sm">logout</span>
-                        <span>Logout</span>
-                    </button>
-                </form>
+                <!-- Context breadcrumb shown on desktop when sidebar is expanded -->
+                <div class="header-context-breadcrumb" th:if="${currentUser != null}">
+                    <span class="context-pill">Studio Operations</span>
+                </div>
             </div>
-        </div>
-    </header>
 
-    <!-- Material 3 Flash Alert Banners -->
-    <div th:fragment="flash-messages" class="flash-area" th:if="${successMessage != null or errorMessage != null or loginError != null or logoutMessage != null}">
-        <div th:if="${successMessage != null}" class="alert alert-success">
-            <span class="material-symbols-rounded icon-lg">check_circle</span>
-            <div th:text="${successMessage}">Success message</div>
-        </div>
-        <div th:if="${errorMessage != null}" class="alert alert-danger">
-            <span class="material-symbols-rounded icon-lg">error</span>
-            <div th:text="${errorMessage}">Error message</div>
-        </div>
-        <div th:if="${loginError != null}" class="alert alert-danger">
-            <span class="material-symbols-rounded icon-lg">error</span>
-            <div th:text="${loginError}">Invalid credentials</div>
-        </div>
-        <div th:if="${logoutMessage != null}" class="alert alert-success">
-            <span class="material-symbols-rounded icon-lg">check_circle</span>
-            <div th:text="${logoutMessage}">You have been logged out</div>
-        </div>
+            <div class="header-right" th:if="${currentUser != null}">
+                <div class="header-user-section">
+                    <div class="user-meta">
+                        <span class="user-avatar-initial" th:text="${#strings.substring(currentUser.fullName, 0, 1)}">S</span>
+                        <div class="user-meta-text">
+                            <span class="user-name" th:text="${currentUser.fullName}">Shubham</span>
+                            <span class="user-role" th:text="${currentUser.role}">OWNER</span>
+                        </div>
+                    </div>
+                    <form th:action="@{/logout}" method="post" class="logout-form">
+                        <button type="submit" class="btn-secondary btn-sm" title="Sign out of account">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </header>
+
+    </th:block>
+
+    <!-- Flash Messages -->
+    <div th:fragment="flash-messages" class="flash-messages" th:if="${successMessage != null or errorMessage != null or loginError != null or logoutMessage != null}">
+        <p th:if="${successMessage != null}" class="alert alert-success"><strong>Success:</strong> <span th:text="${successMessage}">Success message</span></p>
+        <p th:if="${errorMessage != null}" class="alert alert-error"><strong>Error:</strong> <span th:text="${errorMessage}">Error message</span></p>
+        <p th:if="${loginError != null}" class="alert alert-error"><strong>Error:</strong> <span th:text="${loginError}">Invalid credentials</span></p>
+        <p th:if="${logoutMessage != null}" class="alert alert-notice"><strong>Notice:</strong> <span th:text="${logoutMessage}">You have been logged out</span></p>
     </div>
 
-    <!-- Order Wizard Progress Stepper -->
-    <div th:fragment="wizard-progress(currentStep)" class="wizard-progress-bar">
-        <div class="progress-step" th:classappend="${currentStep == 1 ? 'active' : (currentStep > 1 ? 'completed' : '')}">
-            <div class="step-circle">
-                <span th:if="${currentStep > 1}" class="material-symbols-rounded icon-sm">check</span>
-                <span th:unless="${currentStep > 1}">1</span>
-            </div>
-            <span class="step-title">Customer</span>
-        </div>
-        <div class="progress-connector" th:classappend="${currentStep > 1 ? 'completed' : ''}"></div>
-
-        <div class="progress-step" th:classappend="${currentStep == 2 ? 'active' : (currentStep > 2 ? 'completed' : '')}">
-            <div class="step-circle">
-                <span th:if="${currentStep > 2}" class="material-symbols-rounded icon-sm">check</span>
-                <span th:unless="${currentStep > 2}">2</span>
-            </div>
-            <span class="step-title">Garment</span>
-        </div>
-        <div class="progress-connector" th:classappend="${currentStep > 2 ? 'completed' : ''}"></div>
-
-        <div class="progress-step" th:classappend="${currentStep == 3 ? 'active' : (currentStep > 3 ? 'completed' : '')}">
-            <div class="step-circle">
-                <span th:if="${currentStep > 3}" class="material-symbols-rounded icon-sm">check</span>
-                <span th:unless="${currentStep > 3}">3</span>
-            </div>
-            <span class="step-title">Measurements</span>
-        </div>
-        <div class="progress-connector" th:classappend="${currentStep > 3 ? 'completed' : ''}"></div>
-
-        <div class="progress-step" th:classappend="${currentStep == 4 ? 'active' : (currentStep > 4 ? 'completed' : '')}">
-            <div class="step-circle">
-                <span th:if="${currentStep > 4}" class="material-symbols-rounded icon-sm">check</span>
-                <span th:unless="${currentStep > 4}">4</span>
-            </div>
-            <span class="step-title">Review &amp; Bill</span>
-        </div>
-    </div>
+    <!-- Wizard Progress Stepper -->
+    <nav th:fragment="wizard-progress(currentStep)" class="wizard-nav" style="margin-bottom: 24px;">
+        <ol class="wizard-stepper" style="display: flex; gap: 8px; list-style: none; padding: 0; margin: 0; overflow-x: auto;">
+            <li th:styleappend="${currentStep == 1} ? 'background: var(--color-primary); color: #FFF; border-color: var(--color-primary);' : (${currentStep > 1} ? 'background: var(--color-surface-muted); color: var(--color-text-primary);' : 'background: var(--color-surface); color: var(--color-text-secondary);')"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-pill); font-size: 13.5px; font-weight: 500; border: 1px solid var(--color-border); white-space: nowrap;">
+                <span th:if="${currentStep > 1}" style="font-weight: 700;">&check;</span>
+                <span th:unless="${currentStep > 1}">1.</span>
+                <span>Customer</span>
+            </li>
+            <li th:styleappend="${currentStep == 2} ? 'background: var(--color-primary); color: #FFF; border-color: var(--color-primary);' : (${currentStep > 2} ? 'background: var(--color-surface-muted); color: var(--color-text-primary);' : 'background: var(--color-surface); color: var(--color-text-secondary);')"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-pill); font-size: 13.5px; font-weight: 500; border: 1px solid var(--color-border); white-space: nowrap;">
+                <span th:if="${currentStep > 2}" style="font-weight: 700;">&check;</span>
+                <span th:unless="${currentStep > 2}">2.</span>
+                <span>Garment</span>
+            </li>
+            <li th:styleappend="${currentStep == 3} ? 'background: var(--color-primary); color: #FFF; border-color: var(--color-primary);' : (${currentStep > 3} ? 'background: var(--color-surface-muted); color: var(--color-text-primary);' : 'background: var(--color-surface); color: var(--color-text-secondary);')"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-pill); font-size: 13.5px; font-weight: 500; border: 1px solid var(--color-border); white-space: nowrap;">
+                <span th:if="${currentStep > 3}" style="font-weight: 700;">&check;</span>
+                <span th:unless="${currentStep > 3}">3.</span>
+                <span>Measurements</span>
+            </li>
+            <li th:styleappend="${currentStep == 4} ? 'background: var(--color-primary); color: #FFF; border-color: var(--color-primary);' : 'background: var(--color-surface); color: var(--color-text-secondary);'"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-pill); font-size: 13.5px; font-weight: 500; border: 1px solid var(--color-border); white-space: nowrap;">
+                <span>4.</span>
+                <span>Review &amp; Deposit</span>
+            </li>
+        </ol>
+    </nav>
 
 </body>
 </html>

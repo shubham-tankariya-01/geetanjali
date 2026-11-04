@@ -1,64 +1,43 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  orders/item-edit.html: Edit Garment Item for an Existing Order.
-  Material You MD3 redesign reusing the shared item-form fragment. Zero emojis, no bottom bar.
--->
 <head>
     <th:block th:replace="~{fragments/layout :: page-head('Edit Garment Item')}"></th:block>
-    <!-- Interactive client script for chip clicks and photo management -->
     <script th:src="@{/js/new-order.js}" defer></script>
 </head>
 <body>
 
-    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 840px;">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Back to Order link -->
-        <div style="margin-bottom: 1.25rem;">
-            <a th:href="@{'/orders/' + ${order.id}}" class="back-link">
-                <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                <span>Back to Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span></span>
-            </a>
+        <!-- Back to Order Navigation -->
+        <div style="margin-bottom: var(--space-4);">
+            <a th:href="@{'/orders/' + ${order.id}}" class="btn-back">&larr; Back to Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span></a>
         </div>
 
-        <!-- Context Banner -->
-        <div class="card card-flat" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.15rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 0.85rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded icon-lg">edit</span>
-                </div>
-                <div>
-                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em;">
-                        Editing Item in Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span>
-                    </span>
-                    <div style="font-size: 1.15rem; font-weight: 700; color: var(--md-on-surface); line-height: 1.2;">
-                        <span th:text="${order.customer.name}">Suresh Raina</span>
-                        <span style="font-weight: 400; color: var(--md-on-surface-variant); font-size: 0.9rem; margin-left: 0.35rem;">
-                            • <span class="phone-display" th:text="${order.customer.mobile}">9876512345</span>
-                        </span>
-                    </div>
+        <section class="dashboard-hero-section">
+            <h1 class="page-title">Editing Item in Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span></h1>
+            <div class="context-banner" style="margin-top: 10px;">
+                <div class="context-meta-text">
+                    <span class="text-secondary">Customer: </span>
+                    <strong th:text="${order.customer.name}">Suresh Raina</strong>
+                    (<span th:text="${order.customer.mobile}">9876512345</span>)
+                    <span class="meta-dot">&bull;</span>
+                    <span class="text-secondary">Garment: </span>
+                    <strong th:text="${garment.name}">Shirt</strong>
+                    <span class="meta-dot">&bull;</span>
+                    <span class="text-secondary">Status: </span>
+                    <span th:if="${item.isDelivered()}" class="status-pill delivered">DELIVERED</span>
+                    <span th:if="${item.isDone() and !item.isDelivered()}" class="status-pill done">DONE / READY</span>
+                    <span th:if="${item.isPending()}" class="status-pill pending">IN PROGRESS</span>
                 </div>
             </div>
-
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span class="chip" style="background: var(--md-primary-container); color: var(--md-on-primary-container);">
-                    <span class="material-symbols-rounded icon-sm">checkroom</span>
-                    <span th:text="${garment.name}">Shirt</span>
-                </span>
-                <span class="chip"
-                      th:classappend="${item.isDelivered() ? 'badge-success' : (item.isDone() ? 'badge-secondary' : 'badge-warning')}"
-                      th:text="${item.isDelivered() ? 'Delivered' : (item.isDone() ? 'Done' : 'Pending')}">Pending</span>
-            </div>
-        </div>
+        </section>
 
         <!-- Embed Shared Item Form Fragment -->
         <div th:replace="~{fragments/item-form :: item-form(${formAction}, true)}"></div>
-    </div>
+    </main>
 
 </body>
 </html>

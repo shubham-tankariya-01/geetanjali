@@ -1,85 +1,66 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  auth/login.html: Staff and Owner login page using mobile number.
-  Material You MD3 redesign with centered elevation card, soft atmospheric aura, and zero emojis.
--->
 <head th:replace="~{fragments/layout :: page-head('Login')}"></head>
 <body>
 
-    <div class="auth-wrapper">
-        <div class="auth-header">
-            <div style="width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: var(--shadow-2);">
-                <span class="material-symbols-rounded icon-lg" style="font-size: 32px;">styler</span>
+    <main class="auth-card">
+        <header style="text-align: center; margin-bottom: 24px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                <svg class="brand-logo-svg" width="48" height="48" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="loginLogoBg" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#222630"/>
+                            <stop offset="100%" stop-color="#13151A"/>
+                        </linearGradient>
+                        <linearGradient id="loginLogoGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#D8BE8A"/>
+                            <stop offset="100%" stop-color="#B89656"/>
+                        </linearGradient>
+                        <linearGradient id="loginLogoSteel" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#F8FAFC"/>
+                            <stop offset="100%" stop-color="#CBD5E1"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="36" height="36" rx="9" fill="url(#loginLogoBg)"/>
+                    <rect x="1" y="1" width="34" height="34" rx="8" stroke="#2D3442" stroke-width="1"/>
+                    <circle cx="11.5" cy="12.5" r="3.3" stroke="url(#loginLogoGold)" stroke-width="2" fill="none"/>
+                    <circle cx="11.5" cy="23.5" r="3.3" stroke="url(#loginLogoGold)" stroke-width="2" fill="none"/>
+                    <path d="M14.5 14L25.5 24M14.5 22L25.5 12" stroke="url(#loginLogoSteel)" stroke-width="2.2" stroke-linecap="round"/>
+                    <circle cx="18" cy="18" r="1.8" fill="url(#loginLogoGold)" stroke="#13151A" stroke-width="0.8"/>
+                </svg>
             </div>
-            <h2 th:text="${shopName}" style="margin: 0; font-size: 1.85rem; font-weight: 700; color: var(--md-on-surface);">Geetanjali Tailors</h2>
-            <p style="margin: 0.25rem 0 0 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">Staff &amp; Owner Secure Access</p>
-        </div>
+            <h1 class="page-title" style="font-size: 24px; margin-bottom: 4px;" th:text="${shopName}">Geetanjali Tailors</h1>
+            <p class="section-subtext" style="font-size: 14px;">Staff &amp; Owner Secure Access</p>
+        </header>
 
-        <!-- Flash messages for error / logout / registration notices -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card auth-card">
-            <!-- Form submits to POST /login which is intercepted by Spring Security -->
-            <form th:action="@{/login}" method="post">
-                <div class="form-group">
-                    <label for="mobile" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">call</span>
-                        <span>Mobile Number</span>
-                    </label>
-                    <input type="text"
-                           id="mobile"
-                           name="mobile"
-                           class="form-control"
-                           placeholder="Enter 10-digit mobile number"
-                           required
-                           autofocus>
-                </div>
+        <!-- Form submits to POST /login which is intercepted by Spring Security -->
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label for="mobile" class="form-label">Mobile Number or Username:</label>
+                <input type="text"
+                       id="mobile"
+                       name="mobile"
+                       placeholder="e.g. 9876543210 or shubham"
+                       required
+                       autofocus>
+            </div>
 
-                <div class="form-group" style="margin-bottom: 1.75rem;">
-                    <label for="password" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">key</span>
-                        <span>Password</span>
-                    </label>
-                    <div style="position: relative;">
-                        <input type="password"
-                               id="password"
-                               name="password"
-                               class="form-control"
-                               placeholder="Enter your password"
-                               style="padding-right: 48px;"
-                               required>
-                        <button type="button"
-                                id="togglePasswordBtn"
-                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--md-on-surface-variant); padding: 4px; display: flex; align-items: center; justify-content: center;"
-                                title="Show / hide password">
-                            <span class="material-symbols-rounded icon-md" id="togglePasswordIcon">visibility</span>
-                        </button>
-                    </div>
-                </div>
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       placeholder="Enter your password"
+                       required>
+            </div>
 
-                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
-                    <span>Log In</span>
-                    <span class="material-symbols-rounded icon-sm">login</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('togglePasswordBtn');
-            const pwdInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('togglePasswordIcon');
-            if (toggleBtn && pwdInput && toggleIcon) {
-                toggleBtn.addEventListener('click', () => {
-                    const isPwd = pwdInput.type === 'password';
-                    pwdInput.type = isPwd ? 'text' : 'password';
-                    toggleIcon.textContent = isPwd ? 'visibility_off' : 'visibility';
-                });
-            }
-        });
-    </script>
+            <div style="margin-top: 24px;">
+                <button type="submit" class="btn-primary" style="width: 100%; height: 44px; font-size: 15px;">Log In &rarr;</button>
+            </div>
+        </form>
+    </main>
 
 </body>
 </html>

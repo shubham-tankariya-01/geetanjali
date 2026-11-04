@@ -74,4 +74,26 @@ class SettingsSecurityIntegrationTest {
         mockMvc.perform(get("/settings/garments/1"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("Dashboard page renders with Sarvam design system CSS link and Inter font")
+    @WithMockUser(username = "9876543210", roles = {"OWNER"})
+    void testDashboard_rendersSarvamDesignSystem() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("home/index"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/css/app.css")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Inter:wght@400;500;600;700")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("btn-primary")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("btn-secondary")));
+    }
+
+    @Test
+    @DisplayName("Order details page renders successfully")
+    @WithMockUser(username = "9876543210", roles = {"OWNER"})
+    void testOrderDetail_rendersSuccessfully() throws Exception {
+        mockMvc.perform(get("/orders/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("orders/detail"));
+    }
 }

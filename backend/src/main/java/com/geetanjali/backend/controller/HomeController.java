@@ -1,5 +1,7 @@
 package com.geetanjali.backend.controller;
 
+import com.geetanjali.backend.dto.PendingPaymentRow;
+import com.geetanjali.backend.dto.PendingPaymentsSummary;
 import com.geetanjali.backend.entity.CustomerOrder;
 import com.geetanjali.backend.service.OrderService;
 import com.geetanjali.backend.service.PaymentService;
@@ -35,14 +37,25 @@ public class HomeController {
     // @GetMapping("/") = Maps HTTP GET requests for root ("/") to this handler.
     @GetMapping("/")
     public String showHomePage(Model model) {
-        // Query the 20 most recent customer orders
+        // Query the 20 most recent customer orders (booking ledger)
         List<CustomerOrder> recentOrders = orderService.getRecentOrders();
         model.addAttribute("recentOrders", recentOrders);
+
+        // Query active orders sorted by earliest promised delivery date (work schedule)
+        List<CustomerOrder> activeOrders = orderService.getActiveOrdersSortedByDeliveryDate();
+        model.addAttribute("activeOrders", activeOrders);
 
         // Query shop-wide outstanding pending balance
         BigDecimal pendingTotal = paymentService.getTotalPendingBalance();
         model.addAttribute("pendingTotal", pendingTotal);
         model.addAttribute("hasPendingBalance", pendingTotal != null && pendingTotal.compareTo(BigDecimal.ZERO) > 0);
+
+        // Query pending payment rows (for customer collections list)
+        PendingPaymentsSummary pendingSummary = paymentService.getPendingPaymentsSummary();
+        List<PendingPaymentRow> pendingRows = (pendingSummary != null && pendingSummary.rows() != null)
+                ? pendingSummary.rows()
+                : List.of();
+        model.addAttribute("pendingRows", pendingRows);
 
         return "home/index";
     }

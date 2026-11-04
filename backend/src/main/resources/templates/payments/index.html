@@ -1,36 +1,47 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  payments/index.html: Payments and accounts view.
-  Material You MD3 redesign, zero emojis, no bottom bar.
--->
 <head th:replace="~{fragments/layout :: page-head('Payments')}"></head>
 <body>
+
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 800px;">
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <div class="card" style="box-shadow: var(--shadow-2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded icon-lg">payments</span>
-                </div>
-                <div>
-                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Payments &amp; Ledger</h2>
-                    <p style="margin: 0.15rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
-                        Financial ledger, cash drawer tracking, and UPI reconciliation module.
-                    </p>
-                </div>
-            </div>
-
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-                <a th:href="@{/}" class="btn btn-outline">
-                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                    <span>Back to Dashboard</span>
-                </a>
-            </div>
+        <!-- Back to Dashboard Navigation -->
+        <div style="margin-bottom: var(--space-4);">
+            <a th:href="@{/}" class="btn-back">&larr; Back to Dashboard</a>
         </div>
-    </div>
+
+        <section class="dashboard-hero-section">
+            <h1 class="page-title">Payments &amp; Financial Ledger</h1>
+            <p class="section-subtext">Financial receivables ledger, cash tracking, and payment balance reconciliation.</p>
+        </section>
+
+        <section class="dashboard-table-section">
+            <div class="grid-2" style="max-width: 800px;">
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 class="card-title">Pending Receivables Ledger</h3>
+                        <p class="card-subtitle">Review uncollected customer balances, overdue deliveries, and direct phone payment collection.</p>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <a th:href="@{/payments/pending}" class="btn-upgrade btn-sm">View Pending Ledger &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 class="card-title">Order Management</h3>
+                        <p class="card-subtitle">Search orders by customer or ID to view individual payment installment history.</p>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <a th:href="@{/orders}" class="btn-secondary btn-sm">Browse Orders &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
 </body>
 </html>

@@ -1,122 +1,100 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  customers/index.html: Customer directory list and search page.
-  Material You MD3 redesign with filled search bar, responsive table, and zero emojis.
+  customers/index.html: Customer directory list and search (Pure HTML Baseline).
+  Zero CSS classes, pure semantic HTML tags.
 -->
 <head th:replace="~{fragments/layout :: page-head('Customer Directory')}"></head>
 <body>
 
-    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Search Form Card -->
-        <div class="card card-flat" style="margin-top: 1rem; margin-bottom: 1.5rem; padding: 1.15rem 1.5rem;">
-            <form th:action="@{/customers}" method="get">
-                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 260px; position: relative;">
-                        <span class="material-symbols-rounded" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--md-on-surface-variant); font-size: 20px;">search</span>
+        <section class="dashboard-hero-section">
+            <h1 class="page-title">Customer Directory</h1>
+            <p class="section-subtext">Manage customer profiles, saved body measurements, and order history records.</p>
+        </section>
+
+        <!-- Search Card -->
+        <section class="dashboard-search-section">
+            <div class="search-card">
+                <div class="search-text-col">
+                    <h2 class="search-title">Search Customers</h2>
+                    <p class="search-desc">Filter customers by name or 10-digit mobile number.</p>
+                </div>
+                <form th:action="@{/customers}" method="get" class="search-bar-form">
+                    <div class="search-field-wrapper">
+                        <svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
                         <input type="text"
+                               id="search-input"
                                name="q"
                                th:value="${q}"
-                               placeholder="Search customer by name or 10-digit mobile number..."
-                               class="form-control"
-                               style="border-radius: var(--radius-full); padding-left: 48px; height: 50px;"
+                               class="search-text-input"
+                               placeholder="Search by customer name or mobile number..."
                                autocomplete="off"
-                               autofocus />
+                               autofocus>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button type="submit" class="btn btn-dark" style="height: 50px; padding: 0 1.5rem;">
-                            <span>Search</span>
-                            <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                        </button>
-                        <a th:if="${q != null and not #strings.isEmpty(q)}"
-                           th:href="@{/customers}"
-                           class="btn btn-outline"
-                           style="height: 50px;">
-                            <span class="material-symbols-rounded icon-sm">clear</span>
-                            <span>Clear</span>
-                        </a>
-                    </div>
-                </div>
-                <div th:if="${q != null and not #strings.isEmpty(q)}" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                    Showing search results for: <strong><span th:text="${q}"></span></strong>
-                </div>
-            </form>
-        </div>
+                    <button type="submit" class="btn-primary search-submit-btn">Search</button>
+                    <a th:if="${q != null and not #strings.isEmpty(q)}" th:href="@{/customers}" class="btn-secondary btn-sm">Clear</a>
+                </form>
+            </div>
+            <p th:if="${q != null and not #strings.isEmpty(q)}" class="text-secondary" style="margin-top: 8px;">
+                Showing search results for: <strong th:text="${q}">Query</strong>
+            </p>
+        </section>
 
-        <!-- Customers Table Card (Single Unified Header matching reference design) -->
-        <div class="card table-card" style="padding: 0; overflow: hidden; box-shadow: var(--shadow-2);">
-            <div class="table-header">
-                <div class="table-header-left">
-                    <div class="table-header-icon customers-icon">
-                        <span class="material-symbols-rounded">group</span>
-                    </div>
-                    <div>
-                        <h3 class="table-header-title">Customer Directory</h3>
-                        <p class="table-header-subtitle">Profiles &amp; Measurement Archives</p>
-                    </div>
-                </div>
-                <span class="badge badge-secondary" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;" th:text="${#lists.size(customers) + ' customer(s)'}">0 customer(s)</span>
+        <!-- Customers List -->
+        <section class="dashboard-table-section">
+            <div class="section-title-row">
+                <h2 class="section-heading">Registered Customers</h2>
+                <span class="badge badge-neutral" th:if="${not #lists.isEmpty(customers)}" th:text="${customers.size()} + ' Customers'">10 Customers</span>
             </div>
 
             <!-- Empty State -->
-            <div th:if="${#lists.isEmpty(customers)}" class="empty-state">
-                <div class="empty-state-icon">
-                    <span class="material-symbols-rounded icon-hero">person_off</span>
-                </div>
-                <p th:if="${q != null and not #strings.isEmpty(q)}" style="font-size: 1rem; margin-bottom: 1rem;">
+            <div th:if="${#lists.isEmpty(customers)}" class="empty-state-box">
+                <p th:if="${q != null and not #strings.isEmpty(q)}" class="empty-state-text">
                     No customers match your search "<strong><span th:text="${q}"></span></strong>".
                 </p>
-                <p th:if="${q == null or #strings.isEmpty(q)}" style="font-size: 1rem; margin-bottom: 1rem;">
+                <p th:if="${q == null or #strings.isEmpty(q)}" class="empty-state-text">
                     No customers registered in the database yet.
                 </p>
-                <a th:if="${q != null and not #strings.isEmpty(q)}" th:href="@{/customers}" class="btn btn-outline">
-                    Show All Customers
-                </a>
+                <a th:if="${q != null and not #strings.isEmpty(q)}" th:href="@{/customers}" class="btn-secondary btn-sm">Show All Customers</a>
             </div>
 
             <!-- Table with Results -->
-            <div th:if="${not #lists.isEmpty(customers)}" class="table-responsive">
-                <table class="data-table">
+            <div th:if="${not #lists.isEmpty(customers)}" class="table-container">
+                <table>
                     <thead>
                         <tr>
-                            <th style="width: 70px;"><span class="material-symbols-rounded">tag</span><span>#</span></th>
-                            <th><span class="material-symbols-rounded">person</span><span>Customer Name</span></th>
-                            <th><span class="material-symbols-rounded">call</span><span>Mobile Number</span></th>
-                            <th style="width: 140px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
+                            <th>#</th>
+                            <th>Customer Name</th>
+                            <th>Mobile Number</th>
+                            <th class="th-action">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="customer, stat : ${customers}">
                             <td th:text="${stat.count}">1</td>
                             <td>
-                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="customer-name-link">
-                                    <strong th:text="${customer.name}">Ramesh Patel</strong>
-                                </a>
+                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="customer-name-link" th:text="${customer.name}">Ramesh Patel</a>
                             </td>
                             <td>
-                                <span class="phone-display" style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                                    <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">call</span>
-                                    <span th:text="${customer.mobile}">9876543210</span>
-                                </span>
+                                <a th:href="'tel:' + ${customer.mobile}" class="phone-link" th:text="${customer.mobile}">9876543210</a>
                             </td>
-                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
-                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="btn btn-sm btn-outline btn-table-action">
-                                    <span>Profile</span>
-                                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                                </a>
+                            <td class="td-action">
+                                <a th:href="@{/customers/{id}(id=${customer.id})}" class="btn-secondary btn-sm table-action-btn">View Profile &rarr;</a>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
 </body>
 </html>

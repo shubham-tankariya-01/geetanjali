@@ -1,100 +1,61 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  orders/wizard-customer.html: Order Creation Wizard - Step 1: Customer Identification.
-  Material You MD3 redesign with live async customer phone lookup.
--->
 <head>
     <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 1: Customer')}"></th:block>
-    <!-- Wizard interactive client script -->
     <script th:src="@{/js/new-order.js}" defer></script>
 </head>
 <body>
 
-    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 840px;">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Material 3 Stepper -->
-        <div th:replace="~{fragments/layout :: wizard-progress(1)}"></div>
+        <nav th:replace="~{fragments/layout :: wizard-progress(1)}"></nav>
 
-        <!-- Wizard Step 1 Card -->
-        <div class="card" style="box-shadow: var(--shadow-2); max-width: 680px; margin: 0 auto;">
-            <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded icon-lg">person_search</span>
-                </div>
-                <div>
-                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Step 1: Customer Details</h2>
-                    <p style="margin: 0.15rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
-                        Enter the customer's 10-digit mobile number for instant profile lookup.
-                    </p>
-                </div>
+        <section class="dashboard-table-section">
+            <div class="card" style="max-width: 600px;">
+                <h1 class="page-title" style="font-size: 22px; margin-bottom: 6px;">Step 1: Customer Details</h1>
+                <p class="section-subtext" style="margin-bottom: 24px;">Enter the customer's 10-digit mobile number for instant profile lookup.</p>
+
+                <form th:action="@{/orders/new/customer}" th:object="${customerStepForm}" method="post">
+                    <input type="hidden" id="customerId" th:field="*{customerId}">
+                    <input type="hidden" th:field="*{existingOrderId}">
+
+                    <div class="form-group">
+                        <label for="customerMobile" class="form-label">Mobile Number (10 digits):</label>
+                        <span id="lookupBadge" style="display: none;"></span>
+                        <input type="tel"
+                               id="customerMobile"
+                               th:field="*{mobile}"
+                               placeholder="e.g. 9876543210"
+                               maxlength="10"
+                               required
+                               autofocus>
+                        <span th:if="${#fields.hasErrors('mobile')}" th:errors="*{mobile}" class="form-error"></span>
+                    </div>
+
+                    <!-- Dynamic customer history snippet populated by new-order.js -->
+                    <div id="customerHistoryInfo" style="display: none; margin-bottom: 16px;"></div>
+
+                    <div class="form-group">
+                        <label for="customerName" class="form-label">Customer Full Name:</label>
+                        <input type="text"
+                               id="customerName"
+                               th:field="*{name}"
+                               placeholder="e.g. Ramesh Patel"
+                               required>
+                        <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="form-error"></span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Continue to Garment &rarr;</button>
+                        <a th:href="@{/}" class="btn-secondary">Cancel</a>
+                    </div>
+                </form>
             </div>
-
-            <form th:action="@{/orders/new/customer}" th:object="${customerStepForm}" method="post">
-                <!-- Hidden fields for customer ID and optional existing order -->
-                <input type="hidden" id="customerId" th:field="*{customerId}">
-                <input type="hidden" th:field="*{existingOrderId}">
-
-                <!-- Mobile Number Input -->
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                        <label for="customerMobile" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant); margin: 0;">
-                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">call</span>
-                            <span>Mobile Number</span>
-                        </label>
-                        <span id="lookupBadge" class="badge" style="display: none; font-size: 0.75rem;"></span>
-                    </div>
-
-                    <input type="tel"
-                           id="customerMobile"
-                           th:field="*{mobile}"
-                           class="form-control"
-                           placeholder="Enter 10-digit mobile (e.g. 9876543210)"
-                           maxlength="10"
-                           required
-                           autofocus>
-                    <div class="field-error" th:if="${#fields.hasErrors('mobile')}" th:errors="*{mobile}"></div>
-
-                    <!-- Live customer history snippet (populated dynamically by new-order.js) -->
-                    <div id="customerHistoryInfo"
-                         style="display: none; background: var(--md-secondary-container); border: 1.5px solid var(--md-outline); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-top: 0.85rem; font-size: 0.875rem; color: var(--md-on-secondary-container);">
-                    </div>
-                </div>
-
-                <!-- Customer Full Name Input -->
-                <div class="form-group" style="margin-bottom: 2rem;">
-                    <label for="customerName" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 0.4rem;">
-                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">person</span>
-                        <span>Customer Full Name</span>
-                    </label>
-                    <input type="text"
-                           id="customerName"
-                           th:field="*{name}"
-                           class="form-control"
-                           placeholder="Enter customer name (e.g. Ramesh Patel)"
-                           required>
-                    <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
-                </div>
-
-                <!-- Actions -->
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1.5px solid var(--md-outline); padding-top: 1.5rem; gap: 1rem; flex-wrap: wrap;">
-                    <a th:href="@{/}" class="btn btn-outline">
-                        <span class="material-symbols-rounded icon-sm">close</span>
-                        <span>Cancel</span>
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <span>Continue to Garment</span>
-                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </section>
+    </main>
 
 </body>
 </html>

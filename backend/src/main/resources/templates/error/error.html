@@ -1,37 +1,21 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  error/error.html: Friendly error page shown when an unhandled error happens.
-  Material You MD3 redesign, zero emojis, no bottom bar.
--->
 <head th:replace="~{fragments/layout :: page-head('Error')}"></head>
 <body>
+
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 680px;">
-        <div class="card" style="box-shadow: var(--shadow-2); border-left: 4px solid var(--md-error);">
-            <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem;">
-                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--md-error-container); color: var(--md-on-error-container); display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded icon-lg">warning</span>
-                </div>
-                <div>
-                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Something went wrong</h2>
-                    <span style="font-size: 0.8rem; color: var(--md-on-surface-variant); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em;">System Notice</span>
-                </div>
-            </div>
+    <main class="page-content">
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-            <p style="color: var(--md-on-surface-variant); font-size: 0.95rem; line-height: 1.6;"
-               th:text="${errorMessage != null ? errorMessage : 'An unexpected error occurred. Please navigate back to home.'}">
+        <section class="dashboard-hero-section" style="max-width: 600px; margin-top: 40px;">
+            <h1 class="page-title">Something went wrong</h1>
+            <p class="section-subtext text-danger" style="margin-bottom: 20px;" th:text="${errorMessage != null ? errorMessage : 'An unexpected error occurred. Please navigate back to home.'}">
                 An unexpected error occurred.
             </p>
+            <a th:href="@{/}" class="btn-primary">&larr; Return to Dashboard</a>
+        </section>
+    </main>
 
-            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-                <a th:href="@{/}" class="btn btn-primary">
-                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                    <span>Return to Dashboard</span>
-                </a>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

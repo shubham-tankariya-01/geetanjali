@@ -1,495 +1,392 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  orders/detail.html: Customer Order Detail view (Material You MD3).
-  Displays customer header, financial ledger, and garment item cards with measurements and photo lightbox.
--->
 <head th:replace="~{fragments/layout :: page-head('Order Details')}"></head>
-<body>
+<body class="has-sidebar">
 
-    <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
+    <!-- Top Navigation Bar & Collapsible Sidebar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 960px;">
+    <main class="page-content" id="mainContent">
         <!-- Flash messages -->
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Back to Orders navigation -->
-        <div>
-            <a th:href="@{/orders}" class="back-link">
-                <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                <span>Back to Orders</span>
-            </a>
+        <!-- Back to Orders Navigation -->
+        <div style="margin-bottom: var(--space-4);">
+            <a th:href="@{/orders}" class="btn-back">&larr; Back to Orders Directory</a>
         </div>
 
-        <!-- Order Header Card -->
-        <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.25rem;">
+        <!-- Order Operational Hero (Current Theme: dashboard-hero-section) -->
+        <section class="dashboard-hero-section">
+            <div class="hero-header-row">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                        <h2 style="margin: 0; font-size: 1.75rem; color: var(--md-on-surface); font-weight: 700;">
-                            Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span>
-                        </h2>
-                        <!-- Step 1 Balance Chip: Green 'Paid' or Red 'Balance Rs. 400' -->
-                        <span th:if="${order.isPaid()}" class="badge badge-success">
-                            <span class="material-symbols-rounded icon-sm">check_circle</span>
-                            <span>Paid</span>
-                        </span>
-                        <span th:unless="${order.isPaid()}" class="badge badge-danger">
-                            <span class="material-symbols-rounded icon-sm">pending</span>
-                            <span th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Balance Rs. 400</span>
-                        </span>
-                        <span class="badge badge-primary">
-                            <span class="material-symbols-rounded icon-sm">checkroom</span>
-                            <span th:text="${order.itemCount}">1</span> Items
-                        </span>
-                    </div>
-
-                    <!-- Customer Link -->
-                    <div style="margin-top: 0.65rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.45rem;">
-                        <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">person</span>
-                        <span>Customer:</span>
-                        <a th:href="@{'/customers/' + ${order.customer.id}}"
-                           style="color: var(--md-primary); font-weight: 600; text-decoration: underline;"
-                           th:text="${order.customer.name}">
-                            Suresh Raina
-                        </a>
-                        <span class="phone-display" style="margin-left: 0.35rem; display: inline-flex; align-items: center; gap: 0.2rem;">
-                            <span class="material-symbols-rounded icon-sm">call</span>
-                            <span th:text="${order.customer.mobile}">9876512345</span>
-                        </span>
-                    </div>
-
-                    <div style="color: var(--md-on-surface-variant); font-size: 0.85rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
-                        <span class="material-symbols-rounded icon-sm">schedule</span>
-                        <span>Booked:</span>
-                        <span th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, hh:mm a')}">13 Oct 2026, 10:30 PM</span>
-                        <span>by</span>
-                        <strong th:text="${order.createdBy != null ? order.createdBy.fullName : 'Shop Staff'}">Tailor</strong>
-                    </div>
+                    <h1 class="page-title">
+                        Order <span th:text="${@orderNumberFormatter.format(order)}">TS-2026-0001</span>
+                    </h1>
+                    <p class="hero-meta">
+                        Client: <a th:href="@{'/customers/' + ${order.customer.id}}" th:text="${order.customer.name}" style="color: var(--color-text-primary); font-weight: 600;">Customer Name</a>
+                        <span class="meta-dot">&bull;</span>
+                        Mobile: <a th:href="'tel:' + ${order.customer.mobile}" th:text="${order.customer.mobile}" style="color: var(--color-text-primary);">9876543210</a>
+                        <span class="meta-dot">&bull;</span>
+                        Booked: <strong th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, hh:mm a')}">13 Oct 2026, 10:30 pm</strong>
+                        <span class="meta-dot">&bull;</span>
+                        Artisan: <strong th:text="${order.createdBy != null ? order.createdBy.fullName : 'Shop Staff'}">Ketan Tankariya</strong>
+                    </p>
                 </div>
-
-                <!-- Financial Ledger Box: Total / Paid / Balance formatted as Rs. 1,500 -->
-                <div style="background: var(--md-surface-container-high); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 1.15rem 1.35rem; min-width: 250px; text-align: right;">
-                    <div style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 0.25rem;">
-                        Total: <strong style="color: var(--md-on-surface); font-size: 1.05rem;" th:text="${@orderNumberFormatter.formatMoney(order.total)}">Rs. 1,500</strong>
-                    </div>
-                    <div style="font-size: 0.85rem; color: var(--md-success); margin-bottom: 0.35rem;">
-                        Paid: <strong th:text="${@orderNumberFormatter.formatMoney(order.paid)}">Rs. 1,100</strong>
-                    </div>
-                    <div style="border-top: 1.5px solid var(--md-outline); padding-top: 0.5rem; font-size: 1.15rem; font-weight: 700;"
-                         th:styleappend="${order.isPaid()} ? 'color: var(--md-success);' : 'color: var(--md-error);'">
-                        Balance: <span th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</span>
-                    </div>
+                <div class="hero-actions-group">
+                    <span th:if="${order.isPaid()}" class="badge badge-paid">&check; Paid in Full</span>
+                    <span th:unless="${order.isPaid()}" class="badge badge-due" th:text="'Due ' + ${@orderNumberFormatter.formatMoney(order.balance)}">Due Rs. 400</span>
+                    <button type="button" class="btn-secondary" onclick="window.print()">Print Receipt</button>
+                    <button th:if="${!order.isPaid()}"
+                            type="button"
+                            class="btn-primary"
+                            onclick="document.getElementById('addPaymentDialog').showModal()"
+                            style="background: #16A34A !important; border-color: #16A34A !important;">
+                        + Record Payment
+                    </button>
+                    <a th:href="@{'/orders/' + ${order.id} + '/add-items'}" class="btn-primary">+ Add Garment Piece</a>
                 </div>
+            </div>
+        </section>
+
+        <!-- Metrics Overview Grid (Current Theme: metrics-grid) -->
+        <div class="metrics-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Order Value</span>
+                <span class="stat-value" th:text="${@orderNumberFormatter.formatMoney(order.total)}">₹1,500</span>
+                <span class="stat-meta" th:text="${order.itemCount} + ' garment piece' + (${order.itemCount != 1} ? 's' : '') + ' in order'">1 piece</span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Paid to Date</span>
+                <span class="stat-value value-paid" th:text="${@orderNumberFormatter.formatMoney(order.paid)}">₹1,100</span>
+                <span class="stat-meta" th:text="${#lists.size(order.payments)} + ' payment transaction(s)'">1 payment recorded</span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Balance Outstanding</span>
+                <span class="stat-value" th:classappend="${!order.isPaid()} ? 'value-due' : 'value-paid'" th:text="${@orderNumberFormatter.formatMoney(order.balance)}">₹400</span>
+                <span class="stat-meta text-danger" th:if="${!order.isPaid()}">Pending collection on handover</span>
+                <span class="stat-meta" th:if="${order.isPaid()}">Account fully settled</span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Target Delivery Schedule</span>
+                <span class="stat-value" style="font-size: 20px;">
+                    <span th:if="${order.nearestDeliveryDate != null}" th:text="${#temporals.format(order.nearestDeliveryDate, 'dd MMM yyyy')}">20 Oct 2026</span>
+                    <span th:if="${order.nearestDeliveryDate == null}" class="text-muted" style="font-size: 16px;">No date specified</span>
+                </span>
+                <span class="stat-meta">Earliest delivery commitment</span>
             </div>
         </div>
 
-        <!-- Section: Garment Items List -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">checkroom</span>
-                <h3 style="margin: 0; color: var(--md-on-surface); font-size: 1.3rem;">
-                    Garment Items (<span th:text="${order.itemCount}">1</span>)
-                </h3>
+        <!-- Garment Pieces Section (Current Theme: dashboard-table-section) -->
+        <section class="dashboard-table-section">
+            <div class="section-title-row">
+                <div>
+                    <h2 class="section-heading">Garment Pieces (<span th:text="${#lists.size(order.items)}">1</span>)</h2>
+                    <p class="section-subtext">Stitching status, body measurements specification, styling notes, and fabric swatches.</p>
+                </div>
+                <div>
+                    <a th:href="@{'/orders/' + ${order.id} + '/add-items'}" class="btn-primary btn-sm">+ Add Garment Piece</a>
+                </div>
             </div>
-            <a th:href="@{'/orders/' + ${order.id} + '/add-items'}" class="btn btn-outline">
-                <span class="material-symbols-rounded icon-md">add</span>
-                <span>Add Items to Order</span>
-            </a>
-        </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <!-- Iterating over order items -->
-            <div th:each="item, iterStat : ${order.items}" class="card" style="margin-bottom: 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--md-outline); padding-bottom: 0.85rem; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.6rem;">
-                        <span style="font-size: 1.3rem; font-weight: 700; color: var(--md-on-surface);" th:text="${item.garment.name}">
-                            Shirt
+            <!-- Empty State for Pieces -->
+            <div th:if="${order.items == null or order.items.isEmpty()}" class="empty-state-box">
+                <p class="empty-state-text">No garment pieces recorded in this order yet.</p>
+                <a th:href="@{'/orders/' + ${order.id} + '/add-items'}" class="btn-primary btn-sm">+ Add First Piece</a>
+            </div>
+
+            <!-- Garment Piece Cards -->
+            <div th:each="item, iterStat : ${order.items}" class="card" style="margin-bottom: 24px;">
+                <!-- Card Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--color-border); padding-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span class="badge badge-neutral" th:text="'#' + ${iterStat.count}">#1</span>
+                        <span class="garment-tag" th:attr="data-garment=${#strings.toLowerCase(item.garment.name)}" style="height: 26px; font-size: 13px; padding: 0 10px 0 8px;">
+                            <svg class="garment-tag-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                <circle cx="7" cy="7" r="1.5" fill="currentColor"></circle>
+                            </svg>
+                            <span class="garment-tag-label" th:text="${item.garment.name}">Shirt</span>
                         </span>
-                        <!-- Status chip: Pending / Done / Delivered -->
-                        <span class="badge"
-                              th:classappend="${item.isDelivered() ? 'badge-success' : (item.isDone() ? 'badge-secondary' : 'badge-warning')}"
-                              th:text="${item.isDelivered() ? 'Delivered' : (item.isDone() ? 'Done' : 'Pending')}">
-                            Pending
-                        </span>
+                        <span th:if="${item.isDelivered()}" class="status-indicator status-delivered">&check; DELIVERED</span>
+                        <span th:if="${!item.isDelivered() and item.isDone()}" class="status-indicator status-stitched">&check; READY / DONE</span>
+                        <span th:if="${!item.isDelivered() and !item.isDone()}" class="status-indicator status-in-progress">&bull; IN PROGRESS</span>
+                        <strong style="font-size: 17px; color: var(--color-text-primary); margin-left: 6px;" th:text="${@orderNumberFormatter.formatMoney(item.price)}">₹500</strong>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.85rem;">
-                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--md-primary);"
-                             th:text="${@orderNumberFormatter.formatMoney(item.price)}">
-                            Rs. 500
-                        </div>
 
-                        <!-- Mark done button: allowed only from PENDING -->
-                        <form th:if="${item.isPending()}"
-                              th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/done'}"
-                              method="post"
-                              style="margin: 0; display: inline;">
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <span class="material-symbols-rounded icon-sm">check_circle</span>
-                                <span>Mark Done</span>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <!-- Mark Stitched Button -->
+                        <form th:if="${!item.isDone()}" th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/done'}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-primary btn-sm" style="background: #16A34A !important; border-color: #16A34A !important;">
+                                &check; Mark Stitched / Ready
                             </button>
                         </form>
 
-                        <!-- Mark delivered button: allowed from PENDING or DONE, hidden when DELIVERED -->
-                        <form th:if="${!item.isDelivered()}"
-                              th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/deliver'}"
-                              method="post"
-                              style="margin: 0; display: inline;">
-                            <button type="submit" class="btn btn-sm btn-outline">
-                                <span class="material-symbols-rounded icon-sm">local_shipping</span>
-                                <span>Mark Delivered</span>
+                        <!-- Mark Delivered Button -->
+                        <form th:if="${!item.isDelivered()}" th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/deliver'}" method="post" style="display: inline;">
+                            <button type="submit" class="btn-primary btn-sm">
+                                &rarr; Mark Delivered
                             </button>
                         </form>
 
-                        <a th:href="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/edit'}"
-                           class="btn btn-sm btn-outline">
-                            <span class="material-symbols-rounded icon-sm">edit</span>
-                            <span>Edit Item</span>
+                        <!-- Edit Piece Button -->
+                        <a th:href="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/edit'}" class="btn-secondary btn-sm">
+                            Edit Piece
                         </a>
                     </div>
                 </div>
 
-                <!--/* Overridden delivery note: small note 'Delivered with override: <reason>' */-->
-                <div th:if="${item.deliveryOverride != null}"
-                     style="margin-bottom: 0.85rem; background: var(--md-surface-container-low); border: 1.5px dashed var(--md-outline); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; color: var(--md-on-surface-variant);">
-                    <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">verified_user</span>
-                    <span>Delivered with override: <strong th:text="${item.deliveryOverride.reason}">Regular customer</strong></span>
+                <!-- Trust Override Alert -->
+                <div th:if="${item.deliveryOverride != null}" class="alert alert-notice" style="margin-bottom: 16px;">
+                    <span>&check; <strong>Trust Override Approved:</strong> Delivered before balance clearance &mdash; Reason: <strong th:text="${item.deliveryOverride.reason}">Regular customer</strong></span>
                 </div>
 
-                <!-- Delivery Blocked Warning Panel (shown when delivery attempted with balance > 0) -->
-                <div th:if="${blockedItemId != null and blockedItemId == item.id}"
-                     style="margin-bottom: 0.85rem; background-color: var(--md-error-container); color: var(--md-on-error-container); border: 1.5px solid var(--md-error); border-radius: var(--radius-sm); padding: 0.85rem 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.05rem;">
-                        <span class="material-symbols-rounded icon-md">block</span>
-                        <span>Balance <span th:text="${@orderNumberFormatter.formatMoney(blockedBalance)}">Rs. 400</span> pending</span>
+                <!-- Delivery Blocked Warning -->
+                <div th:if="${blockedItemId != null and blockedItemId == item.id}" class="alert alert-error" style="margin-bottom: 16px;">
+                    <div>
+                        <strong>DELIVERY BLOCKED:</strong> Outstanding balance of <strong th:text="${@orderNumberFormatter.formatMoney(blockedBalance)}">₹400</strong> must be cleared before handover.
                     </div>
-
-                    <!-- Tailor View: Cannot override, prompt to ask owner -->
-                    <div th:if="${currentUser == null or currentUser.role.name() != 'OWNER'}" style="margin-top: 0.5rem; font-size: 0.95rem;">
-                        <span>Delivery is blocked because payment is pending. <strong>Ask the owner to approve.</strong></span>
+                    <div th:if="${currentUser == null or currentUser.role.name() != 'OWNER'}" style="margin-top: 6px; font-size: 13.5px;">
+                        Staff tailor cannot deliver without payment. Please ask the shop owner to provide authorization override.
                     </div>
-
-                    <!-- Owner View: Reason box (max 500 chars) and Override button -->
-                    <div th:if="${currentUser != null and currentUser.role.name() == 'OWNER'}" style="margin-top: 0.75rem;">
-                        <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">
-                            As the owner, you may override the block and deliver this item immediately:
-                        </p>
+                    <div th:if="${currentUser != null and currentUser.role.name() == 'OWNER'}" style="margin-top: 8px;">
                         <form th:action="@{'/orders/' + ${order.id} + '/items/' + ${item.id} + '/override'}"
                               method="post"
                               th:object="${overrideForm}"
-                              style="display: flex; flex-direction: column; gap: 0.5rem; max-width: 520px;">
+                              style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                             <input type="text"
+                                   id="overrideReason"
                                    name="reason"
-                                   class="form-input"
-                                   placeholder="Reason for override (required, max 500 chars)"
+                                   placeholder="Enter reason for owner trust override..."
                                    required
                                    maxlength="500"
-                                   style="background: #ffffff; color: #18191E; border: 1.5px solid var(--md-outline); border-radius: var(--radius-xs); padding: 0.5rem 0.75rem; font-size: 0.9rem;" />
-                            <div>
-                                <button type="submit" class="btn btn-sm btn-primary">
-                                    <span class="material-symbols-rounded icon-sm">verified_user</span>
-                                    <span>Override and deliver</span>
-                                </button>
-                            </div>
+                                   style="max-width: 420px; height: 38px;">
+                            <button type="submit" class="btn-danger btn-sm">
+                                Approve Override &amp; Deliver
+                            </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Delivery date and specifications -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.95rem; margin-bottom: 0.85rem;">
-                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant);">
-                        <span class="material-symbols-rounded icon-sm">event</span>
-                        <span>Promised Delivery:</span>
-                        <strong style="color: var(--md-on-surface);" th:text="${item.deliveryDate}">2026-10-31</strong>
-                    </div>
-                    <div th:if="${item.doneAt != null}" style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant);">
-                        <span class="material-symbols-rounded icon-sm">check_circle</span>
-                        <span>Stitched:</span>
-                        <span th:text="${#temporals.format(item.doneAt, 'dd MMM yyyy')}">28 Oct 2026</span>
-                    </div>
-                    <div th:if="${item.deliveredAt != null}" style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant);">
-                        <span class="material-symbols-rounded icon-sm">package_2</span>
-                        <span>Delivered:</span>
-                        <span th:text="${#temporals.format(item.deliveredAt, 'dd MMM yyyy')}">30 Oct 2026</span>
-                    </div>
-                </div>
-
-                <!-- Notes / Styling Instructions -->
-                <div th:if="${item.notes != null and !item.notes.isBlank()}" style="margin-bottom: 0.85rem;">
-                    <div style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-left: 4px solid var(--md-primary); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; display: flex; align-items: flex-start; gap: 0.4rem;">
-                        <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary); margin-top: 0.15rem;">stylus_note</span>
-                        <div>
-                            <strong>Styling Notes:</strong>
-                            <span th:text="${item.notes}" style="color: var(--md-on-surface);">Mandarin collar, double buttons</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Attached Photos with interactive Lightbox Pop-up -->
-                <div th:if="${item.photos != null and !item.photos.isEmpty()}" style="margin-top: 0.85rem; margin-bottom: 0.85rem;">
-                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--md-on-surface-variant); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.35rem;">
-                        <span class="material-symbols-rounded icon-sm">photo_camera</span>
-                        <span>Attached Cloth &amp; Pattern Photos (Tap to enlarge):</span>
-                    </div>
-                    <div class="photo-gallery-grid">
-                        <div th:each="photo : ${item.photos}"
-                             class="photo-thumb-container"
-                             style="cursor: pointer;"
-                             onclick="openImageModal(this.querySelector('img').src)">
-                            <img th:src="${photo.url}" alt="Cloth swatch photo" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Garment Measurements Block (Always visible in detailed view) -->
-                <div style="margin-top: 1rem; border: 1.5px solid var(--md-outline); border-radius: var(--radius-sm); padding: 0.85rem 1rem; background: var(--md-surface-container-low);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-                        <div style="display: flex; align-items: center; gap: 0.45rem; font-weight: 700; color: var(--md-on-surface); font-size: 0.95rem;">
-                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">straighten</span>
-                            <span>Garment Measurements</span>
-                            <span style="color: var(--md-on-surface-variant); font-weight: 500; font-size: 0.85rem;"
-                                  th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}"
-                                  th:text="'(' + ${item.measurement.values.size()} + ' parameters)'">
-                                (6 parameters)
-                            </span>
-                        </div>
-                        <span th:if="${item.measurement != null}" class="badge badge-success" style="font-size: 0.75rem;">
-                            Snapshot #<span th:text="${item.measurement.id}">1</span>
-                        </span>
-                    </div>
-
-                    <div>
-                        <div th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}"
-                             style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;">
-                            <div th:each="val : ${item.measurement.values}"
-                                 style="background: var(--md-surface); border: 1.5px solid var(--md-outline); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm);">
-                                <div style="font-size: 0.75rem; color: var(--md-on-surface-variant); text-transform: uppercase; font-weight: 600;" th:text="${val.field.label}">Chest</div>
-                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--md-on-surface); margin-top: 0.15rem;">
-                                    <span th:text="${val.value}">40.0</span>
-                                    <span style="font-size: 0.75rem; font-weight: normal; color: var(--md-on-surface-variant);" th:text="${val.field.unit}">inch</span>
-                                </div>
+                <!-- Symmetrical 2-Column Grid (Current Theme) -->
+                <div class="grid-2">
+                    <!-- Left Column: Production Schedule, Styling Instructions & Fabric References -->
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Production Milestones -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 16px; background: var(--color-surface-subtle); border-radius: var(--radius-md);">
+                            <div>
+                                <span class="stat-label" style="font-size: 11px;">Promised Date</span>
+                                <strong style="font-size: 13.5px; color: var(--color-text-primary); display: block; margin-top: 2px;" th:text="${item.deliveryDate != null ? #temporals.format(item.deliveryDate, 'dd MMM yyyy') : 'No date set'}">31 Oct 2026</strong>
+                            </div>
+                            <div>
+                                <span class="stat-label" style="font-size: 11px;">Stitching</span>
+                                <span th:if="${item.doneAt != null}" style="font-size: 13.5px; font-weight: 700; color: #15803D; display: block; margin-top: 2px;" th:text="${#temporals.format(item.doneAt, 'dd MMM yyyy')}">28 Oct 2026</span>
+                                <span th:if="${item.doneAt == null}" class="text-muted" style="font-size: 13px; display: block; margin-top: 2px;">In Workshop Queue</span>
+                            </div>
+                            <div>
+                                <span class="stat-label" style="font-size: 11px;">Delivery</span>
+                                <span th:if="${item.deliveredAt != null}" style="font-size: 13.5px; font-weight: 700; color: #4F46E5; display: block; margin-top: 2px;" th:text="${#temporals.format(item.deliveredAt, 'dd MMM yyyy')}">30 Oct 2026</span>
+                                <span th:if="${item.deliveredAt == null}" class="text-muted" style="font-size: 13px; display: block; margin-top: 2px;">Awaiting Pickup</span>
                             </div>
                         </div>
-                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}"
-                             style="color: var(--md-on-surface-variant); font-size: 0.88rem; font-style: italic;">
-                            No measurements recorded for this garment item.
+
+                        <!-- Styling Instructions -->
+                        <div style="padding: 14px 16px; background: var(--color-surface-subtle); border-radius: var(--radius-md);">
+                            <span class="stat-label" style="font-size: 11px; margin-bottom: 4px; display: block;">Styling &amp; Tailoring Instructions</span>
+                            <div th:if="${item.notes != null and !item.notes.isBlank()}" style="font-size: 13.5px; font-weight: 600; color: var(--color-text-primary); line-height: 1.4;" th:text="${item.notes}">
+                                Mandarin collar, comfort loose fit, horn buttons
+                            </div>
+                            <div th:if="${item.notes == null or item.notes.isBlank()}" class="text-muted" style="font-size: 13px; font-style: italic;">
+                                No special styling or alteration instructions provided.
+                            </div>
+                        </div>
+
+                        <!-- Fabric Swatches & References -->
+                        <div style="padding: 14px 16px; background: var(--color-surface-subtle); border-radius: var(--radius-md);">
+                            <span class="stat-label" style="font-size: 11px; margin-bottom: 8px; display: block;">Fabric Swatches &amp; Photos</span>
+                            <div th:if="${item.photos != null and !item.photos.isEmpty()}" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <div th:each="photo : ${item.photos}" class="swatch-thumb" title="Click to view full reference photo">
+                                    <img th:src="${photo.url}" alt="Cloth swatch preview"
+                                         onclick="openImageModal(this.src)"
+                                         tabindex="0"
+                                         onkeydown="if(event.key==='Enter'||event.key===' ')openImageModal(this.src)">
+                                </div>
+                            </div>
+                            <div th:if="${item.photos == null or item.photos.isEmpty()}" class="text-muted" style="font-size: 13px; font-style: italic;">
+                                No fabric swatches or design photos attached for this piece.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Measurements Specification Table (Current Theme: table-container) -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span class="stat-label" style="font-size: 11px;">Body Measurements Specification</span>
+                            <span th:if="${item.measurement != null}" class="badge badge-neutral" style="font-size: 11px;">
+                                Snapshot #<span th:text="${item.measurement.id}">1</span>
+                            </span>
+                        </div>
+
+                        <div class="table-container" th:if="${item.measurement != null and item.measurement.values != null and !item.measurement.values.isEmpty()}">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Measurement Parameter</th>
+                                        <th style="width: 35%; text-align: right;">Value</th>
+                                        <th style="width: 25%; text-align: right;">Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="val : ${item.measurement.values}">
+                                        <td class="font-medium" th:text="${val.field.label}">Chest</td>
+                                        <td style="text-align: right;"><strong class="measurement-val-highlight" th:text="${val.value}">40.0</strong></td>
+                                        <td class="text-muted" style="text-align: right;" th:text="${val.field.unit}">inch</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div th:if="${item.measurement == null or item.measurement.values == null or item.measurement.values.isEmpty()}" class="empty-state-box" style="margin-top: 0;">
+                            <p class="empty-state-text">No measurement parameters saved for this garment piece.</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Section: Payments Ledger (Oldest first) -->
-        <div id="payments-section" style="margin-top: 2.5rem; margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-symbols-rounded icon-lg" style="color: var(--md-primary);">payments</span>
-                    <h3 style="margin: 0; color: var(--md-on-surface); font-size: 1.3rem;">
-                        Payments (<span th:text="${#lists.size(order.payments)}">1</span>)
-                    </h3>
+        <!-- Payment Transactions Ledger Section (Current Theme: dashboard-table-section) -->
+        <section class="dashboard-table-section">
+            <div class="section-title-row">
+                <div>
+                    <h2 class="section-heading">Payment Transactions (<span th:text="${#lists.size(order.payments)}">2</span>)</h2>
+                    <p class="section-subtext">Record of advance deposits, installments, and final balance settlements.</p>
                 </div>
-
-                <!-- Add Payment Button (opens dialog) -->
                 <div>
                     <button th:if="${!order.isPaid()}"
                             type="button"
-                            class="btn btn-primary"
-                            onclick="document.getElementById('addPaymentDialog').showModal()">
-                        <span class="material-symbols-rounded icon-sm">add_card</span>
-                        <span>Add Payment</span>
+                            class="btn-primary btn-sm"
+                            onclick="document.getElementById('addPaymentDialog').showModal()"
+                            style="background: #16A34A !important; border-color: #16A34A !important;">
+                        + Record Payment
                     </button>
-                    <span th:if="${order.isPaid()}" class="chip badge-success">
-                        <span class="material-symbols-rounded icon-sm">check_circle</span>
-                        <span>Paid in Full</span>
-                    </span>
+                    <span th:if="${order.isPaid()}" class="badge badge-paid">&check; Paid in Full</span>
                 </div>
             </div>
 
-            <!-- Payments List Table Card -->
-            <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
-                <div class="table-container" style="margin: 0;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 140px;"><span class="material-symbols-rounded">tag</span><span>Payment</span></th>
-                                <th style="min-width: 140px;"><span class="material-symbols-rounded">event</span><span>Date</span></th>
-                                <th style="min-width: 120px;"><span class="material-symbols-rounded">payments</span><span>Mode</span></th>
-                                <th style="text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">currency_rupee</span><span>Amount</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="payment, iterStat : ${order.payments}">
-                                <!-- Number: #1 (Advance) or #N -->
-                                <td>
-                                    <span class="badge badge-neutral" style="font-weight: 700;">
-                                        #<span th:text="${iterStat.count}">1</span>
-                                        <span th:if="${iterStat.first}" style="font-size: 0.75rem; font-weight: normal; margin-left: 0.2rem;">(Advance)</span>
-                                    </span>
-                                </td>
-
-                                <!-- Payment Date -->
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.9rem;">
-                                        <span class="material-symbols-rounded icon-sm">calendar_today</span>
-                                        <span th:text="${#temporals.format(payment.paidOn, 'dd MMM yyyy')}">14 Oct 2026</span>
-                                    </div>
-                                </td>
-
-                                <!-- Payment Mode -->
-                                <td>
-                                    <span class="chip badge-secondary" style="font-weight: 600;">
-                                        <span class="material-symbols-rounded icon-sm" th:text="${payment.mode == 'UPI' ? 'qr_code_2' : 'payments'}">payments</span>
-                                        <span th:text="${payment.mode}">CASH</span>
-                                    </span>
-                                </td>
-
-                                <!-- Amount (oldest first, formatted as Rs. 1,500) -->
-                                <td style="text-align: right; padding-right: 1.5rem;">
-                                    <strong style="color: var(--md-success); font-size: 1.05rem;"
-                                            th:text="${@orderNumberFormatter.formatMoney(payment.amount)}">
-                                        Rs. 500
-                                    </strong>
-                                </td>
-                            </tr>
-                            <tr th:if="${order.payments == null or order.payments.isEmpty()}">
-                                <td colspan="4" style="text-align: center; color: var(--md-on-surface-variant); padding: 1.5rem;">
-                                    No payments recorded yet.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Table of Payments -->
+            <div th:if="${order.payments != null and !order.payments.isEmpty()}" class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">Receipt #</th>
+                            <th style="width: 30%;">Payment Date</th>
+                            <th style="width: 24%;">Payment Mode</th>
+                            <th class="th-num" style="width: 28%;">Amount Settled</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="payment, iterStat : ${order.payments}">
+                            <td>
+                                <strong style="color: var(--color-text-primary);" th:text="'#' + ${iterStat.count}">#1</strong>
+                                <span th:if="${iterStat.first}" class="badge badge-neutral" style="margin-left: 6px; font-size: 11px;">Advance</span>
+                            </td>
+                            <td class="delivery-date-text" th:text="${#temporals.format(payment.paidOn, 'dd MMM yyyy')}">13 Oct 2026</td>
+                            <td>
+                                <span th:if="${payment.mode == 'CASH'}" class="badge-mode badge-mode-cash">CASH</span>
+                                <span th:if="${payment.mode == 'UPI'}" class="badge-mode badge-mode-upi">UPI</span>
+                                <span th:if="${payment.mode != 'CASH' and payment.mode != 'UPI'}" class="badge-mode badge-mode-card" th:text="${payment.mode}">CARD</span>
+                            </td>
+                            <td class="td-num">
+                                <strong class="font-medium" style="font-size: 15px; color: #15803D;" th:text="${@orderNumberFormatter.formatMoney(payment.amount)}">Rs. 300</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
 
-        <!-- Add Payment Modal Dialog -->
-        <dialog id="addPaymentDialog"
-                style="margin: auto; border: 2px solid var(--md-outline); border-radius: 18px; background: var(--md-surface-container); color: var(--md-on-surface); padding: 2rem; max-width: 440px; width: 90%; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">add_card</span>
-                    <h3 style="margin: 0; font-size: 1.3rem; font-weight: 700;">Add Payment</h3>
-                </div>
-                <button type="button" onclick="document.getElementById('addPaymentDialog').close()"
-                        style="background: transparent; border: none; color: var(--md-on-surface-variant); cursor: pointer; padding: 0.25rem;">
-                    <span class="material-symbols-rounded">close</span>
+            <!-- Empty State for Payments -->
+            <div th:if="${order.payments == null or order.payments.isEmpty()}" class="empty-state-box">
+                <p class="empty-state-text">No payment transactions recorded yet for this order.</p>
+                <button type="button"
+                        class="btn-primary btn-sm"
+                        onclick="document.getElementById('addPaymentDialog').showModal()"
+                        style="background: #16A34A !important; border-color: #16A34A !important;">
+                    + Record First Payment
                 </button>
             </div>
+        </section>
 
-            <div style="background: var(--md-surface-container-high); border: 1px solid var(--md-outline); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: var(--md-on-surface-variant);">Remaining Balance:</span>
-                <strong style="color: var(--md-error); font-size: 1.05rem;" th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</strong>
+        <!-- Record Payment Modal Dialog -->
+        <dialog id="addPaymentDialog" aria-labelledby="addPaymentTitle" style="border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px 28px; max-width: 480px; width: 90vw; box-shadow: 0 20px 45px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+                <h3 id="addPaymentTitle" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--color-text-primary);">Record Payment</h3>
+                <button type="button" onclick="document.getElementById('addPaymentDialog').close()" style="background: none; border: none; font-size: 20px; color: var(--color-text-secondary); cursor: pointer;" aria-label="Close dialog">&times;</button>
             </div>
 
             <form th:action="@{'/orders/' + ${order.id} + '/payments'}" method="post">
-                <input type="hidden" name="returnTo" th:value="@{'/orders/' + ${order.id}}" />
-
-                <!-- Amount Input -->
-                <div class="form-group" style="margin-bottom: 1.25rem;">
-                    <label class="form-label" for="paymentAmount">Amount (₹)</label>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="paymentAmount" class="form-label">Amount Received (₹):</label>
                     <input type="number"
                            id="paymentAmount"
                            name="amount"
-                           class="form-control"
-                           step="any"
-                           min="0.01"
-                           th:max="${order.balance}"
                            th:value="${order.balance}"
+                           th:max="${order.balance}"
+                           min="1"
+                           step="0.01"
                            required
-                           placeholder="Enter amount" />
-                    <small style="font-size: 0.75rem; color: var(--md-on-surface-variant); display: block; margin-top: 0.25rem;">
-                        Amount must not exceed remaining balance (<span th:text="${@orderNumberFormatter.formatMoney(order.balance)}">Rs. 400</span>).
-                    </small>
+                           autofocus
+                           style="font-size: 18px; font-weight: 700;" />
                 </div>
 
-                <!-- Cash / UPI Switch -->
-                <div class="form-group" style="margin-bottom: 1.25rem;">
-                    <label class="form-label">Payment Mode</label>
-                    <div style="display: flex; gap: 1.5rem; margin-top: 0.4rem;">
-                        <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="mode" value="CASH" checked />
-                            <span>Cash</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 0.45rem; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="mode" value="UPI" />
-                            <span>UPI</span>
-                        </label>
-                    </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="paymentMode" class="form-label">Payment Mode:</label>
+                    <select id="paymentMode" name="mode" required>
+                        <option value="CASH" selected>Cash (In Shop)</option>
+                        <option value="UPI">UPI / QR Transfer</option>
+                        <option value="CARD">Debit / Credit Card</option>
+                    </select>
                 </div>
 
-                <!-- Date Input (default today in Asia/Kolkata) -->
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label class="form-label" for="paymentDate">Payment Date</label>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="paymentDate" class="form-label">Payment Date:</label>
                     <input type="date"
                            id="paymentDate"
                            name="paidOn"
-                           class="form-control"
                            th:value="${today != null ? today : @orderNumberFormatter.today}"
                            th:max="${today != null ? today : @orderNumberFormatter.today}"
                            required />
-                    <small style="font-size: 0.75rem; color: var(--md-on-surface-variant); display: block; margin-top: 0.25rem;">
-                        Date cannot be in the future.
-                    </small>
                 </div>
 
-                <!-- Form Actions -->
-                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('addPaymentDialog').close()">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <span class="material-symbols-rounded icon-sm">save</span>
-                        <span>Save Payment</span>
+                <div class="form-actions" style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('addPaymentDialog').close()">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background: #16A34A !important; border-color: #16A34A !important;">
+                        Save Payment &rarr;
                     </button>
                 </div>
             </form>
         </dialog>
-    </div>
 
-    <!-- Full-Size Photo Modal / Lightbox Pop-up -->
-    <div id="imageLightboxModal"
-         style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; padding: 1.5rem;"
-         onclick="closeImageModal()">
-        <div style="position: relative; max-width: 90%; max-height: 90%;">
-            <button type="button"
-                    onclick="closeImageModal()"
-                    style="position: absolute; top: -40px; right: 0; background: transparent; border: none; color: #ffffff; cursor: pointer;"
-                    title="Close">
-                <span class="material-symbols-rounded" style="font-size: 32px;">close</span>
-            </button>
-            <img id="lightboxImg"
-                 src=""
-                 alt="Full size view"
-                 style="max-width: 100%; max-height: 85vh; border-radius: 18px; border: 2px solid #221D2E; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); object-fit: contain;"
-                 onclick="event.stopPropagation();" />
-        </div>
-    </div>
+        <!-- Full-Size Photo Lightbox Modal -->
+        <dialog id="imageLightboxModal" aria-label="Reference photo full preview" style="border: none; border-radius: var(--radius-lg); padding: 16px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+            <div style="text-align: right; margin-bottom: 8px;">
+                <button type="button" class="btn-secondary btn-sm" onclick="document.getElementById('imageLightboxModal').close()" style="background: #FFFFFF; color: #0F172A; font-weight: 700;">Close &times;</button>
+            </div>
+            <img id="lightboxImg" src="" alt="Full size fabric design reference" style="max-width: 88vw; max-height: 80vh; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;">
+        </dialog>
+    </main>
 
-    <!-- Lightbox Interactive Script -->
+    <!-- Modal script -->
     <script>
         function openImageModal(imgSrc) {
             var modal = document.getElementById('imageLightboxModal');
             var img = document.getElementById('lightboxImg');
             if (modal && img) {
                 img.src = imgSrc;
-                modal.style.display = 'flex';
+                modal.showModal();
             }
         }
-
-        function closeImageModal() {
-            var modal = document.getElementById('imageLightboxModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeImageModal();
-            }
-        });
     </script>
-
 </body>
 </html>

@@ -1,188 +1,113 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  orders/index.html: Customer Orders Management List (Material You MD3).
-  Displays all booked orders, status indicators, balances, and quick navigation.
+  orders/index.html: Customer Orders Management List (Pure HTML Baseline).
+  Zero CSS classes, pure semantic HTML tags.
 -->
 <head th:replace="~{fragments/layout :: page-head('Orders')}"></head>
 <body>
 
-    <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 1040px;">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Orders Table Card (Single Unified Header matching reference design) -->
-        <div class="card table-card" style="padding: 0; overflow: hidden; margin-top: 1rem;">
-            <div class="table-header">
-                <div class="table-header-left">
-                    <div class="table-header-icon orders-icon">
-                        <span class="material-symbols-rounded">receipt_long</span>
-                    </div>
-                    <div>
-                        <h3 class="table-header-title">All Orders</h3>
-                        <p class="table-header-subtitle">Active Orders Sorted by Earliest Delivery</p>
-                    </div>
+        <section class="dashboard-hero-section">
+            <div class="hero-header-row">
+                <div>
+                    <h1 class="page-title">All Orders</h1>
+                    <p class="section-subtext">Active customer orders sorted by earliest promised delivery date.</p>
                 </div>
-                <span class="badge badge-secondary" th:if="${orders != null}" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
-                    <span th:text="${orders.size()}">0</span> Active Orders
-                </span>
+                <div>
+                    <a th:href="@{/orders/new}" class="btn-primary">+ Book New Order</a>
+                </div>
             </div>
+        </section>
 
-            <!-- Empty State -->
-            <div th:if="${orders == null or orders.isEmpty()}" class="empty-state">
-                <div class="empty-state-icon">
-                    <span class="material-symbols-rounded icon-xl">inventory_2</span>
-                </div>
-                <h4 style="margin: 0 0 0.4rem 0; color: var(--md-on-surface);">No active orders found</h4>
-                <p style="margin: 0 0 1.25rem 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
-                    All orders are fully paid and delivered! New orders will appear here as they are booked.
+        <div th:if="${orders == null or orders.isEmpty()}" class="empty-state-box">
+            <p class="empty-state-text">No active orders found. All orders are fully paid and delivered!</p>
+            <a th:href="@{/orders/new}" class="btn-primary btn-sm">+ Book New Order</a>
+        </div>
+
+        <section th:if="${orders != null and !orders.isEmpty()}" class="dashboard-table-section">
+            <div class="section-title-row">
+                <p class="section-subtext">
+                    Showing active orders: <strong th:text="${orders.size()}">0</strong> total
                 </p>
-                <a th:href="@{/orders/new}" class="btn btn-secondary">
-                    <span class="material-symbols-rounded icon-md">add</span>
-                    <span>Book New Order</span>
-                </a>
             </div>
 
-            <!-- Orders Data Table -->
-            <div th:if="${orders != null and !orders.isEmpty()}" class="table-responsive">
-                <table class="data-table">
+            <div class="table-container">
+                <table>
                     <thead>
                         <tr>
-                            <th style="width: 110px;"><span class="material-symbols-rounded">tag</span><span>Order No</span></th>
-                            <th><span class="material-symbols-rounded">person</span><span>Customer</span></th>
-                            <th style="width: 85px; text-align: center;"><span class="material-symbols-rounded">checkroom</span><span>Items</span></th>
-                            <th style="min-width: 140px;"><span class="material-symbols-rounded">event</span><span>Delivery</span></th>
-                            <th style="min-width: 100px;"><span class="material-symbols-rounded">currency_rupee</span><span>Total</span></th>
-                            <th style="min-width: 130px;"><span class="material-symbols-rounded">account_balance_wallet</span><span>Status</span></th>
-                            <th style="width: 120px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
+                            <th>Order No</th>
+                            <th>Customer</th>
+                            <th>Mobile</th>
+                            <th>Items</th>
+                            <th>Delivery Date</th>
+                            <th>Total Amount</th>
+                            <th>Payment Status</th>
+                            <th class="th-action">Action</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody">
-                        <!-- Progressive disclosure: first 10 rows visible by default; subsequent rows revealed via Load More -->
                         <tr th:each="ord, iterStat : ${orders}"
-                            class="order-row"
-                            th:classappend="${iterStat.index >= 10 ? 'order-row-hidden' : ''}"
+                            th:id="'order-row-' + ${iterStat.index}"
                             th:style="${iterStat.index >= 10 ? 'display: none;' : ''}">
-                            <!-- Order No: TS-<year>-<4-digit order_no> -->
                             <td>
-                                <a th:href="@{'/orders/' + ${ord.id}}" class="badge badge-primary" style="font-weight: 700; text-decoration: none;">
-                                    <span th:text="${@orderNumberFormatter.format(ord)}">TS-2026-0001</span>
-                                </a>
+                                <a th:href="@{'/orders/' + ${ord.id}}" class="order-id-link" th:text="${@orderNumberFormatter.format(ord)}">TS-2026-0001</a>
                             </td>
-
-                            <!-- Customer Info -->
                             <td>
-                                <div style="display: flex; flex-direction: column;">
-                                    <a th:href="@{'/customers/' + ${ord.customer.id}}" class="customer-name-link" style="font-weight: 600;">
-                                        <span th:text="${ord.customer.name}">Ramesh Patel</span>
-                                    </a>
-                                    <span class="phone-display" style="font-size: 0.8rem;" th:text="${ord.customer.mobile}">
-                                        9876543210
-                                    </span>
-                                </div>
+                                <a th:href="@{'/customers/' + ${ord.customer.id}}" class="customer-name-link" th:text="${ord.customer.name}">Ramesh Patel</a>
                             </td>
-
-                            <!-- Items count -->
+                            <td class="phone-text" th:text="${ord.customer.mobile}">9876543210</td>
+                            <td th:text="${ord.itemCount}">1</td>
                             <td>
-                                <span class="badge badge-neutral">
-                                    <span class="material-symbols-rounded icon-sm">checkroom</span>
-                                    <span th:text="${ord.itemCount}">1</span>
-                                </span>
+                                <span th:if="${ord.nearestDeliveryDate != null}" class="delivery-date-text" th:text="${ord.nearestDeliveryDate}">2026-10-31</span>
+                                <span th:if="${ord.nearestDeliveryDate == null}" class="text-muted">N/A</span>
                             </td>
-
-                            <!-- Delivery Date (sorted earliest first) -->
+                            <td class="font-medium" th:text="${@orderNumberFormatter.formatMoney(ord.total)}">Rs. 500</td>
                             <td>
-                                <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.875rem;">
-                                    <span class="material-symbols-rounded icon-sm">event</span>
-                                    <span th:if="${ord.nearestDeliveryDate != null}" th:text="${ord.nearestDeliveryDate}">2026-10-31</span>
-                                    <span th:if="${ord.nearestDeliveryDate == null}">N/A</span>
-                                </div>
+                                <span th:if="${ord.isPaid()}" class="badge badge-paid">Paid</span>
+                                <span th:unless="${ord.isPaid()}" class="badge badge-due" th:text="'Due ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">Due Rs. 400</span>
                             </td>
-
-                            <!-- Total Amount: Rs. 1,500 -->
-                            <td>
-                                <strong style="color: var(--md-on-surface); font-size: 0.95rem;"
-                                        th:text="${@orderNumberFormatter.formatMoney(ord.total)}">
-                                    Rs. 500
-                                </strong>
-                            </td>
-
-                            <!-- Balance Chip: green 'Paid' or red 'Balance Rs. 400' -->
-                            <td>
-                                <span th:if="${ord.isPaid()}" class="badge badge-success" style="white-space: nowrap;">
-                                    Paid
-                                </span>
-                                <span th:unless="${ord.isPaid()}" class="badge badge-danger" style="white-space: nowrap;"
-                                      th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">
-                                    Balance Rs. 400
-                                </span>
-                            </td>
-
-                            <!-- Action -->
-                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
-                                <a th:href="@{'/orders/' + ${ord.id}}" class="btn btn-sm btn-outline btn-table-action">
-                                    <span>Details</span>
-                                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                                </a>
+                            <td class="td-action">
+                                <a th:href="@{'/orders/' + ${ord.id}}" class="btn-secondary btn-sm table-action-btn">Details &rarr;</a>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Load More Pagination Section -->
-            <div th:if="${orders != null and !orders.isEmpty()}"
-                 id="loadMoreSection"
-                 style="text-align: center; padding: 1.5rem; background: var(--md-surface-container-lowest); border-top: 1.5px solid var(--md-outline);">
-                <button th:if="${#lists.size(orders) > 10}"
-                        type="button"
-                        id="loadMoreBtn"
-                        class="btn btn-outline"
-                        style="min-width: 220px; font-weight: 600; padding: 0.65rem 1.5rem;">
-                    <span class="material-symbols-rounded icon-sm">expand_more</span>
-                    <span>Load More Orders</span>
-                </button>
-                <div id="loadMoreCounter" style="margin-top: 0.6rem; font-size: 0.88rem; color: var(--md-on-surface-variant);">
+            <div th:if="${#lists.size(orders) > 10}" id="loadMoreSection" style="margin-top: 1.5rem; text-align: center;">
+                <button type="button" id="loadMoreBtn" class="btn-secondary">Load More Orders</button>
+                <p id="loadMoreCounter" class="text-muted" style="margin-top: 0.5rem; font-size: 13px;">
                     Showing <strong id="visibleCount" th:text="${#lists.size(orders) > 10 ? 10 : #lists.size(orders)}">10</strong> of <strong id="totalCount" th:text="${#lists.size(orders)}">25</strong> active orders
-                </div>
+                </p>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <!-- Load More Progressive Disclosure Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const btn = document.getElementById('loadMoreBtn');
+            var btn = document.getElementById('loadMoreBtn');
             if (!btn) return;
+            var PAGE_SIZE = 10;
+            var currentVisible = 10;
+            var totalRows = document.querySelectorAll('#ordersTableBody tr').length;
 
-            const PAGE_SIZE = 10;
             btn.addEventListener('click', function () {
-                const hiddenRows = document.querySelectorAll('.order-row.order-row-hidden');
-                const toShow = Array.from(hiddenRows).slice(0, PAGE_SIZE);
-
-                toShow.forEach(function (row) {
-                    row.classList.remove('order-row-hidden');
-                    row.style.display = '';
-                });
-
-                const totalRows = document.querySelectorAll('.order-row').length;
-                const remainingHidden = document.querySelectorAll('.order-row.order-row-hidden').length;
-                const visibleRows = totalRows - remainingHidden;
-
-                const visibleCountEl = document.getElementById('visibleCount');
-                if (visibleCountEl) {
-                    visibleCountEl.textContent = visibleRows;
+                var nextLimit = Math.min(currentVisible + PAGE_SIZE, totalRows);
+                for (var i = currentVisible; i < nextLimit; i++) {
+                    var row = document.getElementById('order-row-' + i);
+                    if (row) row.style.display = '';
                 }
-
-                if (remainingHidden === 0) {
+                currentVisible = nextLimit;
+                var visibleCountEl = document.getElementById('visibleCount');
+                if (visibleCountEl) visibleCountEl.textContent = currentVisible;
+                if (currentVisible >= totalRows) {
                     btn.style.display = 'none';
-                    const counter = document.getElementById('loadMoreCounter');
-                    if (counter) {
-                        counter.innerHTML = 'All <strong>' + totalRows + '</strong> active orders loaded';
-                    }
                 }
             });
         });

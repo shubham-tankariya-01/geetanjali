@@ -1,102 +1,54 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  orders/wizard-garment.html: Order Creation Wizard - Step 2: Garment Category Selection.
-  Material You MD3 redesign with tactile garment cards and zero emojis.
--->
 <head>
     <th:block th:replace="~{fragments/layout :: page-head('New Order - Step 2: Choose Garment')}"></th:block>
-    <!-- Wizard interactive client script -->
     <script th:src="@{/js/new-order.js}" defer></script>
 </head>
 <body>
 
-    <!-- Responsive Glassmorphic Top App Bar -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container" style="max-width: 840px;">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Material 3 Stepper -->
-        <div th:replace="~{fragments/layout :: wizard-progress(2)}"></div>
+        <nav th:replace="~{fragments/layout :: wizard-progress(2)}"></nav>
 
-        <!-- Customer Context Summary Bar -->
-        <div class="card card-flat" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1.15rem 1.5rem; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 0.85rem;">
-                <div style="width: 42px; height: 42px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded icon-md">person</span>
-                </div>
-                <div>
-                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--md-on-surface-variant); letter-spacing: 0.04em;">Selected Customer</span>
-                    <div style="font-size: 1.15rem; font-weight: 700; color: var(--md-on-surface); line-height: 1.2;">
-                        <span th:text="${draft.customerName}">Ramesh Patel</span>
-                        <span style="font-weight: 400; color: var(--md-on-surface-variant); font-size: 0.9rem; margin-left: 0.35rem;">
-                            • <span class="phone-display" th:text="${draft.customerMobile}">9876543210</span>
-                        </span>
+        <section class="dashboard-table-section">
+            <div class="card" style="max-width: 600px;">
+                <div class="context-banner" style="margin-bottom: 20px;">
+                    <div class="context-meta-text">
+                        <span class="text-secondary">Selected Customer: </span>
+                        <strong style="color: var(--color-text-primary);" th:text="${draft.customerName}">Ramesh Patel</strong>
+                        (<span th:text="${draft.customerMobile}">9876543210</span>)
                     </div>
+                    <a th:href="@{/orders/new}" class="link-subtle" style="font-size: 13px;">Change Customer</a>
                 </div>
+
+                <h1 class="page-title" style="font-size: 22px; margin-bottom: 6px;">Step 2: Choose Garment Category</h1>
+                <p class="section-subtext" style="margin-bottom: 20px;">Select the garment type to stitch for this item.</p>
+
+                <form th:action="@{/orders/new/garment}" method="post">
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                        <label th:each="g : ${garments}"
+                               style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer; transition: background 0.15s, border-color 0.15s; margin: 0;">
+                            <input type="radio"
+                                   name="garmentId"
+                                   th:value="${g.id}"
+                                   th:checked="${draft.currentGarment != null && draft.currentGarment.id == g.id}"
+                                   required
+                                   style="width: 18px; height: 18px; accent-color: var(--color-primary); cursor: pointer;">
+                            <strong style="font-size: 15px; color: var(--color-text-primary);" th:text="${g.name}">Shirt</strong>
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Continue to Measurements &rarr;</button>
+                        <a th:href="@{/orders/new}" class="btn-secondary">&larr; Back to Customer</a>
+                    </div>
+                </form>
             </div>
-            <a th:href="@{/orders/new}" class="btn btn-outline btn-sm">
-                <span class="material-symbols-rounded icon-sm">edit</span>
-                <span>Change Customer</span>
-            </a>
-        </div>
-
-        <!-- Garment Selection Card -->
-        <div class="card" style="box-shadow: var(--shadow-2);">
-            <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center;">
-                    <span class="material-symbols-rounded icon-lg">checkroom</span>
-                </div>
-                <div>
-                    <h2 style="font-size: 1.45rem; font-weight: 600; margin: 0; color: var(--md-on-surface);">Step 2: Choose Garment Category</h2>
-                    <p style="margin: 0.15rem 0 0 0; font-size: 0.875rem; color: var(--md-on-surface-variant);">
-                        Select the garment to stitch for this item. Measurements and template fields will adapt automatically.
-                    </p>
-                </div>
-            </div>
-
-            <form th:action="@{/orders/new/garment}" method="post">
-                <!-- Interactive Garment Grid -->
-                <div class="garment-selection-grid" style="margin-bottom: 2rem;">
-                    <label th:each="g : ${garments}"
-                           class="garment-card"
-                           th:classappend="${draft.currentGarment != null && draft.currentGarment.id == g.id ? 'selected' : ''}">
-                        <input type="radio"
-                               name="garmentId"
-                               th:value="${g.id}"
-                               th:checked="${draft.currentGarment != null && draft.currentGarment.id == g.id}"
-                               required>
-
-                        <!-- Unified Material Symbol Icons -->
-                        <div class="garment-icon">
-                            <span th:if="${g.name == 'Shirt'}" class="material-symbols-rounded icon-hero">checkroom</span>
-                            <span th:if="${g.name == 'Pant'}" class="material-symbols-rounded icon-hero">straighten</span>
-                            <span th:if="${g.name == 'Kurta'}" class="material-symbols-rounded icon-hero">apparel</span>
-                            <span th:if="${g.name == 'Blouse'}" class="material-symbols-rounded icon-hero">dry_cleaning</span>
-                            <span th:if="${g.name != 'Shirt' && g.name != 'Pant' && g.name != 'Kurta' && g.name != 'Blouse'}" class="material-symbols-rounded icon-hero">styler</span>
-                        </div>
-
-                        <div class="garment-title" th:text="${g.name}">Shirt</div>
-                        <span style="font-size: 0.8rem; color: var(--md-on-surface-variant);">Custom Tailoring</span>
-                    </label>
-                </div>
-
-                <!-- Navigation Actions -->
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1.5px solid var(--md-outline); padding-top: 1.5rem; gap: 1rem; flex-wrap: wrap;">
-                    <a th:href="@{/orders/new}" class="btn btn-outline">
-                        <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                        <span>Back to Customer</span>
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <span>Continue to Measurements</span>
-                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+        </section>
+    </main>
 
 </body>
 </html>

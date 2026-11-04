@@ -1,231 +1,322 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
-  home/index.html: Tailor Shop Main Home Dashboard (Material You MD3).
-  Full-display widescreen layout with responsive metrics, fast customer search, and recent orders feed.
+  home/index.html: Tailor Shop Operational Dashboard.
+  Sarvam AI / Indus-Inspired SaaS Interface:
+  1. Quick actions & studio status
+  2. Customer search & measurement lookup
+  3. Section 1: Active Stitching & Delivery Schedule
+  4. Section 2: Financial & Booking Operations (Pending Collections & Recent Bookings)
 -->
 <head th:replace="~{fragments/layout :: page-head('Dashboard')}"></head>
 <body>
 
-    <!-- Unified Top Navigation Bar (NO BOTTOM BAR) -->
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container dashboard-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
-        <!-- Flash messages -->
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Hero Welcome Card (Full Width) -->
-        <div class="card card-hero" style="margin-bottom: 1.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+        <!-- Section: Dashboard Hero & Operational Quick Actions -->
+        <section class="dashboard-hero-section">
+            <div class="hero-header-row">
                 <div>
-                    <span class="badge badge-primary" style="margin-bottom: 0.5rem;">
-                        <span class="material-symbols-rounded icon-sm">storefront</span>
-                        <span th:text="${shopName}">Geetanjali Tailors</span>
-                    </span>
-                    <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--md-on-surface); margin: 0.25rem 0;">
-                        Namaste, <span th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Tailor</span>
-                    </h2>
-                    <p style="margin: 0; color: var(--md-on-surface-variant); font-size: 0.95rem;">
-                        Track measurements, book customer orders, and manage stitching schedules.
+                    <h1 class="page-title">Namaste, <span th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Tailor</span></h1>
+                    <p class="hero-meta">
+                        Studio: <strong th:text="${shopName}">Geetanjali Tailors</strong>
+                        <span class="meta-dot">&bull;</span>
+                        Role: <span class="badge badge-neutral" th:text="${currentUser != null ? currentUser.role : 'TAILOR'}">OWNER</span>
                     </p>
                 </div>
-                <div style="display: flex; gap: 0.75rem; align-items: center;">
-                    <a th:href="@{/orders/new}" class="btn btn-secondary btn-lg">
-                        <span class="material-symbols-rounded icon-md">add</span>
-                        <span>New Order</span>
+                <div class="hero-actions-group">
+                    <a th:href="@{/orders/new}" class="btn-primary">+ Book New Order</a>
+                    <a th:href="@{/customers}" class="btn-secondary">Customer Directory</a>
+                    <a th:href="@{/orders}" class="btn-secondary">All Orders</a>
+                    <a th:href="@{/more}" class="btn-secondary">Settings</a>
+                    <a th:if="${hasPendingBalance}" th:href="@{/payments/pending}" class="btn-due-alert">
+                        Pending Dues: <strong th:text="${@orderNumberFormatter.formatMoney(pendingTotal)}">Rs. 0</strong>
                     </a>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Quick Metrics Grid (Full Widescreen Responsive Row) -->
-        <div class="grid" th:classappend="${hasPendingBalance ? 'grid-4' : 'grid-3'}" style="margin-bottom: 1.75rem;">
-            <!-- Stat Tile 1: Recent Active Bookings -->
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <span class="material-symbols-rounded icon-lg">receipt_long</span>
+        <!-- Section: Fast Customer & Measurement Search -->
+        <section class="dashboard-search-section">
+            <div class="search-card">
+                <div class="search-text-col">
+                    <h2 class="search-title">Customer &amp; Measurement Search</h2>
+                    <p class="search-desc">Instant lookup for saved body measurements, customer order history, and contact records.</p>
                 </div>
-                <div class="stat-info">
-                    <div class="stat-value" th:text="${recentOrders != null ? recentOrders.size() : 0}">0</div>
-                    <div class="stat-label">Active Bookings</div>
+                <form th:action="@{/customers}" method="get" class="search-bar-form">
+                    <div class="search-field-wrapper">
+                        <svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input id="search-query"
+                               type="text"
+                               name="q"
+                               class="search-text-input"
+                               placeholder="Enter customer name or 10-digit mobile number..."
+                               required
+                               autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn-primary search-submit-btn">Search Profile</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- SECTION 1: Active Stitching & Delivery Work Queue -->
+        <section class="dashboard-table-section">
+            <div class="section-title-row">
+                <div>
+                    <h2 class="section-heading">Active Stitching &amp; Delivery Schedule</h2>
+                    <p class="section-subtext">Orders currently in tailoring and delivery queues, prioritized by earliest promised delivery date.</p>
+                </div>
+                <div th:if="${activeOrders != null and !activeOrders.isEmpty()}">
+                    <span class="badge badge-active-count" th:text="${activeOrders.size()} + ' Active Orders in Queue'">12 Active Orders in Queue</span>
                 </div>
             </div>
 
-            <!-- Stat Tile 2: Customer Directory -->
-            <a th:href="@{/customers}" class="stat-card" style="text-decoration: none;">
-                <div class="stat-icon secondary">
-                    <span class="material-symbols-rounded icon-lg">group</span>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value">Directory</div>
-                    <div class="stat-label">Customer Profiles &rarr;</div>
-                </div>
-            </a>
-
-            <!-- Stat Tile 3: Garments Catalog & Shop Settings -->
-            <a th:href="@{/more}" class="stat-card" style="text-decoration: none;">
-                <div class="stat-icon tertiary">
-                    <span class="material-symbols-rounded icon-lg">tune</span>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value">Settings</div>
-                    <div class="stat-label">Catalog &amp; Shop &rarr;</div>
-                </div>
-            </a>
-
-            <!-- Stat Tile 4: Pending Payments Summary Tile (Shown only when pending total > 0) -->
-            <a th:if="${hasPendingBalance}" th:href="@{/payments/pending}" class="stat-card" style="text-decoration: none;">
-                <div class="stat-icon" style="background-color: #FEE2E2; color: var(--md-error); border: 1.5px solid var(--md-outline);">
-                    <span class="material-symbols-rounded icon-lg">pending_actions</span>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" style="color: var(--md-error); font-size: 1.5rem;"
-                         th:text="${@orderNumberFormatter.formatMoney(pendingTotal)}">
-                        Rs. 9,500
-                    </div>
-                    <div class="stat-label" style="color: var(--md-error); font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
-                        <span>Pending Dues</span>
-                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Fast Customer Search Card -->
-        <div class="card" style="margin-bottom: 1.75rem; padding: 1.15rem 1.5rem;">
-            <form th:action="@{/customers}" method="get" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 260px; position: relative;">
-                    <span class="material-symbols-rounded" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--md-on-surface-variant); font-size: 20px;">search</span>
-                    <input type="text"
-                           name="q"
-                           class="form-control"
-                           placeholder="Search customer by name or 10-digit mobile number..."
-                           aria-label="Search customer"
-                           style="border-radius: var(--radius-full); padding-left: 48px; height: 50px;" />
-                </div>
-                <button type="submit" class="btn btn-dark" style="height: 50px; padding: 0 1.75rem;">
-                    <span>Find Customer</span>
-                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Recent Orders Card (Full Width Table) -->
-        <div class="card table-card" style="padding: 0; overflow: hidden; margin-bottom: 2rem;">
-            <div class="table-header">
-                <div class="table-header-left">
-                    <div class="table-header-icon orders-icon">
-                        <span class="material-symbols-rounded">receipt_long</span>
-                    </div>
-                    <div>
-                        <h3 class="table-header-title">Recent Orders</h3>
-                        <p class="table-header-subtitle">Latest Tailoring Bookings &amp; Schedules</p>
-                    </div>
-                </div>
-                <span class="badge badge-secondary" th:if="${recentOrders != null}" style="font-size: 0.85rem; padding: 0.35rem 0.9rem;">
-                    <span th:text="${recentOrders.size()}">0</span> Orders
-                </span>
-            </div>
-
-            <!-- Empty State -->
-            <div th:if="${recentOrders == null or recentOrders.isEmpty()}" class="empty-state">
-                <div class="empty-state-icon">
-                    <span class="material-symbols-rounded icon-xl">inventory_2</span>
-                </div>
-                <h4 style="margin: 0 0 0.4rem 0; color: var(--md-on-surface);">No orders recorded yet</h4>
-                <p style="margin: 0 0 1.25rem 0; color: var(--md-on-surface-variant); font-size: 0.9rem;">
-                    Use the order booking wizard to take measurements and confirm your first stitch order.
+            <div th:if="${activeOrders == null or activeOrders.isEmpty()}" class="empty-state-box">
+                <p class="empty-state-text">
+                    All customer orders are stitched, paid, and delivered!
                 </p>
-                <a th:href="@{/orders/new}" class="btn btn-secondary">
-                    <span class="material-symbols-rounded icon-md">add</span>
-                    <span>Book First Order</span>
-                </a>
+                <a th:href="@{/orders/new}" class="btn-primary btn-sm">+ Book New Customer Order</a>
             </div>
 
-            <!-- Recent Orders List -->
-            <div th:if="${recentOrders != null and !recentOrders.isEmpty()}" class="table-responsive">
-                <table class="data-table">
+            <div th:if="${activeOrders != null and !activeOrders.isEmpty()}" class="table-container">
+                <table class="active-orders-table">
                     <thead>
                         <tr>
-                            <th style="width: 110px;"><span class="material-symbols-rounded">tag</span><span>Order No</span></th>
-                            <th><span class="material-symbols-rounded">person</span><span>Customer</span></th>
-                            <th style="width: 85px; text-align: center;"><span class="material-symbols-rounded">checkroom</span><span>Items</span></th>
-                            <th style="min-width: 140px;"><span class="material-symbols-rounded">event</span><span>Delivery</span></th>
-                            <th style="min-width: 100px;"><span class="material-symbols-rounded">currency_rupee</span><span>Total</span></th>
-                            <th style="min-width: 130px;"><span class="material-symbols-rounded">account_balance_wallet</span><span>Status</span></th>
-                            <th style="width: 120px; text-align: right; padding-right: 1.5rem;"><span class="material-symbols-rounded">arrow_forward</span><span>Action</span></th>
+                            <th>Order No</th>
+                            <th>Customer &amp; Mobile</th>
+                            <th>Garments &amp; Stitching Status</th>
+                            <th>Promised Delivery</th>
+                            <th class="th-num">Total</th>
+                            <th class="th-status">Payment Status</th>
+                            <th class="th-action">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="ord : ${recentOrders}">
-                            <!-- Order No: TS-<year>-<4-digit order_no> -->
+                        <tr th:each="ord, stat : ${activeOrders}" th:if="${stat.index < 10}">
+                            <!-- Order No -->
                             <td>
-                                <a th:href="@{'/orders/' + ${ord.id}}" class="badge badge-primary" style="font-weight: 700; text-decoration: none;">
-                                    <span th:text="${@orderNumberFormatter.format(ord)}">TS-2026-0001</span>
+                                <a th:href="@{'/orders/' + ${ord.id}}" class="order-id-link">
+                                    <strong th:text="${@orderNumberFormatter.format(ord)}">TS-2026-0001</strong>
                                 </a>
                             </td>
 
-                            <!-- Customer Info -->
+                            <!-- Customer & Phone combined for clear hierarchy & generous column spacing -->
                             <td>
-                                <div style="display: flex; flex-direction: column;">
-                                    <a th:href="@{'/customers/' + ${ord.customer.id}}" class="customer-name-link" style="font-weight: 600;">
-                                        <span th:text="${ord.customer.name}">Ramesh Patel</span>
-                                    </a>
-                                    <span class="phone-display" style="font-size: 0.8rem;" th:text="${ord.customer.mobile}">
-                                        9876543210
-                                    </span>
+                                <div class="customer-cell-wrap">
+                                    <a th:href="@{'/customers/' + ${ord.customer.id}}" class="customer-name-link" th:text="${ord.customer.name}">Ramesh Patel</a>
+                                    <a th:href="'tel:' + ${ord.customer.mobile}" class="customer-phone-subtext" th:text="${ord.customer.mobile}">9876543210</a>
                                 </div>
                             </td>
 
-                            <!-- Items count -->
-                            <td style="text-align: center;">
-                                <span class="badge badge-neutral">
-                                    <span class="material-symbols-rounded icon-sm">checkroom</span>
-                                    <span th:text="${ord.itemCount}">1</span>
-                                </span>
-                            </td>
-
-                            <!-- Delivery Date -->
+                            <!-- Garments & Distinctive Badges with Tag Icon -->
                             <td>
-                                <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--md-on-surface-variant); font-size: 0.875rem; white-space: nowrap;">
-                                    <span class="material-symbols-rounded icon-sm">event</span>
-                                    <span th:if="${ord.nearestDeliveryDate != null}" th:text="${ord.nearestDeliveryDate}">2026-10-31</span>
-                                    <span th:if="${ord.nearestDeliveryDate == null}">N/A</span>
+                                <div class="item-tag-list">
+                                    <div th:each="item : ${ord.items}" class="item-tag-row">
+                                        <span class="garment-tag"
+                                              th:attr="data-garment=${#strings.toLowerCase(item.garment.name)}"
+                                              th:title="${item.garment.name} + ' Garment Tag'">
+                                            <svg class="garment-tag-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                                <circle cx="7" cy="7" r="1.5" fill="currentColor"></circle>
+                                            </svg>
+                                            <span class="garment-tag-label" th:text="${item.garment.name}">Shirt</span>
+                                        </span>
+                                        <span th:if="${item.isDelivered()}" class="status-pill delivered">&check; Delivered</span>
+                                        <span th:if="${item.isDone() and !item.isDelivered()}" class="status-pill done">&check; Done</span>
+                                        <span th:if="${!item.isDone() and !item.isDelivered()}" class="status-pill pending">&bull; Pending</span>
+                                    </div>
                                 </div>
                             </td>
 
-                            <!-- Total Amount: Rs. 1,500 -->
+                            <!-- Promised Delivery -->
                             <td>
-                                <strong style="color: var(--md-on-surface); font-size: 0.95rem; white-space: nowrap;"
-                                        th:text="${@orderNumberFormatter.formatMoney(ord.total)}">
-                                    Rs. 500
-                                </strong>
+                                <div class="delivery-cell-wrap">
+                                    <span th:if="${ord.nearestDeliveryDate != null}" class="delivery-date-text" th:text="${ord.nearestDeliveryDate}">2026-11-03</span>
+                                    <span th:if="${ord.nearestDeliveryDate == null}" class="text-muted">Unscheduled</span>
+                                </div>
                             </td>
 
-                            <!-- Balance Chip: green "Paid" or red "Balance Rs. 400" -->
-                            <td>
-                                <span th:if="${ord.isPaid()}" class="badge badge-success" style="white-space: nowrap;">
-                                    Paid
-                                </span>
-                                <span th:unless="${ord.isPaid()}" class="badge badge-danger" style="white-space: nowrap;"
-                                      th:text="'Balance ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">
-                                    Balance Rs. 400
-                                </span>
+                            <!-- Total -->
+                            <td class="td-num">
+                                <span class="order-total-text" th:text="${@orderNumberFormatter.formatMoney(ord.total)}">Rs. 500</span>
+                            </td>
+
+                            <!-- Payment Status (High Contrast Green Paid vs Red Due) -->
+                            <td class="td-status">
+                                <span th:if="${ord.isPaid()}" class="badge-paid">&check; Paid</span>
+                                <span th:unless="${ord.isPaid()}" class="badge-due" th:text="'Due ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">Due Rs. 400</span>
                             </td>
 
                             <!-- Action -->
-                            <td style="text-align: right; padding-right: 1.5rem; white-space: nowrap;">
-                                <a th:href="@{'/orders/' + ${ord.id}}" class="btn btn-sm btn-outline btn-table-action">
-                                    <span>Details</span>
-                                    <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                                </a>
+                            <td class="td-action">
+                                <a th:href="@{'/orders/' + ${ord.id}}" class="btn-secondary btn-sm table-action-btn">Open &rarr;</a>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                <div class="table-card-footer" th:if="${activeOrders.size() > 10}">
+                    <span class="table-footer-meta" th:text="'Showing top 10 prioritized orders of ' + ${activeOrders.size()} + ' in tailoring & delivery queue'">Showing top 10 of 120</span>
+                    <a th:href="@{/orders}" class="ledger-footer-link">View All Active Orders in Queue &rarr;</a>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+
+        <!-- SECTION 2: Studio Operations & Ledgers (Pending Payment Collections & Recent Bookings) -->
+        <section class="dashboard-ops-section">
+            <div class="section-title-row">
+                <div>
+                    <h2 class="section-heading">Studio Operations &amp; Ledgers</h2>
+                    <p class="section-subtext">Manage outstanding customer receivables and review recent booking activity across the shop floor.</p>
+                </div>
+            </div>
+
+            <!-- Dual Cards Layout for Collections & Recent Bookings -->
+            <div class="dashboard-ledger-grid">
+                <!-- Sub-Section 2.1: Pending Payment Collections -->
+                <div class="ledger-card">
+                    <div class="ledger-card-header">
+                        <div class="ledger-card-title-col">
+                            <div class="ledger-icon-wrap ledger-icon-due">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="ledger-title">Pending Payment Collections</h3>
+                                <p class="ledger-desc">Customer balances to collect upon trial fitting or delivery pickup.</p>
+                            </div>
+                        </div>
+                        <div class="ledger-due-badge" th:if="${hasPendingBalance}">
+                            <span class="due-badge-label">Total Due:</span>
+                            <strong th:text="${@orderNumberFormatter.formatMoney(pendingTotal)}">Rs. 99,685</strong>
+                        </div>
+                    </div>
+
+                    <div th:if="${!hasPendingBalance or pendingRows == null or pendingRows.isEmpty()}" class="ledger-empty-box">
+                        <p class="text-muted">Zero pending dues! All customer balances are fully collected.</p>
+                    </div>
+
+                    <div th:if="${hasPendingBalance and pendingRows != null and !pendingRows.isEmpty()}" class="table-container ledger-table-wrap">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th>Order No</th>
+                                    <th>Customer &amp; Contact</th>
+                                    <th>Timeline</th>
+                                    <th class="th-num">Balance Due</th>
+                                    <th class="th-action">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="row : ${pendingRows}">
+                                    <td>
+                                        <a th:href="@{/orders/{id}(id=${row.orderId})}" class="order-id-link" th:text="${row.orderNumber}">TS-2026-0001</a>
+                                    </td>
+                                    <td>
+                                        <div class="customer-cell-wrap">
+                                            <span class="customer-name-bold" th:text="${row.customerName}">Ramesh Patel</span>
+                                            <a th:href="'tel:' + ${row.customerPhone}" class="customer-phone-subtext" th:text="${row.customerPhone}">9876543210</a>
+                                        </div>
+                                    </td>
+                                    <td class="text-muted text-sm" th:text="${row.dueText}">due in 2 days</td>
+                                    <td class="td-num">
+                                        <span class="due-amount-pill" th:text="${@orderNumberFormatter.formatMoney(row.balance)}">Rs. 400</span>
+                                    </td>
+                                    <td class="td-action">
+                                        <a th:href="@{/orders/{id}(id=${row.orderId})} + '#payments-section'" class="btn-collect-pill">Collect &rarr;</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ledger-card-footer">
+                        <a th:href="@{/payments/pending}" class="ledger-footer-link">View Full Pending Dues Ledger &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Sub-Section 2.2: Recent Bookings Ledger -->
+                <div class="ledger-card">
+                    <div class="ledger-card-header">
+                        <div class="ledger-card-title-col">
+                            <div class="ledger-icon-wrap ledger-icon-bookings">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="ledger-title">Recent Studio Bookings</h3>
+                                <p class="ledger-desc">Latest customer orders registered and booked in the studio.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge badge-neutral" th:if="${recentOrders != null}" th:text="${recentOrders.size()} + ' Recent'">20 Recent</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${recentOrders == null or recentOrders.isEmpty()}" class="ledger-empty-box">
+                        <p class="text-muted">No orders recorded yet. <a th:href="@{/orders/new}">Book First Order &rarr;</a></p>
+                    </div>
+
+                    <div th:if="${recentOrders != null and !recentOrders.isEmpty()}" class="table-container ledger-table-wrap">
+                        <table class="ledger-table">
+                            <thead>
+                                <tr>
+                                    <th>Order No</th>
+                                    <th>Customer &amp; Contact</th>
+                                    <th>Items</th>
+                                    <th>Booked Date</th>
+                                    <th class="th-num">Total</th>
+                                    <th class="th-status">Payment</th>
+                                    <th class="th-action">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="ord : ${recentOrders}">
+                                    <td>
+                                        <a th:href="@{'/orders/' + ${ord.id}}" class="order-id-link" th:text="${@orderNumberFormatter.format(ord)}">TS-2026-0001</a>
+                                    </td>
+                                    <td>
+                                        <div class="customer-cell-wrap">
+                                            <a th:href="@{'/customers/' + ${ord.customer.id}}" class="customer-name-link" th:text="${ord.customer.name}">Ramesh Patel</a>
+                                            <span class="customer-phone-subtext" th:text="${ord.customer.mobile}">9876543210</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="item-count-chip" th:text="${ord.itemCount} + ' item' + (${ord.itemCount != 1} ? 's' : '')">1 item</span>
+                                    </td>
+                                    <td class="text-muted text-sm" th:text="${#temporals.format(ord.createdAt, 'dd MMM, hh:mm a')}">13 Oct, 10:30 PM</td>
+                                    <td class="td-num">
+                                        <span class="order-total-text" th:text="${@orderNumberFormatter.formatMoney(ord.total)}">Rs. 500</span>
+                                    </td>
+                                    <td class="td-status">
+                                        <span th:if="${ord.isPaid()}" class="badge-paid">&check; Paid</span>
+                                        <span th:unless="${ord.isPaid()}" class="badge-due" th:text="'Due ' + ${@orderNumberFormatter.formatMoney(ord.balance)}">Due Rs. 400</span>
+                                    </td>
+                                    <td class="td-action">
+                                        <a th:href="@{'/orders/' + ${ord.id}}" class="btn-secondary btn-sm table-action-btn">Details</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ledger-card-footer">
+                        <a th:href="@{/orders}" class="ledger-footer-link">View All Studio Orders &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
 </body>
 </html>

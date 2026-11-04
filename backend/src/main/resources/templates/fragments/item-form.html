@@ -2,188 +2,115 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <!--
   fragments/item-form.html: Shared item entry form fragment.
-  Material You MD3 redesign with tactile inputs, chips, camera trigger, and zero emojis.
+  Strict implementation of Sarvam AI / Indus-Inspired SaaS Interface.
 -->
 <body>
 
     <div th:fragment="item-form(formAction, isEdit)">
         <form th:action="${formAction}" th:object="${itemForm}" method="post" id="itemDetailsForm">
 
-            <!-- =========================================================================
-                 SECTION 1: MEASUREMENTS
-                 ========================================================================= -->
-            <div class="card" style="margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center;">
-                        <span class="material-symbols-rounded icon-md">straighten</span>
-                    </div>
+            <!-- SECTION 1: MEASUREMENTS -->
+            <div class="card">
+                <div class="section-title-row">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--md-on-surface);">
-                            Measurements — <span th:text="${garment.name}">Shirt</span>
-                        </h3>
-                        <p style="margin: 0.15rem 0 0 0; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                            Enter values in inches. All fields are editable; blank boxes are permitted.
-                        </p>
+                        <h2 class="card-title">Measurements &mdash; <span th:text="${garment.name}">Shirt</span></h2>
+                        <p class="card-subtitle">Enter values in inches. All fields are editable; blank boxes are permitted.</p>
                     </div>
                 </div>
 
-                <!-- Prefill notification banner if filled from prior order -->
-                <div th:if="${prefillInfo != null}"
-                     style="background: var(--md-secondary-container); border: 1.5px solid var(--md-outline); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.875rem; color: var(--md-on-secondary-container); display: flex; align-items: center; gap: 0.65rem;">
-                    <span class="material-symbols-rounded icon-md" style="color: var(--md-primary);">history</span>
-                    <span>Prefilled from <strong><span th:text="${prefillInfo.date()}">12 Sep 2026</span></strong> snapshot. You can modify any values.</span>
+                <div th:if="${prefillInfo != null}" class="alert alert-notice" style="margin-bottom: 16px;">
+                    <span>Prefilled from previous <strong th:text="${prefillInfo.date()}">12 Sep 2026</strong> snapshot. You can modify any values.</span>
                 </div>
 
-                <!-- Measurement Fields Grid -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem;">
-                    <div th:each="field : ${garmentFields}"
-                         style="background: var(--md-surface-container-low); border: 1.5px solid var(--md-outline); border-radius: var(--radius-md); padding: 0.85rem;">
-                        <label th:for="'m_' + ${field.id}"
-                               style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.825rem; margin-bottom: 0.4rem; color: var(--md-on-surface-variant);">
-                            <span th:text="${field.label}">Chest</span>
-                            <span style="font-weight: 400; font-size: 0.75rem; color: var(--md-on-surface-variant);" th:text="'(' + ${field.unit} + ')'">inch</span>
-                        </label>
-                        <input type="number"
-                               step="0.25"
-                               min="0"
-                               th:id="'m_' + ${field.id}"
-                               th:name="'measurements[' + ${field.id} + ']'"
-                               th:value="${itemForm.measurements != null ? itemForm.measurements.get(field.id) : ''}"
-                               class="form-control"
-                               placeholder="0.0"
-                               style="text-align: right; font-weight: 700; font-size: 1.1rem; height: 46px;">
-                    </div>
+                <div class="table-container" style="max-width: 580px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Measurement Field</th>
+                                <th>Unit</th>
+                                <th>Dimension Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="field : ${garmentFields}">
+                                <td>
+                                    <label th:for="'m_' + ${field.id}" th:text="${field.label}" class="form-label font-medium" style="margin: 0;">Chest</label>
+                                </td>
+                                <td class="text-muted" th:text="${field.unit}">inch</td>
+                                <td>
+                                    <input type="number"
+                                           step="0.25"
+                                           min="0"
+                                           th:id="'m_' + ${field.id}"
+                                           th:name="'measurements[' + ${field.id} + ']'"
+                                           th:value="${itemForm.measurements != null ? itemForm.measurements.get(field.id) : ''}"
+                                           placeholder="0.0"
+                                           style="width: 130px; height: 36px;">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- =========================================================================
-                 SECTION 2: STYLING NOTES & TAP CHIPS
-                 ========================================================================= -->
-            <div class="card" style="margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center;">
-                        <span class="material-symbols-rounded icon-md">stylus_note</span>
-                    </div>
-                    <div>
-                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--md-on-surface);">
-                            Styling Instructions &amp; Notes
-                        </h3>
-                        <p style="margin: 0.15rem 0 0 0; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                            Tap chips for quick tags, or type custom tailoring instructions below.
-                        </p>
-                    </div>
+            <!-- SECTION 2: STYLING NOTES & TAP CHIPS -->
+            <div class="card">
+                <h2 class="card-title">Styling Instructions &amp; Customizations</h2>
+                <p class="card-subtitle">Click quick tags or enter bespoke tailoring specifications.</p>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+                    <button type="button" class="tap-chip" data-note="Extra Lining">+ Extra Lining</button>
+                    <button type="button" class="tap-chip" data-note="Padding">+ Padding</button>
+                    <button type="button" class="tap-chip" data-note="Loose Fit">+ Loose Fit</button>
+                    <button type="button" class="tap-chip" data-note="Slim Fit">+ Slim Fit</button>
+                    <button type="button" class="tap-chip" data-note="Mandarin Collar">+ Mandarin Collar</button>
+                    <button type="button" class="tap-chip" data-note="2 Pockets">+ 2 Pockets</button>
+                    <button type="button" class="tap-chip" data-note="Side Slits">+ Side Slits</button>
                 </div>
 
-                <!-- Tap Chips Container -->
-                <div class="tap-chips-container" style="margin-bottom: 1rem;">
-                    <button type="button" class="tap-chip" data-note="Extra Lining">
-                        <span class="material-symbols-rounded icon-sm">add</span>Extra Lining
-                    </button>
-                    <button type="button" class="tap-chip" data-note="Padding">
-                        <span class="material-symbols-rounded icon-sm">add</span>Padding
-                    </button>
-                    <button type="button" class="tap-chip" data-note="Loose Fit">
-                        <span class="material-symbols-rounded icon-sm">add</span>Loose Fit
-                    </button>
-                    <button type="button" class="tap-chip" data-note="Slim Fit">
-                        <span class="material-symbols-rounded icon-sm">add</span>Slim Fit
-                    </button>
-                    <button type="button" class="tap-chip" data-note="Mandarin Collar">
-                        <span class="material-symbols-rounded icon-sm">add</span>Mandarin Collar
-                    </button>
-                    <button type="button" class="tap-chip" data-note="2 Pockets">
-                        <span class="material-symbols-rounded icon-sm">add</span>2 Pockets
-                    </button>
-                    <button type="button" class="tap-chip" data-note="Side Slits">
-                        <span class="material-symbols-rounded icon-sm">add</span>Side Slits
-                    </button>
+                <div class="form-group">
+                    <label for="itemNotes" class="form-label">Custom Tailoring Notes:</label>
+                    <textarea id="itemNotes"
+                              th:field="*{notes}"
+                              rows="3"
+                              placeholder="e.g. Extra lining inside, front left pocket with button, contrast stitching..."></textarea>
                 </div>
-
-                <!-- Notes Textarea -->
-                <textarea id="itemNotes"
-                          th:field="*{notes}"
-                          rows="3"
-                          class="form-control"
-                          placeholder="e.g. Extra lining inside, front left pocket with button..."></textarea>
             </div>
 
-            <!-- =========================================================================
-                 SECTION 3: DELIVERY DATE & PRICING
-                 ========================================================================= -->
-            <div class="card" style="margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); display: flex; align-items: center; justify-content: center;">
-                        <span class="material-symbols-rounded icon-md">payments</span>
-                    </div>
-                    <div>
-                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--md-on-surface);">
-                            Delivery Schedule &amp; Pricing
-                        </h3>
-                        <p style="margin: 0.15rem 0 0 0; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                            Set the promised delivery date and base tailoring price for this piece.
-                        </p>
-                    </div>
-                </div>
+            <!-- SECTION 3: DELIVERY SCHEDULE & PRICING -->
+            <div class="card">
+                <h2 class="card-title">Promised Delivery &amp; Stitching Price</h2>
+                <p class="card-subtitle">Set customer delivery commitment date and craftsmanship pricing.</p>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
-                    <!-- Promised Delivery Date -->
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="itemDeliveryDate" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 0.4rem;">
-                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">event</span>
-                            <span>Promised Delivery Date <span style="color: var(--md-error);">*</span></span>
-                        </label>
+                        <label for="itemDeliveryDate" class="form-label">Promised Delivery Date *:</label>
                         <input type="date"
                                id="itemDeliveryDate"
                                th:field="*{deliveryDate}"
                                th:min="${minDate}"
-                               class="form-control"
                                required>
-                        <div class="field-error" th:if="${#fields.hasErrors('deliveryDate')}" th:errors="*{deliveryDate}"></div>
-                        <span style="font-size: 0.75rem; color: var(--md-on-surface-variant); margin-top: 0.25rem; display: block;">
-                            Select today or any upcoming delivery date.
-                        </span>
+                        <span th:if="${#fields.hasErrors('deliveryDate')}" th:errors="*{deliveryDate}" class="form-error"></span>
                     </div>
 
-                    <!-- Stitching Price -->
                     <div class="form-group">
-                        <label for="itemPrice" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 0.4rem;">
-                            <span class="material-symbols-rounded icon-sm" style="color: var(--md-primary);">currency_rupee</span>
-                            <span>Stitching Price (₹) <span style="color: var(--md-error);">*</span></span>
-                        </label>
+                        <label for="itemPrice" class="form-label">Stitching Price (₹) *:</label>
                         <input type="number"
                                id="itemPrice"
                                th:field="*{price}"
                                step="1"
                                min="0"
-                               class="form-control"
                                placeholder="0"
-                               style="font-weight: 700; font-size: 1.15rem;"
                                required>
-                        <div class="field-error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
-                        <span style="font-size: 0.75rem; color: var(--md-on-surface-variant); margin-top: 0.25rem; display: block;">
-                            Base tailoring charge for this garment item.
-                        </span>
+                        <span th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="form-error"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- =========================================================================
-                 SECTION 4: CLOTH & PATTERN PHOTOS
-                 ========================================================================= -->
-            <div class="card" style="margin-bottom: 2rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--md-secondary-container); color: var(--md-on-secondary-container); display: flex; align-items: center; justify-content: center;">
-                        <span class="material-symbols-rounded icon-md">photo_camera</span>
-                    </div>
-                    <div>
-                        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--md-on-surface);">
-                            Fabric &amp; Design Photos
-                        </h3>
-                        <p style="margin: 0.15rem 0 0 0; font-size: 0.85rem; color: var(--md-on-surface-variant);">
-                            Snap fabric swatches or design references. Shrunk to ~1280px to save storage.
-                        </p>
-                    </div>
-                </div>
+            <!-- SECTION 4: FABRIC & DESIGN PHOTOS -->
+            <div class="card">
+                <h2 class="card-title">Fabric &amp; Design References</h2>
+                <p class="card-subtitle">Attach cloth swatches, patterns, or styling photo references.</p>
 
                 <!-- Hidden camera file input -->
                 <input type="file"
@@ -192,40 +119,27 @@
                        capture="environment"
                        style="display: none;">
 
-                <!-- Add Photo Trigger Button -->
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <button type="button"
-                            id="addPhotoBtn"
-                            class="btn btn-outline"
-                            style="border-style: dashed; border-width: 1.5px; border-color: var(--md-primary); color: var(--md-primary); background: var(--md-surface-container-low);">
-                        <span class="material-symbols-rounded icon-md">add_a_photo</span>
-                        <span>Add Photo (Camera / Gallery)</span>
-                    </button>
-                    <span style="font-size: 0.8rem; color: var(--md-on-surface-variant);">
-                        Max 5 MB. Formats: JPEG, PNG, WebP.
-                    </span>
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <button type="button" id="addPhotoBtn" class="btn-secondary btn-sm">+ Add Photo (Camera / Gallery)</button>
+                    <span class="text-muted" style="font-size: 12.5px;">Max 5 MB &bull; JPEG, PNG, WebP</span>
                 </div>
 
-                <!-- Async upload progress alert -->
-                <div id="photoUploadStatus"
-                     style="display: none; margin-top: 0.85rem; font-size: 0.85rem; color: var(--md-on-info-container); background: var(--md-info-container); border: 1.5px solid var(--md-outline); padding: 0.65rem 1rem; border-radius: var(--radius-sm); align-items: center; gap: 0.5rem;">
-                    <span class="material-symbols-rounded icon-sm">sync</span>
-                    <span id="photoUploadStatusText" style="font-weight: 500;">Uploading photo...</span>
+                <!-- Async upload status -->
+                <div id="photoUploadStatus" style="display: none; margin-bottom: 12px;" class="alert alert-notice">
+                    <span id="photoUploadStatusText">Uploading photo...</span>
                 </div>
 
-                <!-- Photo thumbnails grid -->
-                <div id="photoThumbnailsContainer" class="photo-thumbnails-grid">
-                    <!-- Re-render existing uploaded photos if form reloaded on validation error -->
+                <!-- Photo thumbnails container -->
+                <div id="photoThumbnailsContainer" style="display: flex; gap: 12px; flex-wrap: wrap;">
                     <th:block th:if="${itemForm.photoUrls != null and not #lists.isEmpty(itemForm.photoUrls)}">
                         <div th:each="photoUrl, iter : ${itemForm.photoUrls}"
-                             class="photo-thumbnail-card"
-                             th:attr="data-url=${photoUrl}">
-                            <img th:src="${photoUrl}" alt="Fabric Photo" class="photo-thumbnail-img">
+                             th:attr="data-url=${photoUrl}"
+                             style="position: relative; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 8px; background: var(--color-surface-subtle); width: 110px; display: flex; flex-direction: column; align-items: center;">
+                            <img th:src="${photoUrl}" alt="Fabric Photo" style="width: 90px; height: 90px; object-fit: cover; border-radius: var(--radius-xs);"><br>
                             <button type="button"
-                                    class="btn-remove-photo"
-                                    th:attr="data-url=${photoUrl}, data-public-id=${itemForm.photoPublicIds != null and iter.index < #lists.size(itemForm.photoPublicIds) ? itemForm.photoPublicIds[iter.index] : photoUrl}"
-                                    title="Remove Photo">
-                                <span class="material-symbols-rounded icon-sm">close</span>
+                                    class="btn-remove-photo btn-danger btn-sm"
+                                    th:attr="data-url=${photoUrl}, data-public-id=${itemForm.photoPublicIds != null and iter.index < #lists.size(itemForm.photoPublicIds) ? itemForm.photoPublicIds[iter.index] : photoUrl}">
+                                Remove
                             </button>
                             <input type="hidden" name="photoUrls" th:value="${photoUrl}">
                             <input type="hidden" name="photoPublicIds"
@@ -235,32 +149,18 @@
                 </div>
             </div>
 
-            <!-- =========================================================================
-                 SECTION 5: ACTION BUTTONS
-                 ========================================================================= -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1.5px solid var(--md-outline); padding-top: 1.5rem;">
-                <a th:href="${cancelUrl != null ? cancelUrl : '/orders/new/garment'}" class="btn btn-outline">
-                    <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                    <span th:text="${isEdit ? 'Cancel' : 'Back to Garment'}">Back to Garment</span>
-                </a>
-
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;" th:if="${!isEdit}">
-                    <button type="submit" name="action" value="more" class="btn btn-secondary">
-                        <span class="material-symbols-rounded icon-sm">add</span>
-                        <span>Save &amp; Add More</span>
-                    </button>
-                    <button type="submit" name="action" value="finish" class="btn btn-primary">
-                        <span>Save &amp; Finish</span>
-                        <span class="material-symbols-rounded icon-sm">arrow_forward</span>
-                    </button>
-                </div>
-
-                <div th:if="${isEdit}">
-                    <button type="submit" class="btn btn-primary">
-                        <span class="material-symbols-rounded icon-sm">check</span>
-                        <span>Update Item</span>
-                    </button>
-                </div>
+            <!-- SECTION 5: ACTION BUTTONS -->
+            <div class="form-actions" style="margin-top: 24px;">
+                <th:block th:if="${!isEdit}">
+                    <button type="submit" name="action" value="finish" class="btn-primary">Save &amp; Finish &rarr;</button>
+                    <button type="submit" name="action" value="more" class="btn-secondary">+ Save &amp; Add Another Piece</button>
+                </th:block>
+                <th:block th:if="${isEdit}">
+                    <button type="submit" class="btn-primary">Update Item &rarr;</button>
+                </th:block>
+                <a th:href="${cancelUrl != null ? cancelUrl : '/orders/new/garment'}"
+                   class="btn-secondary"
+                   th:text="${isEdit ? 'Cancel' : '&larr; Back to Garment'}">&larr; Back to Garment</a>
             </div>
 
         </form>

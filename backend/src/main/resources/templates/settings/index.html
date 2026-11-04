@@ -1,54 +1,57 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<!--
-  settings/index.html: Shop settings view.
-  Material You MD3 redesign, zero emojis, no bottom bar.
--->
 <head th:replace="~{fragments/layout :: page-head('Settings')}"></head>
 <body>
+
     <header th:replace="~{fragments/layout :: top-bar}"></header>
 
-    <div class="container settings-container" style="max-width: 1440px; width: 100%; margin: 1.5rem auto; padding: 0 1.5rem;">
+    <main class="page-content">
         <div th:replace="~{fragments/layout :: flash-messages}"></div>
 
-        <!-- Breadcrumb & Back Link -->
-        <div style="margin-bottom: 1.25rem;">
-            <a th:href="@{/more}" class="back-link">
-                <span class="material-symbols-rounded icon-sm">arrow_back</span>
-                <span>Back to More &amp; Settings</span>
-            </a>
+        <!-- Back to More Navigation -->
+        <div style="margin-bottom: var(--space-4);">
+            <a th:href="@{/more}" class="btn-back">&larr; Back to More &amp; Settings</a>
         </div>
 
-        <div class="card card-hero" style="margin-bottom: 1.75rem; box-shadow: var(--shadow-3);">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--md-primary); color: var(--md-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline);">
-                    <span class="material-symbols-rounded icon-lg">settings</span>
-                </div>
-                <div>
-                    <h2 style="font-size: 1.65rem; font-weight: 700; margin: 0; color: var(--md-on-surface);">Shop Settings</h2>
-                    <p style="margin: 0.15rem 0 0 0; font-size: 0.95rem; color: var(--md-on-surface-variant);">
-                        Garment types, measurement field configurations, and staff management hub.
-                    </p>
-                </div>
-            </div>
-        </div>
+        <section class="dashboard-hero-section">
+            <h1 class="page-title">Shop Settings</h1>
+            <p class="section-subtext">Garment types, measurement field configurations, and staff management hub.</p>
+        </section>
 
-        <div class="card card-elevated" style="box-shadow: var(--shadow-2); border: 1.5px solid var(--md-outline); border-radius: var(--radius-lg);">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a th:href="@{/settings/garments}" class="btn btn-primary" th:if="${isOwner}">
-                    <span class="material-symbols-rounded icon-sm">checkroom</span>
-                    <span>Manage Garments &amp; Templates</span>
-                </a>
-                <a th:href="@{/signup}" class="btn btn-secondary" th:if="${isOwner}">
-                    <span class="material-symbols-rounded icon-sm">group_add</span>
-                    <span>Add Staff Member</span>
-                </a>
-                <a th:href="@{/}" class="btn btn-outline">
-                    <span class="material-symbols-rounded icon-sm">dashboard</span>
-                    <span>Dashboard</span>
-                </a>
+        <section class="dashboard-table-section">
+            <div class="grid-3">
+                <div class="card" th:if="${isOwner}" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 class="card-title">Garments &amp; Templates</h3>
+                        <p class="card-subtitle">Manage garment categories and customize measurement field specifications.</p>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <a th:href="@{/settings/garments}" class="btn-primary btn-sm">Manage Templates &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="card" th:if="${isOwner}" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 class="card-title">Staff Management</h3>
+                        <p class="card-subtitle">Register new studio staff tailors and manage account roles.</p>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <a th:href="@{/signup}" class="btn-secondary btn-sm">+ Add Staff Member</a>
+                    </div>
+                </div>
+
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 class="card-title">Studio Dashboard</h3>
+                        <p class="card-subtitle">Return to the primary operations command center.</p>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <a th:href="@{/}" class="btn-secondary btn-sm">Return Home &rarr;</a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
+
 </body>
 </html>
