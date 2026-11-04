@@ -9,22 +9,29 @@
 Geetanjali/
 ├── .git/                                         # Git version control repository
 ├── .idea/                                        # IDE project configuration
-├── docs/                                         # Documentation assets
+├── docs/                                         # Complete engineering documentation suite & architecture
+│   ├── images/                                   # High-resolution screenshots of the studio interface
+│   ├── 01-PROBLEM_IDENTIFICATION_AND_ORIGIN_STORY.md
+│   ├── 02-SYSTEM_ARCHITECTURE_FLOWS_AND_ERD.md
+│   ├── 03-DYNAMIC_MEASUREMENT_ENGINE_AND_SPECIFICATIONS.md
+│   ├── 04-ORDER_LIFECYCLE_FINANCIALS_AND_CAPACITY_SCHEDULER.md
+│   ├── 05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md
+│   └── 06-FUTURE_ROADMAP_AND_SYSTEM_UPGRADES.md
 ├── uploads/                                      # Uploaded garment & cloth swatch photos
-├── README.md                                     # Project overview and Stage 2 demo guide
-├── VIVA_NOTES.md                                 # Viva exam Q&A, architectural rationale & flows
+├── README.md                                     # Dedicated project overview & quickstart manual
 ├── PROJECT_STRUCTURE_AND_CODEBASE_REFERENCE.md   # [THIS FILE] Complete codebase tree & technical reference
-└── backend/                                      # Spring Boot 4.1.1 & Java 21 backend application
+└── System/                                       # Spring Boot 4.1.1 & Java 21 core enterprise system
     ├── pom.xml                                   # Maven dependencies, build plugins & configuration
     ├── mvnw                                      # Maven wrapper shell script (Linux/macOS)
     ├── mvnw.cmd                                  # Maven wrapper batch script (Windows)
     ├── uploads/                                  # Development upload storage directory
     └── src/
-        ├── test/                                 # Automated Test Suite (141 Unit & Integration Tests)
+        ├── test/                                 # Automated Test Suite (165 Unit & Integration Tests)
         │   └── java/
         │       └── com/geetanjali/backend/
         │           ├── controller/
         │           │   ├── AuthControllerTest.java
+        │           │   ├── CalendarControllerTest.java
         │           │   ├── CustomerControllerTest.java
         │           │   ├── CustomerDetailControllerTest.java
         │           │   ├── GarmentControllerTest.java
@@ -32,7 +39,14 @@ Geetanjali/
         │           │   ├── MoreControllerTest.java
         │           │   ├── OrderControllerTest.java
         │           │   ├── OrderWizardControllerTest.java
-        │           │   └── PaymentControllerTest.java
+        │           │   ├── OrderWizardCustomerPreselectTest.java
+        │           │   ├── PaymentControllerTest.java
+        │           │   ├── advice/
+        │           │   │   └── GlobalExceptionHandlerTest.java
+        │           │   └── api/
+        │           │       ├── AssistantApiControllerTest.java
+        │           │       ├── CalendarApiControllerTest.java
+        │           │       └── PhotoApiControllerTest.java
         │           ├── entity/
         │           │   ├── CustomerOrderCalculatedGettersTest.java
         │           │   └── OrderItemTest.java
@@ -42,6 +56,7 @@ Geetanjali/
         │           ├── security/
         │           │   └── PasswordHashTest.java
         │           └── service/
+        │               ├── CalendarServiceTest.java
         │               ├── CustomerAndGarmentServiceTest.java
         │               ├── CustomerServiceTest.java
         │               ├── DeliveryServiceTest.java
@@ -54,7 +69,9 @@ Geetanjali/
         │               ├── OrderTransactionRollbackIntegrationTest.java
         │               ├── OrderWizardServiceTest.java
         │               ├── PaymentServiceTest.java
-        │               └── PhoneNumbersTest.java
+        │               ├── PhoneNumbersTest.java
+        │               └── assistant/
+        │                   └── ToolRegistryServiceTest.java
         └── main/
             ├── resources/
             │   ├── application.properties        # App properties: DB connection, JPA, Flyway, file uploads
@@ -65,15 +82,20 @@ Geetanjali/
             │   │       └── V3__stage2_delivery.sql # Delivery status, timestamps, and delivery_override audit table
             │   ├── static/                       # Static Web Assets (CSS, JS)
             │   │   ├── css/
-            │   │   │   └── app.css               # Material You MD3 design tokens, theme scrollbars, responsive grids
+            │   │   │   ├── app.css               # Sarvam AI design tokens, theme scrollbars, modals, assistant drawer
+            │   │   │   └── calendar.css          # Google Calendar boxed month grid, capacity chips, executive sidebar
             │   │   └── js/
             │   │       ├── app.js                # Global helpers: toasts, modals, password reveal
+            │   │       ├── calendar.js           # Interactive calendar navigation, schedule inspector, initial avatars
+            │   │       ├── floating-assistant.js # AI floating drawer: streaming markdown, nested tables, wide mode
             │   │       └── new-order.js          # Async customer lookup, interactive chips, photo upload
             │   └── templates/                    # Server-Side Thymeleaf HTML Templates
             │       ├── more.html                 # More features and shop navigation hub
             │       ├── auth/
             │       │   ├── login.html            # Staff & Owner login screen
             │       │   └── signup.html           # Initial owner registration screen
+            │       ├── calendar/
+            │       │   └── index.html            # Google Calendar-style delivery grid, monthly stats, top days
             │       ├── customers/
             │       │   ├── index.html            # Customer directory with live search & order history count
             │       │   └── detail.html           # 2-column widescreen profile: details, measurements & scrollable orders
@@ -83,14 +105,14 @@ Geetanjali/
             │       │   ├── 5xx.html              # Internal server error page
             │       │   └── error.html            # Generic fallback error page
             │       ├── fragments/
-            │       │   ├── layout.html           # Master layout: top navbar, theme headers, alerts, progress bar
-            │       │   └── item-form.html        # Reusable garment measurement input form fragment
+            │       │   ├── layout.html           # Master layout: top navbar, collapsible sidebar, AI drawer, alerts
+            │       │   └── item-form.html        # Reusable garment measurement input form fragment with capacity modal
             │       ├── home/
             │       │   └── index.html            # Executive dashboard: metrics row, customer search & recent orders
             │       ├── orders/
             │       │   ├── index.html            # All orders: earliest delivery sorting, load more, completion filter
             │       │   ├── detail.html           # Order details: items, open measurements, delivery block & override, ledger
-            │       │   ├── item-edit.html        # Edit item notes, price, and delivery date
+            │       │   ├── item-edit.html        # Edit item notes, price, and delivery date with capacity check
             │       │   ├── wizard-customer.html  # Step 1: Customer identification with live AJAX lookup
             │       │   ├── wizard-garment.html   # Step 2: Garment category selection tiles
             │       │   ├── wizard-item.html      # Step 3: Measurements form with automatic snapshot prefill
@@ -114,6 +136,7 @@ Geetanjali/
                     │   └── GlobalModelAdvice.java      # Binds currentUser, shopName, currentUri to every template
                     ├── controller/               # Spring MVC Web Controllers (Thin HTTP Layer)
                     │   ├── AuthController.java   # Login, registration, and logout handling
+                    │   ├── CalendarController.java # Google Calendar-style month delivery view (/calendar)
                     │   ├── CustomerController.java # Customer directory and detailed profile view
                     │   ├── GarmentController.java# Garment catalog and template settings
                     │   ├── HomeController.java   # Main dashboard (/), metrics, customer search, top 20 orders
@@ -122,12 +145,20 @@ Geetanjali/
                     │   ├── OrderWizardController.java # 4-step order wizard navigation and cart management
                     │   ├── PaymentController.java# Pending payments ledger (/payments/pending)
                     │   └── api/                  # RESTful AJAX Endpoints (@RestController)
+                    │       ├── AssistantApiController.java # POST /api/assistant/chat (Dual-provider AI stream)
+                    │       ├── CalendarApiController.java  # GET /api/calendar/capacity, /month, /day
                     │       ├── CustomerApiController.java  # GET /api/customers/lookup (Live mobile autofill)
                     │       ├── CustomerLookupResponse.java # JSON DTO for customer lookup
                     │       └── PhotoApiController.java     # POST /api/photos/upload (Cloth photo upload)
                     ├── dto/                      # Data Transfer Objects
                     │   ├── PendingPaymentRow.java     # Row representation for pending payments table
                     │   ├── PendingPaymentsSummary.java # Aggregated outstanding debt summary DTO
+                    │   ├── calendar/             # Delivery Calendar DTOs
+                    │   │   ├── CalendarDaySummaryDto.java # Day cell summary (itemCount, orderCount, capacity color)
+                    │   │   ├── CalendarOrderItemDto.java  # Item detail for schedule inspector
+                    │   │   ├── DayCapacityDto.java        # Workload metrics (maxReached, overbooking, color)
+                    │   │   ├── MonthCalendarDto.java      # Sun-Sat grid & month metadata
+                    │   │   └── TopDeliveryDayDto.java     # Ranked delivery day peak metrics
                     │   ├── draft/                # In-Memory Wizard Session DTOs
                     │   │   ├── OrderDraft.java       # Session cart holding customer, items, and active draft
                     │   │   └── OrderDraftItem.java   # Draft item holding garment, measurements, notes, price
@@ -136,7 +167,7 @@ Geetanjali/
                     │   │   ├── CustomerStepForm.java # Step 1: Customer mobile and name
                     │   │   ├── FieldForm.java        # Garment measurement field configuration form
                     │   │   ├── GarmentForm.java      # Garment category creation/edit form
-                    │   │   ├── ItemForm.java         # Step 3: Measurements, notes, delivery date, price
+                    │   │   ├── ItemForm.java         # Step 3: Measurements, notes, delivery date, price, overbooking confirmation
                     │   │   ├── OverrideForm.java     # Owner delivery override reason form
                     │   │   ├── PaymentForm.java      # Add payment dialog form (amount, mode, date)
                     │   │   └── SignupForm.java       # Owner signup registration form
@@ -185,6 +216,7 @@ Geetanjali/
                     │   └── SecurityConfig.java          # SecurityFilterChain, URL rules, CSRF & session rules
                     ├── service/                  # Business Logic Layer (@Service & @Transactional)
                     │   ├── AuthService.java             # User registration and authentication service
+                    │   ├── CalendarService.java         # Daily capacity calculation, month grid, top delivery days
                     │   ├── CustomerService.java         # Customer lookups, phone normalization, history queries
                     │   ├── DeliveryService.java         # Delivery block, owner override enforcement & audit logging
                     │   ├── GarmentService.java          # Garment catalog & measurement fields management
@@ -193,6 +225,12 @@ Geetanjali/
                     │   ├── OrderWizardService.java      # Multi-step session cart draft management
                     │   ├── PaymentService.java          # Advance recording & payment additions with validation
                     │   ├── ShopService.java             # Shop branding & profile management
+                    │   ├── assistant/                   # AI Studio Assistant Services
+                    │   │   ├── AssistantService.java    # Dual-provider LLM orchestration (Groq primary, Gemini fallback)
+                    │   │   ├── ModelProvider.java       # LLM provider contract interface
+                    │   │   ├── GroqModelProvider.java   # High-speed native OpenAI-compatible Groq implementation
+                    │   │   ├── GeminiModelProvider.java # Google Gemini 2.5 Flash fallback implementation
+                    │   │   └── ToolRegistryService.java # Executable tool execution registry for AI actions
                     │   └── storage/                     # File Storage Abstraction
                     │       ├── LocalDiskPhotoStorageService.java # Stores uploaded photos to local filesystem
                     │       └── PhotoStorageService.java          # Storage interface contract
@@ -349,16 +387,18 @@ erDiagram
 | **Customer Lookup** | `GET /api/customers/lookup` | `CustomerApiController.lookupCustomer` | `customerService.findByMobile(normalized)` | Fast async AJAX endpoint returning JSON for live customer phone autofill in Step 1. |
 | **New Order Wizard** | `GET/POST /orders/new/*` | `OrderWizardController.*` | `orderWizardService.*`, `orderService.placeOrder(...)` | 4-step booking: 1. Customer -> 2. Garment -> 3. Measurements -> 4. Summary & Advance Deposit -> Atomic Commit. |
 | **Pending Payments**| `GET /payments/pending` | `PaymentController.showPendingPayments` | `paymentService.getPendingPaymentsSummary()` | Shop-wide unpaid balance banner, rows sorted by earliest delivery, smart due text (`"due in N days"`, `"overdue by N days"`). |
+| **Delivery Calendar**| `GET /calendar` | `CalendarController.showCalendar` | `calendarService.getMonthCalendar()`, `calendarService.getDayCapacity()` | Google Calendar-style boxed month view with capacity indicators, ranked top delivery days, and day schedule inspector. |
+| **Studio AI Assistant**| `POST /api/assistant/chat` | `AssistantApiController.chat` | `assistantService.chat()`, `toolRegistryService.executeTool()` | Floating conversational drawer with streaming responses, nested measurement tables, wide mode, and live tool calling. |
 
 ---
 
 ## 5. Verification & Test Suite
 
-The system is fully covered by **141 automated unit and integration tests**:
+The system is fully covered by **165 automated unit and integration tests**:
 - Unit tests: Mockito mock isolation for services and controllers.
 - Integration tests: Full Spring context (`@SpringBootTest`) with PostgreSQL rollback verification.
 - Test execution command:
   ```bash
-  cd backend && ./mvnw test
+  cd System && ./mvnw test
   ```
-- **Test Result**: `Tests run: 141, Failures: 0, Errors: 0, Skipped: 0`.
+- **Test Result**: `Tests run: 165, Failures: 0, Errors: 0, Skipped: 0`.
