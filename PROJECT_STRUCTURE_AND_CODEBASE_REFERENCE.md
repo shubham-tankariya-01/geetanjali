@@ -15,8 +15,7 @@ Geetanjali/
 │   ├── 02-SYSTEM_ARCHITECTURE_FLOWS_AND_ERD.md
 │   ├── 03-DYNAMIC_MEASUREMENT_ENGINE_AND_SPECIFICATIONS.md
 │   ├── 04-ORDER_LIFECYCLE_FINANCIALS_AND_CAPACITY_SCHEDULER.md
-│   ├── 05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md
-│   └── 06-FUTURE_ROADMAP_AND_SYSTEM_UPGRADES.md
+│   └── 05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md
 ├── uploads/                                      # Uploaded garment & cloth swatch photos
 ├── README.md                                     # Dedicated project overview & quickstart manual
 ├── PROJECT_STRUCTURE_AND_CODEBASE_REFERENCE.md   # [THIS FILE] Complete codebase tree & technical reference

@@ -141,8 +141,7 @@ Geetanjali/
 │   ├── 02-SYSTEM_ARCHITECTURE_FLOWS_AND_ERD.md
 │   ├── 03-DYNAMIC_MEASUREMENT_ENGINE_AND_SPECIFICATIONS.md
 │   ├── 04-ORDER_LIFECYCLE_FINANCIALS_AND_CAPACITY_SCHEDULER.md
-│   ├── 05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md
-│   └── 06-FUTURE_ROADMAP_AND_SYSTEM_UPGRADES.md
+│   └── 05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md
 ├── uploads/                                      # Uploaded garment cloth swatch photos
 ├── README.md                                     # [THIS FILE] Project overview & quickstart manual
 ├── PROJECT_STRUCTURE_AND_CODEBASE_REFERENCE.md   # Complete codebase tree & class matrix
@@ -240,7 +239,6 @@ For in-depth architectural specifications and operational flows, refer to the do
 3. **[03. Dynamic Measurement Engine](docs/03-DYNAMIC_MEASUREMENT_ENGINE_AND_SPECIFICATIONS.md)**: Dynamic parameter architecture, JSON modeling, and garment specifications.
 4. **[04. Order Lifecycle & Capacity Scheduler](docs/04-ORDER_LIFECYCLE_FINANCIALS_AND_CAPACITY_SCHEDULER.md)**: Multi-step booking, 5-order capacity rule, and Google Calendar view.
 5. **[05. Studio AI Assistant & Tool Integration](docs/05-STUDIO_AI_ASSISTANT_AND_TOOL_INTEGRATION.md)**: Dual LLM fallback, floating drawer, and structured tool calling.
-6. **[06. Future Roadmap & Upgrades](docs/06-FUTURE_ROADMAP_AND_SYSTEM_UPGRADES.md)**: WhatsApp messaging, thermal barcode tags, multi-branch scaling, and mobile PWA.
 
 ---
 

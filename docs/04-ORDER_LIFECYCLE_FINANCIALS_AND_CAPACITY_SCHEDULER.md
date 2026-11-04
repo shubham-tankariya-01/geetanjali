@@ -1,148 +1,140 @@
 # Geetanjali Tailoring Studio: Order Lifecycle, Financial Invariants & Workload Scheduler
 
-> **Document Classification**: Core Operations & Scheduling Engine  
-> **Authors**: Shubham Tankariya & Sumit Tailor  
-> **Modules**: `com.geetanjali.backend.service.OrderService`, `com.geetanjali.backend.service.CalendarService`, `com.geetanjali.backend.service.PaymentService`  
+> **Created By**: Shubham Tankariya & Sumit Tailor  
+> **Key Java Classes**: `OrderService.java`, `CalendarService.java`, `PaymentService.java`  
 
 ---
 
-## 1. End-to-End Order Creation Wizard
+## 1. The 4-Step Order Booking Wizard
 
-The booking of bespoke garments is orchestrated through an interactive 4-step wizard designed for desktop-speed data entry without leaving the keyboard:
+Booking a custom tailor order takes just a few seconds using the 4-step wizard:
 
 ```mermaid
 flowchart LR
-    Step1["Step 1: Customer<br/>• Mobile Lookup<br/>• Auto-fill Name<br/>• New Profile"] --> Step2["Step 2: Garments<br/>• Select Types<br/>• Item Multipliers<br/>• Visual Tiles"]
-    Step2 --> Step3["Step 3: Item Specs<br/>• Measurements<br/>• Delivery Date<br/>• Capacity Check<br/>• Cloth Photos"]
-    Step3 --> Step4["Step 4: Summary<br/>• Cart Breakdown<br/>• Advance Deposit<br/>• Cash / UPI Mode"]
-    Step4 --> Commit["Atomic Commit<br/>• Sequence ID<br/>• Job Cards<br/>• Receipt Ledger"]
+    Step1["Step 1: Customer<br/>Type 10-digit phone"] --> Step2["Step 2: Garments<br/>Click Shirt / Pant"]
+    Step2 --> Step3["Step 3: Item Specs<br/>Measurements & Date"]
+    Step3 --> Step4["Step 4: Bill & Advance<br/>Cash / UPI Payment"]
+    Step4 --> Saved["Done!<br/>Order Number Created"]
 ```
 
-### 1.1. Step 1: Customer Identification (`/orders/new/customer`)
-- Staff enters a 10-digit Indian mobile number.
-- Client-side JavaScript triggers `GET /api/customers/lookup?mobile={normalized}`.
-- If the customer exists, their name and historical order count are auto-populated in sub-50ms; if new, staff types the name and the profile is staged in session.
+### Step 1: Customer (`/orders/new/customer`)
+- Staff types the customer's 10-digit mobile number.
+- In less than 50 milliseconds, the system checks if the customer has visited before:
+  - **Returning Customer**: Their name and how many orders they have placed pop up automatically.
+  - **New Customer**: Staff types the customer's name and proceeds.
 
-### 1.2. Step 2: Garment Category Selection (`/orders/new/garment`)
-- Interactive garment tiles (Shirt, Pant, Kurta, Blouse, Safari) allow single-click selection.
+### Step 2: Garment Selection (`/orders/new/garment`)
+- Large clickable tiles let the tailor quickly choose what garments to stitch (e.g. 2 Shirts and 1 Trouser).
 
-### 1.3. Step 3: Customization, Measurements & Workload Validation (`/orders/new/item`)
-- Dynamic measurement fields are displayed in tailor tape order.
-- Prior measurements for this customer are automatically pre-filled.
-- Staff uploads cloth swatch or design reference photos (`POST /api/photos/upload`).
-- Staff chooses a promised delivery date, triggering the **Daily Workload Capacity Check**.
+### Step 3: Measurements, Cloth Photo & Delivery Date (`/orders/new/item`)
+- Measurement fields appear in the exact order the tailor uses their measuring tape.
+- Any previous measurements for this customer are already pre-filled.
+- Staff can upload a quick phone photo of the customer's fabric swatch so it is never mixed up with another customer's cloth.
+- Staff selects the promised delivery date, which immediately runs the **Workload Capacity Check**.
 
-### 1.4. Step 4: Cart Summary & Advance Payment Deposit (`/orders/new/summary`)
-- Full itemized bill is presented.
-- Advance deposit is recorded with payment mode (`CASH` or `UPI`).
-- Clicking **"Confirm & Place Order"** invokes `OrderService.placeOrder()` within a single `@Transactional` boundary.
+### Step 4: Bill Summary & Advance Payment (`/orders/new/summary`)
+- Shows the full bill with item prices.
+- Staff enters the advance payment paid by the customer and selects whether it was paid via **CASH** or **UPI** (Google Pay, PhonePe, Paytm).
+- Clicking **"Confirm & Place Order"** saves everything safely in the database.
 
 ---
 
-## 2. Daily Tailor Workload Capacity Enforcement Engine
+## 2. The Tailor Workload Limit: Protecting Tailors From Burnout
 
-One of the most transformative innovations in Geetanjali is the **Tailor Workload Protection Engine**. In traditional shops, tailors suffer severe burnout and missed deadlines because shop owners verbally promise deliveries without checking existing commitments.
+In traditional tailor shops, shop owners verbally promise dates to customers without checking how much work is already waiting for that day. This leads to the infamous "Sunday Avalanche" where 25 clothes are due on the same day, forcing tailors to work all night.
 
-Geetanjali solves this by establishing a clear 3-tier daily capacity model:
+Geetanjali protects tailors by enforcing **3 daily capacity tiers**:
 
 ```mermaid
 graph TD
-    DateInput["Promised Delivery Date Selected"] --> CheckCap["Query OrderItemRepository.countItemsByDeliveryDate(date)"]
+    PickDate["Tailor selects delivery date on form"] --> Check["System counts existing orders on that date"]
     
-    CheckCap --> Eval{Total Orders Scheduled on Date}
+    Check --> TierEval{How many orders already?}
     
-    Eval -- "0 to 4 Orders" --> GreenZone["GREEN ZONE (Optimal)<br/>• Under Standard Limit<br/>• Immediate Approval<br/>• Capacity: Available"]
+    TierEval -- "0 to 4 Orders" --> Green["GREEN TIER (Standard)<br/>• Comfortable workload<br/>• Approved immediately"]
     
-    Eval -- "5 to 9 Orders" --> YellowZone["YELLOW ZONE (Overbooking Window)<br/>• Exceeds Standard 5-Order Limit<br/>• Triggers Overbooking Confirmation Modal<br/>• Tailor Must Consciously Confirm"]
+    TierEval -- "5 to 9 Orders" --> Yellow["YELLOW TIER (Overbooking)<br/>• Over normal capacity<br/>• Warning pop-up appears<br/>• Tailor must consciously confirm"]
     
-    Eval -- "10 or More Orders" --> RedZone["RED ZONE (Hard Capacity Limit)<br/>• Absolute Maximum Reached<br/>• Hard Error Blocked<br/>• Submission Forbidden"]
+    TierEval -- "10 or More Orders" --> Red["RED TIER (Maximum Cap)<br/>• Absolute hard limit<br/>• Form is strictly blocked<br/>• Tailor must choose another day"]
 ```
 
-### 2.1. The Three Workload Thresholds
-
-| Workload Tier | Daily Order Count | UI Indicator | System Behavior |
-|---|---|---|---|
-| **Standard Capacity** | 0 to 4 orders | **GREEN** | Allowed seamlessly. No confirmation needed. |
-| **Overbooking Zone** | 5 to 9 orders | **YELLOW / AMBER** | Allowed only with explicit confirmation. Displays warning modal: *"This date already has N orders scheduled. Do you want to add an overday order?"* |
-| **Maximum Hard Cap** | 10 orders | **RED** | **Strictly Blocked**. Form displays error: *"Maximum daily capacity reached (10 orders already scheduled). Please select another delivery date."* |
-
-### 2.2. Dual-Layer Defense Architecture
-1. **Client-Side Interactive Modal**:
-   When staff chooses a date in Step 3 or edits an item, `new-order.js` calls `GET /api/calendar/capacity?date=YYYY-MM-DD`. If in the overbooking window, an interactive modal card pops up requiring staff confirmation before form submission is enabled.
-2. **Server-Side Binding Validation**:
-   Even if client-side JavaScript is bypassed, `OrderWizardController` and `OrderController` independently call `CalendarService.getDayCapacity(date)`. If `capacity.maxReached()`, the controller rejects the request using `bindingResult.rejectValue("deliveryDate", ...)` and returns the user to the form with an inline alert.
+### The 3 Workload Tiers:
+1. **Standard Capacity (0 to 4 orders / day) &rarr; GREEN**:
+   - A tailor can easily cut and stitch up to 5 orders a day with top quality.
+   - Form accepts the date smoothly with a green indicator.
+2. **Overbooking Zone (5 to 9 orders / day) &rarr; YELLOW**:
+   - The shop is already busy on this day.
+   - If the tailor chooses this date, a clear pop-up modal appears on screen:
+     > *"This day already has 6 orders scheduled. Do you want to add an overday order?"*
+   - The tailor must explicitly click **"Yes, Confirm Overbooking"** to proceed.
+3. **Hard Maximum Cap (10 orders / day) &rarr; RED**:
+   - 10 orders is the absolute physical limit of what the shop can complete in a 24-hour cycle.
+   - The system **strictly blocks the form** and shows an error:
+     > *"Maximum daily capacity reached (10 orders already scheduled for this day). Please select another delivery date."*
 
 ---
 
-## 3. Google Calendar-Style Delivery Scheduler (`/calendar`)
+## 3. Google Calendar-Style Delivery Screen (`/calendar`)
 
-To provide master tailors and shop owners with complete visibility into monthly production schedules, Geetanjali provides a dedicated **Production & Delivery Calendar**:
+To see the whole month at a glance, the shop has a dedicated **Delivery Calendar**:
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  GEETANJALI STUDIO PRODUCTION CALENDAR                                             [ < Prev ] November 2026 [ Next > ] │
-├────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────┤
-│  SUN       MON       TUE       WED       THU       FRI       SAT       │  MONTHLY EXECUTIVE METRICS          │
-│ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐  ├─────────────────────────────────────┤
-│ │ 1     │ │ 2     │ │ 3     │ │ 4     │ │ 5     │ │ 6     │ │ 7     │  │ Total Monthly Deliveries: 84 Items  │
-│ │ 2 ord │ │ 4 ord │ │ 1 ord │ │ 6 ord │ │ 8 ord │ │ 3 ord │ │ 2 ord │  │ Standard Days: 22   Overbooking: 6   │
-│ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  ├─────────────────────────────────────┤
-│ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘  │  TOP DELIVERY PEAK DAYS             │
-│ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐  │  1. Nov 5 (Thursday)  - 8 Items    │
-│ │ 8     │ │ 9     │ │ 10    │ │ 11    │ │ 12    │ │ 13    │ │ 14    │  │  2. Nov 4 (Wednesday) - 6 Items    │
-│ │ 5 ord │ │ 3 ord │ │ 4 ord │ │ 7 ord │ │ 2 ord │ │ 5 ord │ │ 1 ord │  │  3. Nov 8 (Sunday)    - 5 Items    │
-│ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  ├─────────────────────────────────────┤
-│ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘  │  SELECTED DAY SCHEDULE INSPECTOR    │
-│  ... (Full 5-6 week boxed grid with clean event tag chips) ...        │  │  Nov 4, 2026 (Wednesday):        │
-│                                                                        │  │  • ORD-202611-0004 [RM] - Pant   │
-│                                                                        │  │  • ORD-202611-0004 [RM] - Shirt  │
-│                                                                        │  │  • ORD-202611-0012 [KT] - Kurta  │
-└────────────────────────────────────────────────────────────────────────┴─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  DELIVERY CALENDAR                                     [ < Prev ] November 2026 [ Next > ]       │
+├────────────────────────────────────────────────────────────────────────┬─────────────────────────┤
+│  SUN       MON       TUE       WED       THU       FRI       SAT       │  MONTHLY SUMMARY        │
+│ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐  ├─────────────────────────┤
+│ │ 1     │ │ 2     │ │ 3     │ │ 4     │ │ 5     │ │ 6     │ │ 7     │  │ Total Clothes: 84 Items │
+│ │ 2 ord │ │ 4 ord │ │ 1 ord │ │ 6 ord │ │ 8 ord │ │ 3 ord │ │ 2 ord │  │ Normal Days: 22        │
+│ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  │ Overbooked: 6           │
+│ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘  ├─────────────────────────┤
+│ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐  │  BUSIEST DELIVERY DAYS  │
+│ │ 8     │ │ 9     │ │ 10    │ │ 11    │ │ 12    │ │ 13    │ │ 14    │  │  1. Nov 5 - 8 Clothes   │
+│ │ 5 ord │ │ 3 ord │ │ 4 ord │ │ 7 ord │ │ 2 ord │ │ 5 ord │ │ 1 ord │  │  2. Nov 4 - 6 Clothes   │
+│ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │ │ [•]   │  │  3. Nov 8 - 5 Clothes   │
+│ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘ └───────┘  ├─────────────────────────┤
+│                                                                        │  SELECTED DAY SCHEDULE  │
+│  (Clean 7-column grid showing dates and color dots)                    │  Nov 4 (Wednesday):     │
+│                                                                        │  • ORD-1004 [RM] - Pant │
+│                                                                        │  • ORD-1004 [RM] - Shirt│
+│                                                                        │  • ORD-1012 [KT] - Kurta│
+└────────────────────────────────────────────────────────────────────────┴─────────────────────────┘
 ```
 
-### Calendar Interface Components:
-1. **Google Calendar 7-Column Boxed Grid**:
-   - Sun through Sat layout with exact monthly padding (leading/trailing days).
-   - Each cell displays the date number, total items scheduled, and a **colored capacity tag chip** (Green, Yellow, Red) with clean dot accents.
-   - Explanatory color text is cleanly hidden to maintain a minimalist, uncluttered interface.
-2. **Monthly Metrics Sidebar**:
-   - Total scheduled deliveries for the month.
-   - Breakdown of standard vs. overbooked production days.
-3. **Ranked Top Delivery Days**:
-   - Automatic ranking of peak completion days so tailors can pre-cut fabric in advance.
-4. **Selected Day Schedule Inspector**:
-   - Clicking any day highlights the cell and instantly reveals the day's scheduled garments in the right inspector.
-   - Garment tiles feature **customer initials avatars** (e.g. `[KT]` for Ketan Tankariya), garment icons, item status chips (`PENDING`, `DONE`, `DELIVERED`), and direct links to the order page.
+### What You See on the Calendar:
+1. **7-Column Month Grid (Sunday to Saturday)**:
+   - Every day is shown in a clean rounded box like Google Calendar.
+   - Shows how many clothes are due that day.
+   - Has clean colored chips with dot accents (Green for light days, Yellow for busy days, Red for full days).
+2. **Monthly Summary (Right Sidebar)**:
+   - Total number of clothes due to be delivered this month.
+   - Busiest delivery peak days ranked at the top, so tailors can cut cloth in advance.
+3. **Selected Day Inspector**:
+   - Click on any day box, and the right panel instantly lists every customer and garment due on that day.
+   - Shows customer initials (e.g. `[KT]` for Ketan Tankariya), garment icons, and direct links to the order.
 
 ---
 
-## 4. Financial Accounting Engine & Delivery Gate Invariants
+## 4. Money Accounting & The Delivery Block Rule
 
-Geetanjali maintains strict financial ledger integrity to permanently eliminate advance disputes and unpaid debt leaks:
+To make sure the shop never loses money on uncollected balances:
 
-### 4.1. Runtime Balance Calculation (No Cached Columns)
-Balance is dynamically evaluated across all items and payments:
-$$\text{Total Amount} = \sum_{i=1}^{n} \text{order\_item}_i\text{.price}$$
-$$\text{Total Paid} = \sum_{j=1}^{m} \text{payment}_j\text{.amount}$$
-$$\text{Balance} = \text{Total Amount} - \text{Total Paid}$$
+### 4.1. Automatic Balance Calculation
+Every time you look at an order, the system calculates:
+$$\text{Balance} = \text{Total Item Prices} - \text{Total Payments Made}$$
 
-All calculations utilize `java.math.BigDecimal` with `RoundingMode.UNNECESSARY`, completely eliminating IEEE 754 floating-point rounding errors.
+### 4.2. Blocking Delivery If Money Is Unpaid
+When a customer comes to collect their stitched garment:
+- If the balance is **₹0 (Fully Paid)**: Staff clicks "Deliver Item", and the garment is marked `DELIVERED`.
+- If there is **Unpaid Balance (e.g. ₹500 pending)**: The system **blocks delivery** and shows a red alert:
+  > *"Delivery blocked: Balance of ₹500 is still pending."*
+- Staff clicks "Add Payment", enters the money (Cash or UPI), and then the clothes can be delivered.
 
-### 4.2. Zero-Balance Delivery Invariant
-When a customer arrives to pick up a stitched garment, staff clicks **"Deliver Item"** (`POST /orders/{id}/items/{itemId}/deliver`):
-- If $\text{Balance} == 0$, the item is transitioned to `DELIVERED` and timestamped (`delivered_at = Instant.now()`).
-- If $\text{Balance} > 0$, the system **blocks delivery** by throwing `BalancePendingException`. The UI presents a prominent red warning banner detailing the exact outstanding amount.
+### 4.3. Shop Owner Override (For Trusted Neighbors)
+In real life, a close family friend or trusted regular customer might say: *"I will send the ₹500 on Google Pay tonight, can I take the clothes for the wedding now?"*
 
-### 4.3. Owner Delivery Override Protocol
-In traditional Indian neighborhood culture, long-standing trusted customers or family friends occasionally request to collect their garments immediately and pay the balance later via UPI.
-
-To accommodate this real-world custom without creating financial leakages:
-1. **Role Authorization**: Only users with the `OWNER` role are authorized to override a blocked delivery. Staff tailors (`ROLE_TAILOR`) are strictly forbidden.
-2. **Mandatory Documentation**: The owner must provide a written justification (e.g., *"Trusted neighbor, will pay via Google Pay this evening"*).
-3. **Immutable Audit Trail**: The system writes a permanent record into the `delivery_override` audit table:
-   - Order Item ID
-   - Exact outstanding balance at the moment of override
-   - Justification reason
-   - Owner AppUser ID
-   - Audit timestamp (`created_at`)
-4. The item is marked `DELIVERED`, while the balance remains tracked on the **Pending Payments Dashboard** (`/payments/pending`).
+The system handles this safely:
+- Normal tailors (`TAILOR`) **cannot override**. They must call the shop owner.
+- The shop owner (`OWNER`) can approve the delivery by typing a quick reason (e.g., *"Trusted neighbor, will pay via Google Pay tonight"*).
+- The system marks the clothes delivered, but **saves a permanent audit log** recording who approved it, why, and the exact balance amount.
+- The unpaid balance continues to appear on the **Pending Payments Dashboard** (`/payments/pending`) so it is never forgotten!
