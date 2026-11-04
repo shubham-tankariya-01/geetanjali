@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  assistant.html - Universal Floating AI Operational Assistant Fragment.
+  Strict implementation matching the Sarvam AI / Indus SaaS interface.
+-->
+<body>
+
+    <th:block th:fragment="floating-widget">
+        <!-- Floating Launcher Button (Fixed at Bottom-Right) -->
+        <button type="button" class="assistant-trigger-btn" id="assistantLauncherBtn" 
+                title="Studio Assistant (Ctrl + Space)" aria-label="Open AI Assistant">
+            <span class="assistant-trigger-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"></path>
+                    <circle cx="9" cy="11" r="1.3" fill="currentColor"></circle>
+                    <circle cx="15" cy="11" r="1.3" fill="currentColor"></circle>
+                    <path d="M9.5 14.5a3.5 3.5 0 0 0 5 0"></path>
+                </svg>
+            </span>
+        </button>
+
+        <!-- Slide-over Backdrop (Mobile) -->
+        <div class="assistant-backdrop" id="assistantBackdrop"></div>
+
+        <!-- Slide-over Assistant Drawer -->
+        <aside class="assistant-drawer" id="assistantDrawer" aria-label="Geetanjali Studio AI Assistant">
+            <!-- Header -->
+            <div class="assistant-header">
+                <div class="assistant-header-brand">
+                    <div class="assistant-header-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"></path>
+                            <circle cx="9" cy="11" r="1.3" fill="currentColor"></circle>
+                            <circle cx="15" cy="11" r="1.3" fill="currentColor"></circle>
+                            <path d="M9.5 14.5a3.5 3.5 0 0 0 5 0"></path>
+                        </svg>
+                    </div>
+                    <span class="assistant-header-title">Studio Assistant</span>
+                </div>
+                <div class="assistant-header-actions">
+                    <button type="button" class="assistant-tool-btn" id="assistantExpandBtn" title="Toggle Wide View" aria-label="Toggle Wide View">
+                        <svg class="icon-expand" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <polyline points="9 21 3 21 3 15"></polyline>
+                            <line x1="21" y1="3" x2="14" y2="10"></line>
+                            <line x1="3" y1="21" x2="10" y2="14"></line>
+                        </svg>
+                        <svg class="icon-compress" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="4 14 10 14 10 20"></polyline>
+                            <polyline points="20 10 14 10 14 4"></polyline>
+                            <line x1="14" y1="10" x2="21" y2="3"></line>
+                            <line x1="3" y1="21" x2="10" y2="14"></line>
+                        </svg>
+                    </button>
+                    <button type="button" class="assistant-tool-btn" id="assistantClearBtn" title="Clear Conversation" aria-label="Clear Conversation">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                    <button type="button" class="assistant-tool-btn" id="assistantCloseBtn" title="Close Drawer (Esc)" aria-label="Close Assistant">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Page Context Ribbon -->
+            <div class="assistant-context-ribbon" id="assistantContextRibbon" style="display: none;">
+                <span class="context-ribbon-text">
+                    <span class="context-tag">STUDIO</span>
+                    <span class="context-desc">Operational Context Active</span>
+                </span>
+                <span style="font-size: 10.5px; color: #94A3B8;">Auto-detected</span>
+            </div>
+
+            <!-- Quick Suggestion Chips -->
+            <div class="assistant-chips-bar" id="assistantChipsBar">
+                <button type="button" class="assistant-chip-btn" data-prompt="How many pending orders and garments are in the stitching queue?">
+                    Pending Stitching
+                </button>
+                <button type="button" class="assistant-chip-btn" data-prompt="Which orders have deliveries due today?">
+                    Deliveries Today
+                </button>
+                <button type="button" class="assistant-chip-btn" th:if="${currentUser != null and currentUser.role.name() == 'OWNER'}" data-prompt="Show all orders with unpaid balances">
+                    Unpaid Dues
+                </button>
+                <button type="button" class="assistant-chip-btn" th:if="${currentUser != null and currentUser.role.name() == 'OWNER'}" data-prompt="What is our total collected revenue this month?">
+                    Monthly Revenue
+                </button>
+            </div>
+
+            <!-- Conversation Messages Area -->
+            <div class="assistant-messages" id="assistantMessages">
+                <!-- Welcome Assistant Greeting -->
+                <div class="message-row is-assistant">
+                    <div class="message-bubble">
+                        <p><strong>Namaste <span th:text="${currentUser != null ? currentUser.fullName : 'Tailor'}">Tailor</span>!</strong></p>
+                        <p>I am your studio operational assistant. Ask me anything about delivery dates, customer measurements, stitching queues, or balances in English, Hindi, or Hinglish.</p>
+                    </div>
+                    <div class="message-meta">
+                        <span>Studio Assistant</span>
+                    </div>
+                </div>
+
+                <!-- Animated Typing Indicator -->
+                <div class="typing-indicator" id="assistantTypingIndicator">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            </div>
+
+            <!-- Footer Chat Input Form -->
+            <div class="assistant-footer">
+                <form class="assistant-form" id="assistantForm" autocomplete="off">
+                    <input type="text" class="assistant-input" id="assistantInput" 
+                           placeholder="Ask: 'Kab deliver karna hai 1001?' or 'Pending orders...'" 
+                           maxlength="400" required>
+                    <button type="submit" class="assistant-send-btn" id="assistantSendBtn" title="Send Message">
+                        <span>Send</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+                <div class="assistant-footer-hint">
+                    Press <strong>Enter</strong> to send &bull; <strong>Ctrl + Space</strong> to toggle
+                </div>
+            </div>
+        </aside>
+    </th:block>
+
+</body>
+</html>

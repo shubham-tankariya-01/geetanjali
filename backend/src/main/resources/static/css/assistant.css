@@ -1,0 +1,850 @@
+/* ==========================================================================
+   assistant.css - Floating AI Assistant Widget
+   Strict Sarvam AI / Indus SaaS Design System
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Floating Launcher Button (Fixed at Bottom-Right)
+   -------------------------------------------------------------------------- */
+.assistant-trigger-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1050;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #111111;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+    outline: none;
+    padding: 0;
+}
+
+.assistant-trigger-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+    background-color: #222222;
+}
+
+.assistant-trigger-btn:active {
+    transform: translateY(0);
+}
+
+.assistant-trigger-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Backdrop (Mobile only)
+   -------------------------------------------------------------------------- */
+.assistant-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(17, 17, 17, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 1060;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.assistant-backdrop.is-active {
+    display: block;
+    opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Slide-over Assistant Drawer
+   -------------------------------------------------------------------------- */
+.assistant-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 480px;
+    max-width: 100vw;
+    background-color: #FFFFFF;
+    border-left: 1px solid #E7E7E7;
+    box-shadow: -6px 0 24px rgba(0, 0, 0, 0.08);
+    z-index: 1070;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: var(--font-ui, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.assistant-drawer.is-open {
+    transform: translateX(0);
+}
+
+.assistant-drawer.is-expanded {
+    width: 680px;
+    max-width: 94vw;
+}
+
+@media (min-width: 1600px) {
+    .assistant-drawer {
+        width: 500px;
+    }
+    .assistant-drawer.is-expanded {
+        width: 740px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Drawer Header
+   -------------------------------------------------------------------------- */
+.assistant-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background-color: #111111;
+    color: #FFFFFF;
+    border-bottom: 1px solid #222222;
+    min-height: 56px;
+    box-sizing: border-box;
+}
+
+.assistant-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.assistant-header-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #222222;
+    border: 1px solid #333333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+}
+
+.assistant-header-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    line-height: 1.2;
+}
+
+.assistant-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.assistant-tool-btn {
+    background: transparent;
+    border: none;
+    color: #A5A5A5;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.assistant-tool-btn:hover {
+    color: #FFFFFF;
+    background-color: #222222;
+}
+
+/* --------------------------------------------------------------------------
+   Page Context Ribbon
+   -------------------------------------------------------------------------- */
+.assistant-context-ribbon {
+    background-color: #FAFAFA;
+    border-bottom: 1px solid #E7E7E7;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: #555555;
+}
+
+.context-ribbon-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.context-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background-color: #111111;
+    color: #FFFFFF;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.context-desc {
+    color: #171717;
+    font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Suggestion Chips Bar
+   -------------------------------------------------------------------------- */
+.assistant-chips-bar {
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #EEEEEE;
+    scrollbar-width: thin;
+}
+
+.assistant-chip-btn {
+    background-color: #FAFAFA;
+    border: 1px solid #E7E7E7;
+    color: #171717;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.assistant-chip-btn:hover {
+    background-color: #111111;
+    border-color: #111111;
+    color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Conversation Scroll Container
+   -------------------------------------------------------------------------- */
+.assistant-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background-color: #FFFFFF;
+    scrollbar-width: thin;
+}
+
+/* --------------------------------------------------------------------------
+   Message Rows & Bubbles
+   -------------------------------------------------------------------------- */
+.message-row {
+    display: flex;
+    flex-direction: column;
+    max-width: 88%;
+}
+
+.message-row.is-user {
+    align-self: flex-end;
+}
+
+.message-row.is-assistant {
+    align-self: flex-start;
+    max-width: 92%;
+}
+
+.message-row.is-assistant.has-table {
+    max-width: 100%;
+    width: 100%;
+}
+
+.message-row.is-assistant.has-table .message-bubble {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #FFFFFF;
+}
+
+.message-bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.message-row.is-user .message-bubble {
+    background-color: #111111;
+    color: #FFFFFF;
+    border-bottom-right-radius: 2px;
+}
+
+.message-row.is-assistant .message-bubble {
+    background-color: #FAFAFA;
+    color: #171717;
+    border: 1px solid #E7E7E7;
+    border-bottom-left-radius: 2px;
+}
+
+.message-bubble p {
+    margin: 0 0 8px 0;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.message-bubble strong {
+    font-weight: 600;
+    color: inherit;
+}
+
+.message-bubble em {
+    font-style: italic;
+}
+
+/* Lists inside Assistant Bubble */
+.assistant-list,
+.message-bubble ul,
+.message-bubble ol {
+    margin: 6px 0 8px 0;
+    padding-left: 20px;
+}
+
+.assistant-list li,
+.message-bubble li {
+    margin-bottom: 4px;
+    line-height: 1.5;
+}
+
+.assistant-list li:last-child,
+.message-bubble li:last-child {
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Markdown Tables inside Assistant Bubble (High Production Quality)
+   -------------------------------------------------------------------------- */
+.assistant-table-wrapper {
+    margin: 12px 0 8px 0;
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 #F8FAFC;
+}
+
+.assistant-table-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+
+.assistant-table-wrapper::-webkit-scrollbar-track {
+    background: #F8FAFC;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.assistant-table-wrapper::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+}
+
+.assistant-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+.assistant-table {
+    width: 100%;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    text-align: left;
+    margin: 0;
+    background: #FFFFFF;
+}
+
+.assistant-table th {
+    background: #E2E8F0 !important;
+    color: #0F172A !important;
+    font-size: 11px;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    border-bottom: 1.5px solid #CBD5E1 !important;
+    border-right: 1px solid #CBD5E1;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.assistant-table th:last-child {
+    border-right: none;
+}
+
+.assistant-table td {
+    padding: 9px 14px;
+    color: #1E293B;
+    border-bottom: 1px solid #F1F5F9;
+    border-right: 1px solid #F8FAFC;
+    vertical-align: middle;
+    font-size: 12.5px;
+}
+
+.assistant-table td:last-child {
+    border-right: none;
+}
+
+.assistant-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Subtle Zebra Striping for scanability */
+.assistant-table tbody tr:nth-child(even) td {
+    background-color: #FAFAFA;
+}
+
+.assistant-table tbody tr:nth-child(odd) td {
+    background-color: #FFFFFF;
+}
+
+.assistant-table tbody tr:hover td {
+    background-color: #F1F5F9 !important;
+}
+
+/* Tabular figures for numbers in tables */
+.assistant-table td,
+.assistant-table th {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Empty cell placeholder */
+.assistant-table td:empty::before {
+    content: "—";
+    color: #CBD5E1;
+    font-weight: 400;
+}
+
+/* Outer table rows and cells containing nested sub-tables */
+.assistant-table td.has-nested-table {
+    padding: 6px 8px;
+    vertical-align: top;
+}
+
+.assistant-table tr:has(.has-nested-table) td {
+    vertical-align: top;
+    padding-top: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Nested Sub-Tables inside Table Cells (e.g. Garment Measurements)
+   -------------------------------------------------------------------------- */
+.assistant-subtable {
+    width: 100%;
+    min-width: 190px;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    background: #FFFFFF;
+    margin: 2px 0;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.assistant-subtable th {
+    background: #E2E8F0 !important;
+    color: #0F172A !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 6px 10px !important;
+    border-bottom: 1.5px solid #CBD5E1 !important;
+    border-right: 1px solid #CBD5E1 !important;
+    white-space: nowrap !important;
+    position: static !important;
+}
+
+.assistant-subtable th:last-child {
+    border-right: none !important;
+}
+
+.assistant-subtable td {
+    padding: 6px 10px !important;
+    border-bottom: 1px solid #F1F5F9 !important;
+    border-right: 1px solid #F8FAFC !important;
+    color: #1E293B !important;
+    font-size: 12px !important;
+    vertical-align: middle !important;
+}
+
+.assistant-subtable td:last-child {
+    border-right: none !important;
+}
+
+.assistant-subtable tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+.assistant-subtable .subtable-param {
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    background: #FAFAFA !important;
+    width: 48% !important;
+}
+
+.assistant-subtable .subtable-param strong {
+    font-weight: 700 !important;
+    color: #0F172A !important;
+}
+
+.assistant-subtable .subtable-val {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.assistant-subtable tbody tr:hover td {
+    background-color: #F8FAFC !important;
+}
+
+/* --------------------------------------------------------------------------
+   High-Visibility Highlights & Pills
+   -------------------------------------------------------------------------- */
+/* Order Numbers */
+.assistant-order-tag {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #F3F3F3;
+    color: #171717;
+    border: 1px solid #E7E7E7;
+    letter-spacing: -0.01em;
+}
+
+.message-row.is-user .assistant-order-tag {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Currency */
+.assistant-currency {
+    display: inline-block;
+    font-weight: 700;
+    color: #171717;
+    background: #F3F4F6;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #E5E7EB;
+}
+
+.message-row.is-user .assistant-currency {
+    background: rgba(255, 255, 255, 0.18);
+    color: #FFFFFF;
+    border-color: transparent;
+}
+
+/* Measurements */
+.assistant-measurement {
+    display: inline-block;
+    font-weight: 600;
+    background: #FEF3C7;
+    color: #92400E;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #FDE68A;
+    font-size: 12px;
+}
+
+/* Inline Code */
+.assistant-inline-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #F3F3F3;
+    color: #171717;
+    border: 1px solid #E7E7E7;
+}
+
+/* Status Badges */
+.assistant-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.assistant-badge.is-success {
+    background: #E7F1D9;
+    color: #496A2D;
+    border: 1px solid #D1E5B6;
+}
+
+.assistant-badge.is-neutral {
+    background: #F3F3F3;
+    color: #555555;
+    border: 1px solid #E7E7E7;
+}
+
+.assistant-badge.is-warning {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
+/* --------------------------------------------------------------------------
+   Message Metadata (Timestamp only)
+   -------------------------------------------------------------------------- */
+.message-meta {
+    font-size: 10.5px;
+    color: #929292;
+    margin-top: 4px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.message-row.is-user .message-meta {
+    text-align: right;
+    justify-content: flex-end;
+}
+
+/* --------------------------------------------------------------------------
+   Error State Card & Retry Button
+   -------------------------------------------------------------------------- */
+.assistant-error-card {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: #92400E;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.error-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: #B45309;
+}
+
+.error-card-msg {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #78350F;
+}
+
+.assistant-retry-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #111111;
+    color: #FFFFFF;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    margin-top: 4px;
+}
+
+.assistant-retry-btn:hover {
+    background: #222222;
+}
+
+/* --------------------------------------------------------------------------
+   Suggested Action Links inside Message
+   -------------------------------------------------------------------------- */
+.assistant-actions-wrap {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.assistant-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #111111;
+    color: #FFFFFF;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.assistant-action-link:hover {
+    background-color: #222222;
+    color: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Typing Indicator
+   -------------------------------------------------------------------------- */
+.typing-indicator {
+    display: none;
+    align-self: flex-start;
+    padding: 10px 14px;
+    background-color: #FAFAFA;
+    border: 1px solid #E7E7E7;
+    border-radius: 12px;
+    border-bottom-left-radius: 2px;
+}
+
+.typing-indicator.is-visible {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #888888;
+    animation: typingPulse 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   Drawer Footer Input & Controls
+   -------------------------------------------------------------------------- */
+.assistant-footer {
+    padding: 14px 20px;
+    background-color: #FFFFFF;
+    border-top: 1px solid #EEEEEE;
+}
+
+.assistant-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.assistant-input {
+    flex: 1;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 13.5px;
+    border: 1px solid #E7E7E7;
+    border-radius: 8px;
+    outline: none;
+    font-family: inherit;
+    background-color: #FAFAFA;
+    color: #171717;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.assistant-input:focus {
+    border-color: #111111;
+    background-color: #FFFFFF;
+    box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.08);
+}
+
+.assistant-send-btn {
+    height: 44px;
+    background-color: #111111;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 0 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+
+.assistant-send-btn:hover:not(:disabled) {
+    background-color: #222222;
+}
+
+.assistant-send-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.assistant-send-btn:disabled,
+.assistant-send-btn.is-loading {
+    background-color: #929292;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.assistant-footer-hint {
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: #929292;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile Responsiveness
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+    .assistant-drawer {
+        width: 100vw;
+    }
+    .assistant-trigger-btn {
+        bottom: 16px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+    }
+}

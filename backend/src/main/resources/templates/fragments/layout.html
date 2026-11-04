@@ -14,7 +14,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/assistant.css}">
     <script th:src="@{/js/sidebar.js}" defer></script>
+    <script th:src="@{/js/assistant.js}" defer></script>
 </head>
 <body>
 
@@ -229,6 +231,10 @@
             </div>
         </header>
 
+        <!-- Universal Floating AI Operational Assistant -->
+        <th:block th:if="${currentUser != null}">
+            <div th:replace="~{fragments/assistant :: floating-widget}"></div>
+        </th:block>
     </th:block>
 
     <!-- Flash Messages -->
