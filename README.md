@@ -56,9 +56,9 @@ Two-column customer profile displaying complete historical orders, running outst
 
 ---
 
-### 5. Multi-Step Order Booking Wizard
-Rapid 4-step order entry flow with customer auto-fill, interactive garment category tiles, and cloth swatch photo upload.
-![Order Creation Wizard](docs/images/05-order-creation-wizard.png)
+### 5. Google Calendar-Style Delivery & Production Scheduler
+7-column boxed month grid with capacity dot chips (Green <4, Yellow 4-5, Red 5+), monthly delivery metrics, and top peak delivery days ranking.
+![Delivery & Production Calendar](docs/images/05-delivery-calendar.png)
 
 ---
 
