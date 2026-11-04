@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: page-head(${pageTitle})}">
+    <title>Delivery Calendar - Geetanjali Tailors</title>
+</head>
+<body>
+
+    <!-- Unified Master Layout Header and Collapsible Sidebar -->
+    <th:block th:replace="~{fragments/layout :: top-bar}"></th:block>
+
+    <!-- Main Workspace Container -->
+    <main class="page-content" id="pageContent">
+
+        <!-- Flash Messages -->
+        <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+        <!-- Custom Page CSS & Interactive JS -->
+        <link rel="stylesheet" th:href="@{/css/calendar.css}">
+        <script th:src="@{/js/calendar.js}" defer></script>
+
+        <!-- Page Header & Action Controls -->
+        <div class="page-header" style="margin-bottom: 24px;">
+            <div>
+                <h1 class="page-title">Delivery &amp; Production Calendar</h1>
+                <p class="page-subtitle">Schedule overview, promised delivery dates, and workshop completion milestones.</p>
+            </div>
+            <div class="page-actions" style="display: flex; gap: 10px;">
+                <a th:href="@{/orders/new}" class="btn-primary" title="Book a new customer order">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Order</span>
+                </a>
+                <a th:href="@{/orders}" class="btn-secondary" title="View all studio orders">View All Orders</a>
+            </div>
+        </div>
+
+        <!-- Master Calendar Layout Grid: Left Boxed Grid + Right Month Sidebar -->
+        <div class="calendar-page-layout">
+
+            <!-- LEFT COLUMN: GOOGLE CALENDAR-STYLE BOXED MONTH VIEW -->
+            <section class="calendar-card">
+
+                <!-- Calendar Header Bar with Navigation Controls -->
+                <div class="calendar-header-bar">
+                    <div class="calendar-title-group">
+                        <h2 class="calendar-month-heading" th:text="${calendar.yearMonthTitle}">November 2026</h2>
+                        <div class="calendar-nav-segmented">
+                            <a th:href="@{/calendar(year=${calendar.prevMonthDate.year}, month=${calendar.prevMonthDate.monthValue})}"
+                               class="calendar-nav-btn" title="Previous Month">&lsaquo;</a>
+                            <a th:href="@{/calendar(year=${today.year}, month=${today.monthValue})}"
+                               class="calendar-today-btn" title="Jump to current month">Today</a>
+                            <a th:href="@{/calendar(year=${calendar.nextMonthDate.year}, month=${calendar.nextMonthDate.monthValue})}"
+                               class="calendar-nav-btn" title="Next Month">&rsaquo;</a>
+                        </div>
+                    </div>
+
+                    <!-- Clean Month Orders Badge (No Color Legend) -->
+                    <div class="calendar-header-meta">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span><strong th:text="${calendar.totalOrdersInMonth}">0</strong> Orders &bull; <strong th:text="${calendar.totalItemsInMonth}">0</strong> Garments</span>
+                    </div>
+                </div>
+
+                <!-- 7-Column Day of Week Header Bar (Sunday to Saturday) -->
+                <div class="calendar-grid-header">
+                    <div class="calendar-weekday-cell">Sun</div>
+                    <div class="calendar-weekday-cell">Mon</div>
+                    <div class="calendar-weekday-cell">Tue</div>
+                    <div class="calendar-weekday-cell">Wed</div>
+                    <div class="calendar-weekday-cell">Thu</div>
+                    <div class="calendar-weekday-cell">Fri</div>
+                    <div class="calendar-weekday-cell">Sat</div>
+                </div>
+
+                <!-- Boxed Calendar Body Grid -->
+                <div class="calendar-grid-body">
+                    <div th:each="day : ${calendar.gridDays}"
+                         class="calendar-day-box"
+                         th:classappend="${(day.isToday ? 'is-today ' : '') + (!day.isCurrentMonth ? 'is-other-month ' : '')}"
+                         th:attr="data-date=${day.date}, data-order-count=${day.orderCount}, data-item-count=${day.itemCount}, data-color=${day.tagColor}, data-items-json=${day.itemsJson}">
+
+                        <!-- Day Box Top: Day Number & Today Tag -->
+                        <div class="calendar-day-top">
+                            <span class="calendar-day-number" th:text="${day.dayOfMonth}">1</span>
+                            <span th:if="${day.isToday}" class="calendar-today-badge">Today</span>
+                        </div>
+
+                        <!-- Day Box Content: Event Tag Chip -->
+                        <div class="calendar-day-content">
+                            <th:block th:if="${day.orderCount > 0}">
+                                <div class="calendar-order-tag"
+                                     th:classappend="${day.tagColor == 'GREEN' ? 'tag-green' : (day.tagColor == 'YELLOW' ? 'tag-yellow' : 'tag-red')}">
+                                    <span class="order-tag-dot"></span>
+                                    <span th:text="${day.tagLabel}">2 orders</span>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: MONTHLY SUMMARY & TOP DELIVERY DAYS SIDEBAR -->
+            <aside class="calendar-sidebar">
+
+                <!-- 1. Month Overview Card -->
+                <div class="calendar-summary-card">
+                    <h3 class="calendar-sidebar-title">
+                        <span th:text="${calendar.monthName} + ' Overview'">November Overview</span>
+                        <span style="font-size: 13px; font-weight: 600; color: #64748B;" th:text="${calendar.year}">2026</span>
+                    </h3>
+
+                    <div class="calendar-metric-grid">
+                        <div class="calendar-metric-box">
+                            <div class="calendar-metric-label">Total Orders</div>
+                            <div class="calendar-metric-value" th:text="${calendar.totalOrdersInMonth}">0</div>
+                        </div>
+                        <div class="calendar-metric-box">
+                            <div class="calendar-metric-label">Garment Pieces</div>
+                            <div class="calendar-metric-value" th:text="${calendar.totalItemsInMonth}">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Top Delivery Days Card (Ranked by Maximum Deliveries) -->
+                <div class="calendar-summary-card">
+                    <h3 class="calendar-sidebar-title" style="margin-bottom: 4px;">Top Delivery Days</h3>
+                    <p style="font-size: 12.5px; color: #64748B; margin: 0 0 16px 0;">Peak completion deadlines this month</p>
+
+                    <div th:if="${#lists.isEmpty(calendar.topDeliveryDays)}" class="day-empty-state" style="padding: 16px 8px;">
+                        <p style="margin: 0; color: #64748B; font-size: 12.5px;">No delivery deadlines scheduled this month.</p>
+                    </div>
+
+                    <ul th:unless="${#lists.isEmpty(calendar.topDeliveryDays)}" class="top-days-list">
+                        <li th:each="topDay : ${calendar.topDeliveryDays}"
+                            class="top-day-item"
+                            th:attr="data-date=${topDay.date}"
+                            title="Click to inspect this day">
+                            <div class="top-day-left">
+                                <span class="top-day-rank" th:text="${topDay.rank}">1</span>
+                                <div>
+                                    <div class="top-day-date" th:text="${topDay.formattedDate}">Tue, 20 Nov 2026</div>
+                                    <div class="top-day-meta" th:text="${topDay.itemCount} + ' garments scheduled'">47 garments</div>
+                                </div>
+                            </div>
+                            <span class="top-day-tag"
+                                  th:styleappend="${topDay.tagColor == 'RED'} ? 'background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA;' : (${topDay.tagColor == 'YELLOW'} ? 'background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A;' : 'background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0;')"
+                                  th:text="${topDay.orderCount} + ' orders'">
+                                44 orders
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 3. Selected Day Schedule Details Panel -->
+                <div class="day-detail-card" id="selectedDayDetailContainer">
+                    <div class="day-detail-header">
+                        <div class="day-detail-title-group">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <h4 class="day-detail-title" id="selectedDayTitle">Select a Day</h4>
+                        </div>
+                        <span id="selectedDayBadge" class="top-day-tag" style="background: #F1F5F9; color: #64748B;">0 orders</span>
+                    </div>
+
+                    <!-- Scrollable list of orders on this date -->
+                    <div class="day-orders-list" id="selectedDayOrdersList">
+                        <div class="day-empty-state">
+                            <p style="margin: 0;">Click any day on the calendar to inspect scheduled customer orders and garment deliverables.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+        </div>
+
+    </main>
+
+</body>
+</html>

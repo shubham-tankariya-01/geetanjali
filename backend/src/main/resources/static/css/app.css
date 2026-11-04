@@ -3058,6 +3058,103 @@ body:has(form[action*="/signup"]) button[type="submit"] {
 }
 
 /* Print Styles */
+/* ==========================================================================
+   CAPACITY OVERBOOKING CONFIRMATION MODAL (Sarvam AI / Indus SaaS Theme)
+   ========================================================================== */
+.capacity-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.18s ease-out;
+}
+
+.capacity-modal-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(226, 232, 240, 0.8);
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.capacity-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.capacity-modal-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.capacity-modal-icon.warning {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.capacity-modal-icon.danger {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.capacity-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 3px 0;
+  letter-spacing: -0.01em;
+}
+
+.capacity-modal-subtitle {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
+}
+
+.capacity-modal-body {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-md, 10px);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.capacity-modal-text {
+  font-size: 14px;
+  color: #1E293B;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+.capacity-modal-subtext {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+}
+
+.capacity-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 @media print {
   .app-sidebar,
   .sidebar-backdrop,

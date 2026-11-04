@@ -1,0 +1,585 @@
+/* ==========================================================================
+   GEETANJALI TAILORS - MODERN GOOGLE CALENDAR-STYLE DELIVERY SCHEDULER
+   Sarvam AI / Indus SaaS Theme - Refined Executive Edition
+   ========================================================================== */
+
+.calendar-page-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1140px) {
+  .calendar-page-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   MAIN CALENDAR CONTAINER
+   ========================================================================== */
+.calendar-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Calendar Header Bar */
+.calendar-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  background: #FFFFFF;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.calendar-title-group {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.calendar-month-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Segmented Month Navigation Pills */
+.calendar-nav-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.calendar-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: transparent;
+  color: #334155;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.calendar-nav-btn:hover {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.calendar-today-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  height: 32px;
+  border-radius: 7px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #0F172A;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: all 0.15s ease;
+}
+
+.calendar-today-btn:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+/* Quick Month Stats Tag in Header */
+.calendar-header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* ==========================================================================
+   7-COLUMN DAY OF WEEK HEADER
+   ========================================================================== */
+.calendar-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+}
+
+.calendar-weekday-cell {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-right: 1px solid var(--color-border, #E2E8F0);
+}
+
+.calendar-weekday-cell:last-child {
+  border-right: none;
+}
+
+/* ==========================================================================
+   BOXED CALENDAR BODY GRID
+   ========================================================================== */
+.calendar-grid-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #E2E8F0; /* Clean 1px grid divider lines */
+  gap: 1px;
+}
+
+.calendar-day-box {
+  background: #FFFFFF;
+  min-height: 125px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.calendar-day-box:hover {
+  background: #F8FAFC;
+}
+
+.calendar-day-box.is-selected {
+  background: #F8FAFC;
+  box-shadow: inset 0 0 0 2px #0F172A;
+  z-index: 2;
+}
+
+.calendar-day-box.is-other-month {
+  background: #FAFBFD;
+  opacity: 0.38;
+}
+
+.calendar-day-box.is-other-month:hover {
+  opacity: 0.75;
+}
+
+/* Day Number & Header in Box */
+.calendar-day-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-day-number {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.calendar-day-box.is-today .calendar-day-number {
+  background: #0F172A;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.18);
+}
+
+.calendar-today-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #E2E8F0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Day Box Content */
+.calendar-day-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+/* Event Chips in Day Box */
+.calendar-order-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.calendar-order-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.order-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Color 1: Green */
+.calendar-order-tag.tag-green {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+.calendar-order-tag.tag-green .order-tag-dot {
+  background: #10B981;
+}
+
+/* Color 2: Yellow */
+.calendar-order-tag.tag-yellow {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+.calendar-order-tag.tag-yellow .order-tag-dot {
+  background: #F59E0B;
+}
+
+/* Color 3: Red */
+.calendar-order-tag.tag-red {
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+.calendar-order-tag.tag-red .order-tag-dot {
+  background: #EF4444;
+}
+
+.calendar-day-subtext {
+  font-size: 11px;
+  color: #64748B;
+  padding-left: 2px;
+}
+
+/* ==========================================================================
+   CALENDAR RIGHT SIDEBAR
+   ========================================================================== */
+.calendar-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.calendar-summary-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+.calendar-sidebar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Executive Metrics Grid */
+.calendar-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.calendar-metric-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.calendar-metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.calendar-metric-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   TOP DELIVERY DAYS LIST
+   ========================================================================== */
+.top-days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.top-day-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.top-day-item:hover {
+  background: #FFFFFF;
+  border-color: #94A3B8;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  transform: translateX(3px);
+}
+
+.top-day-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-day-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0F172A;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.top-day-item:nth-child(n+4) .top-day-rank {
+  background: #E2E8F0;
+  color: #334155;
+}
+
+.top-day-date {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.top-day-meta {
+  font-size: 11.5px;
+  color: #64748B;
+  margin-top: 1px;
+}
+
+.top-day-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   SELECTED DAY SCHEDULE DETAILS INSPECTOR
+   ========================================================================== */
+.day-detail-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+.day-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #E2E8F0;
+  gap: 10px;
+}
+
+.day-detail-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-detail-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.day-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Clean Custom Scrollbar for Day Orders */
+.day-orders-list::-webkit-scrollbar {
+  width: 5px;
+}
+.day-orders-list::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 4px;
+}
+.day-orders-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+.day-order-item {
+  padding: 12px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.day-order-item:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.day-order-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-order-link {
+  font-weight: 700;
+  color: #0F172A;
+  text-decoration: none;
+  font-size: 13.5px;
+}
+
+.day-order-link:hover {
+  color: #2563EB;
+  text-decoration: underline;
+}
+
+.day-order-customer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-order-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #E2E8F0;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.day-order-customer-name {
+  font-weight: 600;
+  color: #1E293B;
+  font-size: 13px;
+}
+
+.day-order-customer-phone {
+  color: #64748B;
+  font-size: 11.5px;
+}
+
+.day-order-row-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748B;
+  padding-top: 4px;
+  border-top: 1px dashed #E2E8F0;
+}
+
+.day-empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #64748B;
+  font-size: 13px;
+}

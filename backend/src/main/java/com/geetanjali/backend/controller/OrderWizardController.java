@@ -22,6 +22,9 @@ import com.geetanjali.backend.service.PaymentService;
 import com.geetanjali.backend.service.storage.PhotoStorageService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.geetanjali.backend.dto.calendar.DayCapacityDto;
+import com.geetanjali.backend.service.CalendarService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -56,8 +59,9 @@ public class OrderWizardController {
     private final PaymentService paymentService;
     private final PhotoStorageService photoStorageService;
     private final Clock clock;
+    private final CalendarService calendarService;
 
-    // Constructor injection: Spring provides the service beans and IST Clock automatically.
+    // Backward-compatible 7-arg constructor for unit tests
     public OrderWizardController(OrderWizardService orderWizardService,
                                  GarmentService garmentService,
                                  MeasurementService measurementService,
@@ -65,6 +69,19 @@ public class OrderWizardController {
                                  PaymentService paymentService,
                                  PhotoStorageService photoStorageService,
                                  Clock clock) {
+        this(orderWizardService, garmentService, measurementService, orderService, paymentService, photoStorageService, clock, null);
+    }
+
+    // Full constructor injection: Spring provides service beans, CalendarService, and Clock
+    @Autowired
+    public OrderWizardController(OrderWizardService orderWizardService,
+                                 GarmentService garmentService,
+                                 MeasurementService measurementService,
+                                 OrderService orderService,
+                                 PaymentService paymentService,
+                                 PhotoStorageService photoStorageService,
+                                 Clock clock,
+                                 CalendarService calendarService) {
         this.orderWizardService = orderWizardService;
         this.garmentService = garmentService;
         this.measurementService = measurementService;
@@ -72,6 +89,7 @@ public class OrderWizardController {
         this.paymentService = paymentService;
         this.photoStorageService = photoStorageService;
         this.clock = clock;
+        this.calendarService = calendarService;
     }
 
     // =========================================================================
@@ -296,6 +314,18 @@ public class OrderWizardController {
         LocalDate today = clock.instant().atZone(clock.getZone()).toLocalDate();
         if (itemForm.getDeliveryDate() != null && itemForm.getDeliveryDate().isBefore(today)) {
             bindingResult.rejectValue("deliveryDate", "pastDate", "Promised delivery date cannot be in the past");
+        } else if (itemForm.getDeliveryDate() != null && calendarService != null) {
+            DayCapacityDto capacity = calendarService.getDayCapacity(itemForm.getDeliveryDate());
+            if (capacity.maxReached()) {
+                bindingResult.rejectValue("deliveryDate", "capacityExceeded",
+                        "Maximum daily capacity reached (10 orders already scheduled for this date). Please choose another date.");
+            }
+        } else if (itemForm.getDeliveryDate() != null && calendarService != null) {
+            DayCapacityDto capacity = calendarService.getDayCapacity(itemForm.getDeliveryDate());
+            if (capacity.maxReached()) {
+                bindingResult.rejectValue("deliveryDate", "capacityExceeded",
+                        "Maximum daily capacity reached (10 orders already scheduled for this date). Please choose another date.");
+            }
         }
 
         // If validation errors exist, re-populate context and redisplay form
@@ -530,6 +560,12 @@ public class OrderWizardController {
         LocalDate today = clock.instant().atZone(clock.getZone()).toLocalDate();
         if (itemForm.getDeliveryDate() != null && itemForm.getDeliveryDate().isBefore(today)) {
             bindingResult.rejectValue("deliveryDate", "pastDate", "Promised delivery date cannot be in the past");
+        } else if (itemForm.getDeliveryDate() != null && calendarService != null) {
+            DayCapacityDto capacity = calendarService.getDayCapacity(itemForm.getDeliveryDate());
+            if (capacity.maxReached()) {
+                bindingResult.rejectValue("deliveryDate", "capacityExceeded",
+                        "Maximum daily capacity reached (10 orders already scheduled for this date). Please choose another date.");
+            }
         }
 
         if (bindingResult.hasErrors()) {

@@ -50,6 +50,7 @@ public class ToolRegistryService {
     private final AppUserRepository appUserRepository;
     private final OrderNumberFormatter orderNumberFormatter;
     private final Clock clock;
+    private final com.geetanjali.backend.service.CalendarService calendarService;
 
     public ToolRegistryService(
             CustomerOrderRepository customerOrderRepository,
@@ -61,6 +62,22 @@ public class ToolRegistryService {
             AppUserRepository appUserRepository,
             OrderNumberFormatter orderNumberFormatter,
             Clock clock) {
+        this(customerOrderRepository, orderItemRepository, customerRepository, paymentRepository,
+             paymentService, measurementService, appUserRepository, orderNumberFormatter, clock, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ToolRegistryService(
+            CustomerOrderRepository customerOrderRepository,
+            OrderItemRepository orderItemRepository,
+            CustomerRepository customerRepository,
+            PaymentRepository paymentRepository,
+            PaymentService paymentService,
+            MeasurementService measurementService,
+            AppUserRepository appUserRepository,
+            OrderNumberFormatter orderNumberFormatter,
+            Clock clock,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) com.geetanjali.backend.service.CalendarService calendarService) {
         this.customerOrderRepository = customerOrderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
@@ -70,6 +87,7 @@ public class ToolRegistryService {
         this.appUserRepository = appUserRepository;
         this.orderNumberFormatter = orderNumberFormatter;
         this.clock = clock;
+        this.calendarService = calendarService;
     }
 
     /**
@@ -182,6 +200,28 @@ public class ToolRegistryService {
                 Map.of("type", "object", "properties", revProps)
         ));
 
+        // 9. checkDeliveryCapacity
+        Map<String, Object> capProps = new LinkedHashMap<>();
+        capProps.put("date", Map.of(
+                "type", "string",
+                "description", "Target delivery date in ISO-8601 format (YYYY-MM-DD)."
+        ));
+        tools.add(new ToolDefinition(
+                "checkDeliveryCapacity",
+                "Checks daily tailor workshop capacity for a given delivery date (standard limit: 5 orders, overbooking up to 10 max).",
+                Map.of("type", "object", "properties", capProps, "required", List.of("date"))
+        ));
+
+        // 10. getCalendarSchedule
+        Map<String, Object> calProps = new LinkedHashMap<>();
+        calProps.put("year", Map.of("type", "integer", "description", "Target calendar year (e.g. 2026)."));
+        calProps.put("month", Map.of("type", "integer", "description", "Target month (1 to 12)."));
+        tools.add(new ToolDefinition(
+                "getCalendarSchedule",
+                "Retrieves monthly Google Calendar delivery schedule, total monthly orders, and peak delivery days.",
+                Map.of("type", "object", "properties", calProps)
+        ));
+
         return tools;
     }
 
@@ -227,6 +267,12 @@ public class ToolRegistryService {
                         return ToolResult.error("Access Restricted: Studio revenue and cash flow metrics are restricted to Shop Owners.");
                     }
                     return executeGetRevenueMetrics(shopId, args);
+
+                case "checkDeliveryCapacity":
+                    return executeCheckDeliveryCapacity(args);
+
+                case "getCalendarSchedule":
+                    return executeGetCalendarSchedule(args);
 
                 default:
                     return ToolResult.error("Unknown tool: " + toolName);
@@ -724,5 +770,63 @@ public class ToolRegistryService {
             } catch (NumberFormatException ignored) {}
         }
         return Optional.empty();
+    }
+
+    // -------------------------------------------------------------------------
+    // Tool 9: checkDeliveryCapacity
+    // -------------------------------------------------------------------------
+    private ToolResult executeCheckDeliveryCapacity(Map<String, Object> args) {
+        if (calendarService == null) {
+            return ToolResult.error("Calendar service is not available.");
+        }
+        String dateStr = (String) args.get("date");
+        if (dateStr == null || dateStr.isBlank()) {
+            return ToolResult.error("Date parameter is required (YYYY-MM-DD).");
+        }
+        try {
+            LocalDate date = LocalDate.parse(dateStr.trim());
+            com.geetanjali.backend.dto.calendar.DayCapacityDto capacity = calendarService.getDayCapacity(date);
+            return ToolResult.ok(Map.of(
+                    "date", capacity.date().toString(),
+                    "orderCount", capacity.orderCount(),
+                    "itemCount", capacity.itemCount(),
+                    "standardLimit", capacity.standardLimit(),
+                    "maxLimit", capacity.maxLimit(),
+                    "available", capacity.available(),
+                    "overbooking", capacity.overbooking(),
+                    "maxReached", capacity.maxReached(),
+                    "tagColor", capacity.tagColor(),
+                    "message", capacity.message()
+            ));
+        } catch (Exception e) {
+            return ToolResult.error("Invalid date format. Expected YYYY-MM-DD.");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Tool 10: getCalendarSchedule
+    // -------------------------------------------------------------------------
+    private ToolResult executeGetCalendarSchedule(Map<String, Object> args) {
+        if (calendarService == null) {
+            return ToolResult.error("Calendar service is not available.");
+        }
+        LocalDate today = LocalDate.now(clock);
+        int year = args.containsKey("year") && args.get("year") instanceof Number
+                ? ((Number) args.get("year")).intValue() : today.getYear();
+        int month = args.containsKey("month") && args.get("month") instanceof Number
+                ? ((Number) args.get("month")).intValue() : today.getMonthValue();
+
+        com.geetanjali.backend.dto.calendar.MonthCalendarDto calendar = calendarService.getMonthCalendar(year, month);
+        return ToolResult.ok(Map.of(
+                "year", calendar.year(),
+                "month", calendar.month(),
+                "monthName", calendar.monthName(),
+                "totalOrdersInMonth", calendar.totalOrdersInMonth(),
+                "totalItemsInMonth", calendar.totalItemsInMonth(),
+                "greenDaysCount", calendar.greenDaysCount(),
+                "yellowDaysCount", calendar.yellowDaysCount(),
+                "redDaysCount", calendar.redDaysCount(),
+                "topDeliveryDays", calendar.topDeliveryDays()
+        ));
     }
 }

@@ -1,5 +1,6 @@
 package com.geetanjali.backend.controller;
 
+import com.geetanjali.backend.dto.calendar.DayCapacityDto;
 import com.geetanjali.backend.dto.form.ItemForm;
 import com.geetanjali.backend.dto.form.OverrideForm;
 import com.geetanjali.backend.dto.form.PaymentForm;
@@ -11,6 +12,7 @@ import com.geetanjali.backend.entity.OrderItem;
 import com.geetanjali.backend.exception.BalancePendingException;
 import com.geetanjali.backend.exception.BusinessRuleException;
 import com.geetanjali.backend.security.AppUserDetails;
+import com.geetanjali.backend.service.CalendarService;
 import com.geetanjali.backend.service.DeliveryService;
 import com.geetanjali.backend.service.GarmentService;
 import com.geetanjali.backend.service.OrderService;
@@ -53,23 +55,34 @@ public class OrderController {
     private final PaymentService paymentService;
     private final DeliveryService deliveryService;
     private final Clock clock;
+    private final CalendarService calendarService;
 
-    // Full constructor injection: Spring automatically injects all service dependencies.
-    // Inputs: orderService, orderWizardService, garmentService, paymentService, deliveryService, clock.
-    // Injects all required service beans and clock into this controller.
+    // Full constructor injection with CalendarService
     @Autowired
     public OrderController(OrderService orderService,
                            OrderWizardService orderWizardService,
                            GarmentService garmentService,
                            PaymentService paymentService,
                            DeliveryService deliveryService,
-                           Clock clock) {
+                           Clock clock,
+                           CalendarService calendarService) {
         this.orderService = orderService;
         this.orderWizardService = orderWizardService;
         this.garmentService = garmentService;
         this.paymentService = paymentService;
         this.deliveryService = deliveryService;
         this.clock = clock;
+        this.calendarService = calendarService;
+    }
+
+    // Convenience constructor for tests that inject 6 arguments.
+    public OrderController(OrderService orderService,
+                           OrderWizardService orderWizardService,
+                           GarmentService garmentService,
+                           PaymentService paymentService,
+                           DeliveryService deliveryService,
+                           Clock clock) {
+        this(orderService, orderWizardService, garmentService, paymentService, deliveryService, clock, null);
     }
 
     // Convenience constructor for tests that do not inject DeliveryService.
@@ -78,7 +91,7 @@ public class OrderController {
                            GarmentService garmentService,
                            PaymentService paymentService,
                            Clock clock) {
-        this(orderService, orderWizardService, garmentService, paymentService, null, clock);
+        this(orderService, orderWizardService, garmentService, paymentService, null, clock, null);
     }
 
     // Convenience constructor for tests that do not test payment or delivery endpoints.
@@ -86,7 +99,7 @@ public class OrderController {
                            OrderWizardService orderWizardService,
                            GarmentService garmentService,
                            Clock clock) {
-        this(orderService, orderWizardService, garmentService, null, null, clock);
+        this(orderService, orderWizardService, garmentService, null, null, clock, null);
     }
 
     // Handles GET /orders: Displays the customer orders overview list in the All Orders section.
@@ -351,6 +364,12 @@ public class OrderController {
         LocalDate today = clock.instant().atZone(clock.getZone()).toLocalDate();
         if (form.getDeliveryDate() != null && form.getDeliveryDate().isBefore(today)) {
             bindingResult.rejectValue("deliveryDate", "pastDate", "Promised delivery date cannot be in the past");
+        } else if (form.getDeliveryDate() != null && calendarService != null) {
+            DayCapacityDto capacity = calendarService.getDayCapacity(form.getDeliveryDate());
+            if (capacity.maxReached()) {
+                bindingResult.rejectValue("deliveryDate", "capacityExceeded",
+                        "Maximum daily capacity reached (10 orders already scheduled for this date). Please choose another date.");
+            }
         }
 
         if (bindingResult.hasErrors()) {

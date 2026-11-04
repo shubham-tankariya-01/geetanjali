@@ -90,6 +90,8 @@
                                th:field="*{deliveryDate}"
                                th:min="${minDate}"
                                required>
+                        <input type="hidden" id="confirmedOverbooking" th:field="*{confirmedOverbooking}">
+                        <div id="dateCapacityBadge" style="margin-top: 6px; font-size: 12.5px; display: none;"></div>
                         <span th:if="${#fields.hasErrors('deliveryDate')}" th:errors="*{deliveryDate}" class="form-error"></span>
                     </div>
 
@@ -164,6 +166,214 @@
             </div>
 
         </form>
+
+        <!-- Capacity Overbooking Confirmation Modal (Sarvam AI / Indus SaaS Theme) -->
+        <div id="capacityModalBackdrop" class="capacity-modal-backdrop" style="display: none;">
+            <div class="capacity-modal-card">
+                <div class="capacity-modal-header">
+                    <div id="capacityModalIcon" class="capacity-modal-icon warning">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="capacityModalTitle" class="capacity-modal-title">High Daily Order Volume</h3>
+                        <p id="capacityModalSubtitle" class="capacity-modal-subtitle">Tailor workload capacity check</p>
+                    </div>
+                </div>
+                <div class="capacity-modal-body">
+                    <p id="capacityModalMessage" class="capacity-modal-text">
+                        This day already has <strong>5 orders</strong> scheduled.
+                    </p>
+                    <p id="capacityModalQuestion" class="capacity-modal-subtext">
+                        Do you want to add more to this day?
+                    </p>
+                </div>
+                <div class="capacity-modal-footer">
+                    <button type="button" id="capacityCancelBtn" class="btn-secondary">Choose Another Date</button>
+                    <button type="button" id="capacityConfirmBtn" class="btn-primary">Yes, Add to This Day</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                const dateInput = document.getElementById('itemDeliveryDate');
+                const badge = document.getElementById('dateCapacityBadge');
+                const confirmedField = document.getElementById('confirmedOverbooking');
+                const modal = document.getElementById('capacityModalBackdrop');
+                const modalIcon = document.getElementById('capacityModalIcon');
+                const modalTitle = document.getElementById('capacityModalTitle');
+                const modalSubtitle = document.getElementById('capacityModalSubtitle');
+                const modalMsg = document.getElementById('capacityModalMessage');
+                const modalQuestion = document.getElementById('capacityModalQuestion');
+                const confirmBtn = document.getElementById('capacityConfirmBtn');
+                const cancelBtn = document.getElementById('capacityCancelBtn');
+                const form = dateInput ? dateInput.closest('form') : null;
+
+                if (!dateInput || !form) return;
+
+                let lastCapacity = null;
+                let pendingSubmitBtn = null;
+
+                // Track which submit button was clicked
+                form.querySelectorAll('button[type="submit"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pendingSubmitBtn = btn;
+                    });
+                });
+
+                async function checkCapacity(dateStr) {
+                    if (!dateStr) {
+                        badge.style.display = 'none';
+                        lastCapacity = null;
+                        return null;
+                    }
+                    try {
+                        const res = await fetch('/api/calendar/capacity?date=' + encodeURIComponent(dateStr));
+                        if (!res.ok) return null;
+                        const data = await res.json();
+                        lastCapacity = data;
+                        renderBadge(data);
+                        return data;
+                    } catch (e) {
+                        console.warn('Failed to check date capacity:', e);
+                        return null;
+                    }
+                }
+
+                function renderBadge(data) {
+                    if (!badge) return;
+                    badge.style.display = 'inline-flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.gap = '6px';
+                    badge.style.padding = '4px 10px';
+                    badge.style.borderRadius = '9999px';
+                    badge.style.fontWeight = '500';
+                    badge.style.fontSize = '12px';
+                    badge.style.marginTop = '6px';
+
+                    if (data.maxReached) {
+                        badge.style.background = '#FEF2F2';
+                        badge.style.color = '#B91C1C';
+                        badge.style.border = '1px solid #FECACA';
+                        badge.innerHTML = '⛔ <strong>Max Capacity:</strong> ' + data.orderCount + ' orders scheduled (Full)';
+                    } else if (data.overbooking) {
+                        badge.style.background = '#FEF2F2';
+                        badge.style.color = '#B91C1C';
+                        badge.style.border = '1px solid #FECACA';
+                        badge.innerHTML = '⚠️ <strong>High Volume:</strong> ' + data.orderCount + ' orders scheduled (Overbooking allowed up to 10)';
+                    } else if (data.orderCount >= 4) {
+                        badge.style.background = '#FEFCE8';
+                        badge.style.color = '#B45309';
+                        badge.style.border = '1px solid #FDE68A';
+                        badge.innerHTML = '🟡 <strong>Standard Load:</strong> ' + data.orderCount + ' of 5 standard orders';
+                    } else if (data.orderCount > 0) {
+                        badge.style.background = '#ECFDF5';
+                        badge.style.color = '#047857';
+                        badge.style.border = '1px solid #A7F3D0';
+                        badge.innerHTML = '🟢 <strong>Available:</strong> ' + data.orderCount + ' of 5 standard orders';
+                    } else {
+                        badge.style.background = '#F1F5F9';
+                        badge.style.color = '#475569';
+                        badge.style.border = '1px solid #E2E8F0';
+                        badge.innerHTML = '🟢 <strong>Available:</strong> 0 orders scheduled';
+                    }
+                }
+
+                dateInput.addEventListener('change', () => {
+                    confirmedField.value = 'false';
+                    checkCapacity(dateInput.value);
+                });
+
+                if (dateInput.value) {
+                    checkCapacity(dateInput.value);
+                }
+
+                function showModal(data) {
+                    if (data.maxReached) {
+                        modalIcon.className = 'capacity-modal-icon danger';
+                        modalTitle.textContent = 'Maximum Daily Capacity Reached';
+                        modalSubtitle.textContent = 'Tailor workshop limit: 10 orders maximum';
+                        modalMsg.innerHTML = 'This day (<strong>' + data.date + '</strong>) already has <strong>' + data.orderCount + ' orders</strong> scheduled for delivery.<br>Tailors cannot take more than 10 orders on any single day.';
+                        modalQuestion.textContent = 'Please choose another delivery date to ensure timely quality craftsmanship.';
+                        confirmBtn.style.display = 'none';
+                        cancelBtn.textContent = 'Choose Another Date';
+                        cancelBtn.className = 'btn-primary';
+                    } else {
+                        modalIcon.className = 'capacity-modal-icon warning';
+                        modalTitle.textContent = 'High Order Volume on Selected Date';
+                        modalSubtitle.textContent = 'Tailor standard workload check';
+                        modalMsg.innerHTML = 'This day (<strong>' + data.date + '</strong>) already has <strong>' + data.orderCount + ' orders</strong> scheduled.<br>Standard workload is up to 5 orders per day.';
+                        modalQuestion.textContent = 'Do you want to add more to this day?';
+                        confirmBtn.style.display = 'inline-flex';
+                        confirmBtn.textContent = 'Yes, Add to This Day';
+                        confirmBtn.className = 'btn-primary';
+                        cancelBtn.textContent = 'Choose Another Date';
+                        cancelBtn.className = 'btn-secondary';
+                    }
+                    modal.style.display = 'flex';
+                }
+
+                function closeModal() {
+                    modal.style.display = 'none';
+                }
+
+                cancelBtn.addEventListener('click', () => {
+                    closeModal();
+                    dateInput.focus();
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    confirmedField.value = 'true';
+                    closeModal();
+                    if (pendingSubmitBtn) {
+                        if (pendingSubmitBtn.name && pendingSubmitBtn.value) {
+                            let hiddenAction = form.querySelector('input[type="hidden"][name="' + pendingSubmitBtn.name + '"]');
+                            if (!hiddenAction) {
+                                hiddenAction = document.createElement('input');
+                                hiddenAction.type = 'hidden';
+                                hiddenAction.name = pendingSubmitBtn.name;
+                                form.appendChild(hiddenAction);
+                            }
+                            hiddenAction.value = pendingSubmitBtn.value;
+                        }
+                    }
+                    form.submit();
+                });
+
+                form.addEventListener('submit', async (e) => {
+                    if (!dateInput.value) return;
+
+                    // If already confirmed by user, allow submission
+                    if (confirmedField.value === 'true') {
+                        return;
+                    }
+
+                    // Check latest capacity
+                    let cap = lastCapacity;
+                    if (!cap || cap.date !== dateInput.value) {
+                        e.preventDefault();
+                        cap = await checkCapacity(dateInput.value);
+                    }
+
+                    if (!cap) return;
+
+                    if (cap.maxReached) {
+                        e.preventDefault();
+                        showModal(cap);
+                        return;
+                    }
+
+                    if (cap.overbooking) {
+                        e.preventDefault();
+                        showModal(cap);
+                    }
+                });
+            })();
+        </script>
     </div>
 
 </body>

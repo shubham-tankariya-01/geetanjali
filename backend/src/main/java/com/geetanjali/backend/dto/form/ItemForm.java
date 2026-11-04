@@ -51,6 +51,9 @@ public class ItemForm {
     // List of uploaded cloth/pattern photo public IDs (e.g. "uuid.jpg").
     private List<String> photoPublicIds = new ArrayList<>();
 
+    // Confirmation flag for scheduling on days that already have 5 to 9 orders (overbooking).
+    private Boolean confirmedOverbooking = false;
+
     // Default zero-argument constructor required by Spring form binding.
     public ItemForm() {
     }
@@ -119,5 +122,13 @@ public class ItemForm {
 
     public void setPhotoPublicIds(List<String> photoPublicIds) {
         this.photoPublicIds = (photoPublicIds != null) ? new ArrayList<>(photoPublicIds) : new ArrayList<>();
+    }
+
+    public Boolean getConfirmedOverbooking() {
+        return confirmedOverbooking;
+    }
+
+    public void setConfirmedOverbooking(Boolean confirmedOverbooking) {
+        this.confirmedOverbooking = confirmedOverbooking;
     }
 }
